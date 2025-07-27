@@ -7,8 +7,9 @@ import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
-import { authAPI } from '@/lib/api'
+import { Eye, EyeOff, Loader2, Mail, Lock, User } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { useToast } from '@/contexts/ToastContext'
 
 const loginSchema = z.object({
   email: z.string().email('Email tidak valid'),
@@ -22,6 +23,8 @@ export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
+  const { login } = useAuth()
+  const { showToast } = useToast()
 
   const {
     register,
@@ -36,28 +39,55 @@ export default function LoginForm() {
     setError('')
 
     try {
-      const response = await authAPI.login(data)
-      const { token, user } = response.data
-
-      // Simpan token dan user data
-      localStorage.setItem('token', token)
-      localStorage.setItem('user', JSON.stringify(user))
-
+      await login(data.email, data.password)
+      showToast({
+        type: 'success',
+        title: 'Login Berhasil',
+        message: 'Selamat datang kembali!'
+      })
       // Redirect ke dashboard
       router.push('/dashboard')
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan saat login'
+      console.error('Login error:', error)
+      
+      let errorMessage = 'Terjadi kesalahan saat login'
+      
+      if (error instanceof Error) {
+        errorMessage = error.message
+      } else if (error && typeof error === 'object' && 'response' in error) {
+        const apiError = error as { 
+          response?: { 
+            data?: { message?: string },
+            status?: number 
+          } 
+        }
+        if (apiError.response?.data?.message) {
+          errorMessage = apiError.response.data.message
+        } else if (apiError.response?.status === 401) {
+          errorMessage = 'Email atau password salah'
+        } else if (apiError.response?.status === 500) {
+          errorMessage = 'Server error, silakan coba lagi nanti'
+        } else if (apiError.response?.status === 0) {
+          errorMessage = 'Tidak dapat terhubung ke server'
+        }
+      }
+      
       setError(errorMessage)
+      showToast({
+        type: 'error',
+        title: 'Login Gagal',
+        message: errorMessage
+      })
     } finally {
       setIsLoading(false)
     }
   }
 
-           return (
-           <div className="authentication-wrapper authentication-cover authentication-bg">
-                          <div className="authentication-inner row">
-               {/* Left Section - Illustration */}
-               <div className="d-none d-lg-flex col-lg-7 p-0">
+  return (
+    <div className="authentication-wrapper authentication-cover authentication-bg">
+      <div className="authentication-inner row">
+        {/* Left Section - Illustration */}
+        <div className="d-none d-lg-flex col-lg-7 p-0">
           <div className="auth-cover-bg auth-cover-bg-color d-flex justify-content-center align-items-center">
             <Image
               src="/images/auth-login-illustration-light.png"
@@ -124,55 +154,62 @@ export default function LoginForm() {
                 </div>
               )}
 
-              {/* Email Field */}
-              <div className="mb-3">
-                <label htmlFor="email" className="form-label">Email or Username</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="email"
-                  {...register('email')}
-                  placeholder="Enter your email or username"
-                  autoFocus
-                />
-                {errors.email && (
-                  <div className="invalid-feedback d-block">{errors.email.message}</div>
-                )}
-              </div>
+              {/* Input Group Container */}
+              <div className="input-group-container">
+                                 {/* Email Field Group */}
+                 <div className="input-group mb-3">
+                   <span className="input-group-text">
+                     <Mail className="h-4 w-4" />
+                   </span>
+                   <div className="form-floating flex-grow-1">
+                     <input
+                       type="text"
+                       className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                       id="email"
+                       {...register('email')}
+                       placeholder=""
+                       autoFocus
+                     />
+                     <label htmlFor="email">Email or Username</label>
+                     {errors.email && (
+                       <div className="invalid-feedback">{errors.email.message}</div>
+                     )}
+                   </div>
+                 </div>
 
-              {/* Password Field */}
-              <div className="mb-3 form-password-toggle">
-                <div className="d-flex justify-content-between">
-                  <label className="form-label" htmlFor="password">Password</label>
-                  <Link href="/forgot-password">
+                 {/* Password Field Group */}
+                 <div className="input-group mb-3">
+                   <span className="input-group-text">
+                     <Lock className="h-4 w-4" />
+                   </span>
+                   <div className="form-floating flex-grow-1">
+                     <input
+                       type={showPassword ? 'text' : 'password'}
+                       className={`form-control ${errors.password ? 'is-invalid' : ''}`}
+                       id="password"
+                       {...register('password')}
+                       placeholder=""
+                     />
+                     <label htmlFor="password">Password</label>
+                     {errors.password && (
+                       <div className="invalid-feedback">{errors.password.message}</div>
+                     )}
+                   </div>
+                   <span className="input-group-text cursor-pointer" onClick={() => setShowPassword(!showPassword)}>
+                     {showPassword ? (
+                       <EyeOff className="h-4 w-4" />
+                     ) : (
+                       <Eye className="h-4 w-4" />
+                     )}
+                   </span>
+                 </div>
+
+                {/* Forgot Password Link */}
+                <div className="text-end mb-3">
+                  <Link href="/forgot-password" className="text-decoration-none">
                     <small>Forgot Password?</small>
                   </Link>
                 </div>
-                <div className="input-group input-group-merge">
-                                           <input
-                           type={showPassword ? 'text' : 'password'}
-                           id="password"
-                           className="form-control"
-                           {...register('password')}
-                           placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
-                         />
-                  <span className="input-group-text cursor-pointer">
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="border-0 bg-transparent"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </span>
-                </div>
-                {errors.password && (
-                  <div className="invalid-feedback d-block">{errors.password.message}</div>
-                )}
               </div>
 
               {/* Remember Me */}
@@ -245,6 +282,100 @@ export default function LoginForm() {
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .input-group-container {
+          background: #f8f9fa;
+          border-radius: 0.5rem;
+          padding: 1.5rem;
+          margin-bottom: 1rem;
+        }
+        
+        .input-group {
+          border: none;
+          background: transparent;
+        }
+        
+        .input-group-text {
+          background: #e9ecef;
+          border: 1px solid #ced4da;
+          border-right: none;
+          color: #6c757d;
+          padding: 0.75rem 1rem;
+          transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+        }
+        
+        .input-group:focus-within .input-group-text {
+          border-color: #7367F0;
+          background-color: #f8f9ff;
+        }
+        
+        .form-floating {
+          position: relative;
+        }
+        
+        .form-floating > .form-control {
+          height: calc(3.5rem + 2px);
+          line-height: 1.25;
+          padding: 1rem 0.75rem;
+          border: 1px solid #ced4da;
+          border-left: none;
+          border-radius: 0 0.375rem 0.375rem 0;
+          transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        
+        .form-floating > .form-control:focus {
+          border-color: #7367F0;
+          box-shadow: 0 0 0 0.2rem rgba(115, 103, 240, 0.25);
+          outline: none;
+        }
+        
+        .form-floating > label {
+          position: absolute;
+          top: 0;
+          left: 0;
+          height: 100%;
+          padding: 1rem 0.75rem;
+          pointer-events: none;
+          border: 1px solid transparent;
+          transform-origin: 0 0;
+          transition: all 0.2s ease-in-out;
+          color: #6c757d;
+          font-size: 1rem;
+        }
+        
+        .form-floating > .form-control:focus,
+        .form-floating > .form-control:not(:placeholder-shown) {
+          padding-top: 1.625rem;
+          padding-bottom: 0.625rem;
+        }
+        
+        .form-floating > .form-control:focus ~ label,
+        .form-floating > .form-control:not(:placeholder-shown) ~ label {
+          opacity: 0.75;
+          transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+          color: #7367F0;
+          font-weight: 500;
+        }
+        
+        .input-group:last-child .input-group-text:last-child {
+          border-radius: 0 0.375rem 0.375rem 0;
+          border-left: none;
+        }
+        
+        .input-group:last-child .form-floating > .form-control {
+          border-radius: 0;
+          border-left: none;
+        }
+        
+        .cursor-pointer {
+          cursor: pointer;
+        }
+        
+        .cursor-pointer:hover {
+          background-color: #dee2e6;
+        }
+      `}</style>
     </div>
   )
 } 

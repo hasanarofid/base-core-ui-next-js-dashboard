@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Public_Sans } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ToastProvider } from "@/contexts/ToastContext";
+import ErrorBoundary from "@/components/ui/ErrorBoundary";
 
 const publicSans = Public_Sans({
   subsets: ["latin"],
@@ -23,7 +26,13 @@ export default function RootLayout({
       <body
         className={`${publicSans.variable} antialiased`}
       >
-        {children}
+        <ErrorBoundary>
+          <ToastProvider>
+            <AuthProvider>
+              {children}
+            </AuthProvider>
+          </ToastProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

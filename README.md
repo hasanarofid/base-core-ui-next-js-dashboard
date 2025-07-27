@@ -75,8 +75,8 @@ Dashboard ini terintegrasi dengan backend Laravel melalui:
 
 ### Endpoints yang Digunakan
 
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/logout` - Logout user
+- `POST /api/ogin` - Login user
+- `POST /api/ogout` - Logout user
 - `GET /api/auth/me` - Get current user
 - `GET /api/dashboard/stats` - Get dashboard statistics
 - `GET /api/dashboard/recent-activity` - Get recent activities

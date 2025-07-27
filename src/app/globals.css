@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 :root {
+  --vuexy-purple: #7367f0;
+  --vuexy-purple-dark: #5e50ee;
+  --vuexy-gradient-start: #667eea;
+  --vuexy-gradient-end: #764ba2;
   --primary: #7367F0;
   --primary-dark: #5E50EE;
 }
@@ -59,24 +63,32 @@
 
 /* Vuexy Authentication Layout */
 .authentication-wrapper {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* background: linear-gradient(135deg, var(--vuexy-gradient-start) 0%, var(--vuexy-gradient-end) 100%); */
   min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.authentication-cover {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+/* .authentication-cover {
+  background: linear-gradient(135deg, var(--vuexy-gradient-start) 0%, var(--vuexy-gradient-end) 100%);
 }
 
 .authentication-bg {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
+  background: linear-gradient(135deg, var(--vuexy-gradient-start) 0%, var(--vuexy-gradient-end) 100%);
+} */
 
 .authentication-inner {
   min-height: 100vh;
+  background: transparent;
+  display: flex;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .auth-cover-bg {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* background: linear-gradient(135deg, var(--vuexy-gradient-start) 0%, var(--vuexy-gradient-end) 100%); */
   position: relative;
   min-height: 100vh;
   display: flex;
@@ -85,7 +97,7 @@
 }
 
 .auth-cover-bg-color {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--vuexy-gradient-start) 0%, var(--vuexy-gradient-end) 100%);
 }
 
 .auth-cover-bg::before {
@@ -104,6 +116,7 @@
   z-index: 2;
   max-width: 500px;
   height: auto;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.1));
 }
 
 @media (max-width: 1024px) {
@@ -128,11 +141,6 @@
 }
 
 /* Layout Classes */
-.row {
-  display: flex;
-  flex-wrap: wrap;
-}
-
 .d-none {
   display: none;
 }
@@ -238,9 +246,13 @@
   display: inline-block;
 }
 
+.app-brand-logo svg path[fill="#7367F0"] {
+  fill: var(--vuexy-purple);
+}
+
 /* Typography */
 .fw-bold {
-  font-weight: 700;
+  font-weight: 700 !important;
   color: #2c3e50;
   font-size: 1.75rem;
   line-height: 1.2;
@@ -277,10 +289,24 @@ h3 {
   color: #495057;
   width: 100%;
   box-sizing: border-box;
+  line-height: 1.5;
 }
 
 .form-control:focus {
-  border-color: #7367f0;
+  border-color: var(--vuexy-purple);
+  box-shadow: 0 0 0 0.2rem rgba(115, 103, 240, 0.25);
+  background-color: #ffffff;
+  color: #495057;
+  outline: none;
+}
+
+.form-control::placeholder {
+  color: #6c757d;
+  opacity: 1;
+}
+
+.form-control:focus {
+  border-color: var(--vuexy-purple);
   box-shadow: 0 0 0 0.2rem rgba(115, 103, 240, 0.25);
   background-color: #ffffff;
   color: #495057;
@@ -299,6 +325,9 @@ h3 {
 
 .form-password-toggle .input-group {
   position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
 }
 
 .form-password-toggle .input-group-text {
@@ -307,6 +336,11 @@ h3 {
   border: 1px solid #d1d5db;
   border-left: none;
   padding: 0.75rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  border-radius: 0 0.375rem 0.375rem 0;
 }
 
 .form-password-toggle .input-group-text button {
@@ -318,6 +352,8 @@ h3 {
   align-items: center;
   justify-content: center;
   color: #6b7280;
+  width: 100%;
+  height: 100%;
 }
 
 .form-password-toggle .input-group-text button:hover {
@@ -327,6 +363,7 @@ h3 {
 .form-password-toggle .form-control {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
+  border-right: none;
 }
 
 .form-password-toggle .input-group-text {
@@ -350,7 +387,7 @@ h3 {
 .input-group-text {
   display: flex;
   align-items: center;
-  padding: 0.5rem 0.75rem;
+  padding: 0.75rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 400;
   line-height: 1.5;
@@ -361,11 +398,13 @@ h3 {
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   border-left: 0;
+  min-width: 42px;
 }
 
 .input-group .form-control {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
+  border-right: none;
 }
 
 .input-group .input-group-text {
@@ -393,8 +432,8 @@ h3 {
 }
 
 .btn-primary {
-  background-color: #7367f0;
-  border-color: #7367f0;
+  background-color: var(--vuexy-purple);
+  border-color: var(--vuexy-purple);
   color: #ffffff;
   padding: 0.75rem 1.5rem;
   font-weight: 600;
@@ -403,14 +442,14 @@ h3 {
 }
 
 .btn-primary:hover {
-  background-color: #5e50ee;
-  border-color: #5e50ee;
+  background-color: var(--vuexy-purple-dark);
+  border-color: var(--vuexy-purple-dark);
   color: #ffffff;
 }
 
 .btn-primary:focus {
-  background-color: #5e50ee;
-  border-color: #5e50ee;
+  background-color: var(--vuexy-purple-dark);
+  border-color: var(--vuexy-purple-dark);
   box-shadow: 0 0 0 0.2rem rgba(115, 103, 240, 0.25);
   color: #ffffff;
 }
@@ -448,13 +487,13 @@ h3 {
 }
 
 .form-check-input:checked {
-  background-color: #7367f0;
-  border-color: #7367f0;
+  background-color: var(--vuexy-purple);
+  border-color: var(--vuexy-purple);
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
 }
 
 .form-check-input:focus {
-  border-color: #7367f0;
+  border-color: var(--vuexy-purple);
   outline: 0;
   box-shadow: 0 0 0 0.2rem rgba(115, 103, 240, 0.25);
 }
@@ -496,12 +535,12 @@ h3 {
 
 /* Links */
 a {
-  color: #7367f0;
+  color: var(--vuexy-purple);
   text-decoration: none;
 }
 
 a:hover {
-  color: #5e50ee;
+  color: var(--vuexy-purple-dark);
   text-decoration: underline;
 }
 
@@ -511,12 +550,12 @@ small {
 }
 
 small a {
-  color: #7367f0;
+  color: var(--vuexy-purple);
   text-decoration: none;
 }
 
 small a:hover {
-  color: #5e50ee;
+  color: var(--vuexy-purple-dark);
   text-decoration: underline;
 }
 
@@ -531,8 +570,8 @@ small a:hover {
   position: relative;
   display: inline-block;
   padding: 0 1rem;
-  background-color: #ffffff;
-  color: #6c757d;
+  background-color: #f9fafb;
+  color: #6c7280;
   font-size: 0.875rem;
 }
 

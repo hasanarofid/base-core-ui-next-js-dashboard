@@ -2,23 +2,28 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 export default function HomePage() {
+  const { isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    // Check if user is authenticated
-    const token = localStorage.getItem('token')
-    if (token) {
-      router.push('/dashboard')
-    } else {
-      router.push('/login')
+    if (!isLoading) {
+      if (isAuthenticated) {
+        router.push('/dashboard')
+      } else {
+        router.push('/login')
+      }
     }
-  }, [router])
+  }, [isAuthenticated, isLoading, router])
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-    </div>
+    <LoadingSpinner 
+      size="lg" 
+      text="Redirecting..." 
+      className="min-h-screen" 
+    />
   )
 }

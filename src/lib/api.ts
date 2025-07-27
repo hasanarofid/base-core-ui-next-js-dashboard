@@ -1,26 +1,36 @@
 import axios from 'axios'
-
-// Konfigurasi API base URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'
+import { config } from '@/config'
+import { debugApiRequest, debugApiResponse, debugError } from '@/utils/debug'
 
 // Membuat instance axios dengan konfigurasi default
 export const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: config.api.baseURL,
+  timeout: config.api.timeout,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
+  withCredentials: false, // Disable credentials untuk cross-origin
 })
 
 // Interceptor untuk menambahkan token ke header
 api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token')
+  (axiosConfig) => {
+    const token = localStorage.getItem(config.auth.tokenKey)
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+      axiosConfig.headers.Authorization = `Bearer ${token}`
     }
-    return config
+    
+    debugApiRequest(
+      axiosConfig.method?.toUpperCase() || 'UNKNOWN',
+      axiosConfig.url || 'unknown',
+      axiosConfig.data
+    )
+    
+    return axiosConfig
   },
   (error) => {
+    debugError('Request interceptor error', error)
     return Promise.reject(error)
   }
 )
@@ -28,23 +38,55 @@ api.interceptors.request.use(
 // Interceptor untuk handle response
 api.interceptors.response.use(
   (response) => {
+    debugApiResponse(
+      response.config.method?.toUpperCase() || 'UNKNOWN',
+      response.config.url || 'unknown',
+      response.status,
+      response.data
+    )
     return response
   },
-  (error) => {
-    if (error.response?.status === 401) {
-      // Token expired atau tidak valid
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      window.location.href = '/login'
+  async (error) => {
+    const originalRequest = error.config
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true
+
+      try {
+        // Try to refresh token
+        const refreshToken = localStorage.getItem(config.auth.refreshTokenKey)
+        if (refreshToken) {
+          const response = await api.post('/auth/refresh', { refreshToken })
+          const { token } = response.data
+          
+          localStorage.setItem(config.auth.tokenKey, token)
+          originalRequest.headers.Authorization = `Bearer ${token}`
+          
+          return api(originalRequest)
+        }
+      } catch (refreshError) {
+        // Refresh token failed, redirect to login
+        debugError('Token refresh failed', refreshError)
+        localStorage.removeItem(config.auth.tokenKey)
+        localStorage.removeItem(config.auth.refreshTokenKey)
+        localStorage.removeItem(config.auth.userKey)
+        window.location.href = '/login'
+      }
     }
+    
+    debugError('Response interceptor error', error)
     return Promise.reject(error)
   }
 )
 
 // API endpoints
 export const authAPI = {
-  login: (credentials: { email: string; password: string }) =>
-    api.post('/auth/login', credentials),
+  login: (credentials: { email: string; password: string }) => {
+    console.log('Base URL:', config.api.baseURL)
+    console.log('Login request to:', `${config.api.baseURL}/auth/login`)
+    console.log('Credentials:', credentials)
+    return api.post('/auth/login', credentials)
+  },
   logout: () => api.post('/auth/logout'),
   me: () => api.get('/auth/me'),
   refresh: () => api.post('/auth/refresh'),

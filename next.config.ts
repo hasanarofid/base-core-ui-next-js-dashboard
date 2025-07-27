@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Konfigurasi untuk development
+  experimental: {
+    // Enable jika diperlukan
+  },
 };
 
 export default nextConfig;

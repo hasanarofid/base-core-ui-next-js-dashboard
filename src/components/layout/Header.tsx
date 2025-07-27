@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 import { 
   Search, 
   Bell, 
@@ -21,6 +22,22 @@ export default function Header({ sidebarCollapsed = false, onToggleSidebar }: He
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const { user, logout } = useAuth()
+  const userMenuRef = useRef<HTMLDivElement>(null)
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode)
@@ -91,7 +108,7 @@ export default function Header({ sidebarCollapsed = false, onToggleSidebar }: He
           </button>
 
           {/* User menu */}
-          <div className="relative">
+          <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100"
@@ -100,7 +117,7 @@ export default function Header({ sidebarCollapsed = false, onToggleSidebar }: He
                 <User className="w-4 h-4 text-white" />
               </div>
               <span className="hidden md:block text-sm font-medium text-gray-700">
-                Admin User
+                {user?.fullName || 'Admin User'}
               </span>
               <ChevronDown className="w-4 h-4 text-gray-400" />
             </button>
@@ -135,9 +152,8 @@ export default function Header({ sidebarCollapsed = false, onToggleSidebar }: He
                 </a>
                 <button
                   onClick={() => {
-                    localStorage.removeItem('token')
-                    localStorage.removeItem('user')
-                    window.location.href = '/login'
+                    logout()
+                    setShowUserMenu(false)
                   }}
                   className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >

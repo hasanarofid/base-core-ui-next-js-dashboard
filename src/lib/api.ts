@@ -52,8 +52,8 @@ export const authAPI = {
 
 export const userAPI = {
   getProfile: () => api.get('/user/profile'),
-  updateProfile: (data: any) => api.put('/user/profile', data),
-  changePassword: (data: any) => api.put('/user/password', data),
+  updateProfile: (data: Record<string, unknown>) => api.put('/user/profile', data),
+  changePassword: (data: Record<string, unknown>) => api.put('/user/password', data),
 }
 
 export const dashboardAPI = {

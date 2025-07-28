@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils'
 import { LucideIcon } from 'lucide-react'
 
 interface StatsCardProps {
@@ -10,7 +9,7 @@ interface StatsCardProps {
   }
   icon: LucideIcon
   iconColor?: string
-  className?: string
+  iconBgColor?: string
 }
 
 export default function StatsCard({
@@ -18,37 +17,23 @@ export default function StatsCard({
   value,
   change,
   icon: Icon,
-  iconColor = 'text-blue-600',
-  className
+  iconColor = "text-blue-600",
+  iconBgColor = "bg-blue-100"
 }: StatsCardProps) {
   return (
-    <div className={cn(
-      "bg-white rounded-lg shadow-sm border border-gray-200 p-6",
-      className
-    )}>
+    <div className="stats-card">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+          <p className="stats-label">{title}</p>
+          <h3 className="stats-value">{value}</h3>
           {change && (
-            <div className="flex items-center mt-2">
-              <span
-                className={cn(
-                  "text-sm font-medium",
-                  change.type === 'increase' ? 'text-green-600' : 'text-red-600'
-                )}
-              >
-                {change.type === 'increase' ? '+' : '-'}{Math.abs(change.value)}%
-              </span>
-              <span className="text-sm text-gray-500 ml-1">dari bulan lalu</span>
-            </div>
+            <p className={`stats-change ${change.type === 'increase' ? 'positive' : 'negative'}`}>
+              {change.type === 'increase' ? '+' : '-'}{change.value}% dari bulan lalu
+            </p>
           )}
         </div>
-        <div className={cn(
-          "p-3 rounded-lg",
-          iconColor.replace('text-', 'bg-').replace('-600', '-100')
-        )}>
-          <Icon className={cn("w-6 h-6", iconColor)} />
+        <div className={`stats-icon ${iconBgColor}`}>
+          <Icon className={`w-6 h-6 ${iconColor}`} />
         </div>
       </div>
     </div>

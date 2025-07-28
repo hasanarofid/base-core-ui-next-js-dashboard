@@ -7,16 +7,18 @@ import { cn } from '@/lib/utils'
 import { 
   Home, 
   Users, 
-  FileText, 
-  BarChart3, 
-  Calendar,
-  Mail,
-  MessageSquare,
-  Kanban,
+  Building,
+  Key,
+  Settings,
   CreditCard,
+  BarChart3,
+  FileText,
+  Mail,
+  LogOut,
+  ChevronRight,
+  Database,
   Shield,
-  HelpCircle,
-  LogOut
+  Bell
 } from 'lucide-react'
 
 const menuItems = [
@@ -27,64 +29,67 @@ const menuItems = [
     icon: Home,
   },
   {
-    id: 'users',
-    title: 'Pengguna',
-    href: '/users',
+    id: 'tenant-management',
+    title: 'Tenant Management',
+    href: '/tenant-management',
+    icon: Building,
+    description: 'Approve / Suspend / Update tenant'
+  },
+  {
+    id: 'user-management',
+    title: 'User Management',
+    href: '/user-management',
     icon: Users,
+    description: 'Lihat semua user tenant, buat akun admin tenant'
+  },
+  {
+    id: 'client-credentials',
+    title: 'Client Credentials',
+    href: '/client-credentials',
+    icon: Key,
+    description: 'Lihat/generate ulang client ID & key'
+  },
+  {
+    id: 'global-config',
+    title: 'Global Config',
+    href: '/global-config',
+    icon: Settings,
+    description: 'Default fee config, global payment provider keys'
+  },
+  {
+    id: 'payment-methods',
+    title: 'Payment Method Master',
+    href: '/payment-methods',
+    icon: CreditCard,
+    description: 'Buat dan kelola metode pembayaran global'
+  },
+  {
+    id: 'transaction-monitoring',
+    title: 'Transaction Monitoring',
+    href: '/transaction-monitoring',
+    icon: BarChart3,
+    description: 'Lihat seluruh transaksi lintas tenant'
+  },
+  {
+    id: 'logs-notifications',
+    title: 'Logs & Notifications',
+    href: '/logs-notifications',
+    icon: Bell,
+    description: 'Lihat log callback, email notifikasi'
   },
   {
     id: 'reports',
-    title: 'Laporan',
+    title: 'Reports',
     href: '/reports',
     icon: FileText,
+    description: 'Ringkasan performa tiap tenant, transaksi per metode'
   },
   {
-    id: 'analytics',
-    title: 'Analitik',
-    href: '/analytics',
-    icon: BarChart3,
-  },
-  {
-    id: 'calendar',
-    title: 'Kalender',
-    href: '/calendar',
-    icon: Calendar,
-  },
-  {
-    id: 'email',
-    title: 'Email',
-    href: '/email',
-    icon: Mail,
-  },
-  {
-    id: 'chat',
-    title: 'Chat',
-    href: '/chat',
-    icon: MessageSquare,
-  },
-  {
-    id: 'kanban',
-    title: 'Kanban',
-    href: '/kanban',
-    icon: Kanban,
-  },
-  {
-    id: 'invoices',
-    title: 'Invoice',
-    href: '/invoices',
-    icon: CreditCard,
-  },
-  {
-    id: 'roles',
-    title: 'Roles & Permissions',
-    href: '/roles',
-    icon: Shield,
-  },
-  {
-    id: 'help',
-    title: 'Bantuan',
-    href: '/help',
-    icon: HelpCircle,
+    id: 'system-settings',
+    title: 'System Settings',
+    href: '/system-settings',
+    icon: Database,
+    description: 'Konfigurasi SMTP, integrasi eksternal'
   },
 ]
 
@@ -106,8 +111,8 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
   return (
     <aside 
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen bg-white border-r border-gray-200 transition-all duration-300",
-        isCollapsed ? "w-16" : "w-64"
+        "layout-menu",
+        isCollapsed && "collapsed"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -135,7 +140,7 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
       </div>
 
       {/* Navigation */}
-      <nav className="mt-4 px-2">
+      <nav className="mt-4 px-2 pb-20">
         <ul className="space-y-1">
           {menuItems.map((item) => {
             const Icon = item.icon
@@ -146,15 +151,27 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
                 <Link
                   href={item.href}
                   className={cn(
-                    "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                    isActive
-                      ? "bg-primary text-white"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    "menu-item",
+                    isActive && "active"
                   )}
                 >
-                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <Icon className="menu-icon" />
                   {(!isCollapsed || isHovered) && (
-                    <span className="ml-3">{item.title}</span>
+                    <>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="menu-text">{item.title}</span>
+                          {item.description && (
+                            <ChevronRight className="w-4 h-4" />
+                          )}
+                        </div>
+                        {item.description && (
+                          <p className="text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {item.description}
+                          </p>
+                        )}
+                      </div>
+                    </>
                   )}
                 </Link>
               </li>
@@ -167,11 +184,11 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
       <div className="absolute bottom-4 left-0 right-0 px-2">
         <button
           onClick={handleLogout}
-          className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          className="menu-item w-full"
         >
-          <LogOut className="w-5 h-5 flex-shrink-0" />
+          <LogOut className="menu-icon" />
           {(!isCollapsed || isHovered) && (
-            <span className="ml-3">Keluar</span>
+            <span className="menu-text">Keluar</span>
           )}
         </button>
       </div>

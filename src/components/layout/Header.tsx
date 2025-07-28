@@ -52,10 +52,10 @@ export default function Header({ sidebarCollapsed = false, onToggleSidebar }: He
 
   return (
     <header className={cn(
-      "fixed top-0 right-0 z-30 h-16 bg-white border-b border-gray-200 transition-all duration-300",
-      sidebarCollapsed ? "left-16" : "left-64"
+      "layout-navbar",
+      sidebarCollapsed && "collapsed"
     )}>
-      <div className="flex items-center justify-between h-full px-6">
+      <div className="flex items-center justify-between h-full w-full">
         {/* Left side - Menu toggle and search */}
         <div className="flex items-center space-x-4">
           <button
@@ -73,7 +73,7 @@ export default function Header({ sidebarCollapsed = false, onToggleSidebar }: He
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Cari..."
+                placeholder="Search (Ctrl+/)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"

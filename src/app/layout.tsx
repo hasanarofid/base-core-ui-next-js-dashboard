@@ -3,6 +3,7 @@ import { Public_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/contexts/ToastContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
 
 const publicSans = Public_Sans({
@@ -12,8 +13,14 @@ const publicSans = Public_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Vuexy - Login",
-  description: "Vuexy Admin Dashboard Template",
+  title: "Tenant System - Admin Dashboard",
+  description: "Tenant System - Modern and Professional Tenant Management Dashboard",
+  keywords: ["tenant", "management", "dashboard", "admin", "system"],
+  authors: [{ name: "Tenant System Team" }],
+  viewport: "width=device-width, initial-scale=1",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
@@ -22,16 +29,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${publicSans.variable} antialiased`}
       >
         <ErrorBoundary>
-          <ToastProvider>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
-          </ToastProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <AuthProvider>
+                {children}
+              </AuthProvider>
+            </ToastProvider>
+          </ThemeProvider>
         </ErrorBoundary>
       </body>
     </html>

@@ -1,35 +1,66 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { cn } from '@/lib/utils'
-import { useAuth } from '@/contexts/AuthContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import { 
-  Search, 
-  Bell, 
-  Settings, 
-  User,
-  ChevronDown,
+  Search,
+  Settings,
+  Bell,
+  Grid3X3,
+  Sun,
   Moon,
-  Sun
+  ChevronDown,
+  User,
+  LogOut,
+  Mail,
+  MessageSquare
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface HeaderProps {
   sidebarCollapsed?: boolean
   onToggleSidebar?: () => void
 }
 
-export default function Header({ sidebarCollapsed = false, onToggleSidebar }: HeaderProps) {
-  const [isDarkMode, setIsDarkMode] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [showUserMenu, setShowUserMenu] = useState(false)
-  const { user, logout } = useAuth()
-  const userMenuRef = useRef<HTMLDivElement>(null)
+export default function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProps) {
+  const { isDarkMode, toggleDarkMode } = useTheme()
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
+  const [isNotificationsDropdownOpen, setIsNotificationsDropdownOpen] = useState(false)
+  const userDropdownRef = useRef<HTMLDivElement>(null)
+  const notificationsDropdownRef = useRef<HTMLDivElement>(null)
 
-  // Close user menu when clicking outside
+  const notifications = [
+    {
+      id: 1,
+      title: 'New user registered',
+      message: 'John Doe has registered as a new tenant',
+      time: '2 minutes ago',
+      type: 'user'
+    },
+    {
+      id: 2,
+      title: 'Payment received',
+      message: 'Payment of $299 has been received from Tenant ABC',
+      time: '1 hour ago',
+      type: 'payment'
+    },
+    {
+      id: 3,
+      title: 'System update',
+      message: 'System maintenance completed successfully',
+      time: '3 hours ago',
+      type: 'system'
+    }
+  ]
+
+  // Close dropdowns when clicking outside
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-        setShowUserMenu(false)
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+        setIsUserDropdownOpen(false)
+      }
+      if (notificationsDropdownRef.current && !notificationsDropdownRef.current.contains(event.target as Node)) {
+        setIsNotificationsDropdownOpen(false)
       }
     }
 
@@ -39,128 +70,150 @@ export default function Header({ sidebarCollapsed = false, onToggleSidebar }: He
     }
   }, [])
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode)
-    // Implement dark mode toggle logic here
+  const toggleUserDropdown = () => {
+    setIsUserDropdownOpen(!isUserDropdownOpen)
+    setIsNotificationsDropdownOpen(false)
   }
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Implement search logic here
-    console.log('Searching for:', searchQuery)
+  const toggleNotificationsDropdown = () => {
+    setIsNotificationsDropdownOpen(!isNotificationsDropdownOpen)
+    setIsUserDropdownOpen(false)
   }
 
   return (
-    <header className={cn(
-      "layout-navbar",
-      sidebarCollapsed && "collapsed"
-    )}>
-      <div className="flex items-center justify-between h-full w-full">
-        {/* Left side - Menu toggle and search */}
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={onToggleSidebar}
-            className="p-2 rounded-md hover:bg-gray-100 lg:hidden"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-
-          {/* Search */}
-          <form onSubmit={handleSearch} className="hidden md:block">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search (Ctrl+/)"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              />
-            </div>
-          </form>
-        </div>
-
-        {/* Right side - Actions and user menu */}
-        <div className="flex items-center space-x-4">
-          {/* Dark mode toggle */}
-          <button
-            onClick={toggleDarkMode}
-            className="p-2 rounded-md hover:bg-gray-100"
-          >
-            {isDarkMode ? (
-              <Sun className="w-5 h-5 text-gray-600" />
-            ) : (
-              <Moon className="w-5 h-5 text-gray-600" />
-            )}
-          </button>
-
-          {/* Notifications */}
-          <button className="relative p-2 rounded-md hover:bg-gray-100">
-            <Bell className="w-5 h-5 text-gray-600" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
-
-          {/* Settings */}
-          <button className="p-2 rounded-md hover:bg-gray-100">
-            <Settings className="w-5 h-5 text-gray-600" />
-          </button>
-
-          {/* User menu */}
-          <div className="relative" ref={userMenuRef}>
+    <header className="layout-navbar bg-navbar-theme">
+      <div className="container-fluid">
+        <div className="navbar-nav align-items-center">
+          {/* Left side - Menu Toggle */}
+          <div className="nav-item d-flex align-items-center">
             <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100"
+              onClick={onToggleSidebar}
+              className="btn-icon me-3 hover:bg-menu-hover transition-all duration-300"
             >
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-white" />
-              </div>
-              <span className="hidden md:block text-sm font-medium text-gray-700">
-                {user?.fullName || 'Admin User'}
-              </span>
-              <ChevronDown className="w-4 h-4 text-gray-400" />
+              <Grid3X3 className="w-5 h-5" />
             </button>
+          </div>
 
-            {/* Dropdown menu */}
-            {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
-                <a
-                  href="/profile"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Profil Saya
-                </a>
-                <a
-                  href="/settings"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Pengaturan
-                </a>
-                <a
-                  href="/billing"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Tagihan
-                </a>
-                <hr className="my-1" />
-                <a
-                  href="/help"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Bantuan
-                </a>
-                <button
-                  onClick={() => {
-                    logout()
-                    setShowUserMenu(false)
-                  }}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  Keluar
-                </button>
-              </div>
-            )}
+          {/* Right side */}
+          <div className="navbar-nav align-items-center ms-auto">
+        
+
+            {/* Theme Toggle */}
+            <div className="nav-item me-2">
+              <button
+                onClick={toggleDarkMode}
+                className="btn-icon hover:bg-menu-hover transition-all duration-300"
+              >
+                {isDarkMode ? (
+                  <Sun className="w-5 h-5 transition-transform duration-300 hover:rotate-12" />
+                ) : (
+                  <Moon className="w-5 h-5 transition-transform duration-300 hover:rotate-12" />
+                )}
+              </button>
+            </div>
+
+            {/* Notifications */}
+            <div className="nav-item dropdown me-2" ref={notificationsDropdownRef}>
+              <button
+                onClick={toggleNotificationsDropdown}
+                className="btn-icon position-relative hover:bg-menu-hover transition-all duration-300"
+              >
+                <Bell className="w-5 h-5" />
+                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                  3
+                </span>
+              </button>
+
+              {isNotificationsDropdownOpen && (
+                <div className="dropdown-menu dropdown-menu-end show" style={{ width: '320px' }}>
+                  <div className="dropdown-menu-header d-flex align-items-center justify-content-between">
+                    <h6 className="dropdown-menu-title mb-0">Notifications</h6>
+                    <button className="btn-icon btn-sm hover:bg-menu-hover transition-all duration-300">
+                      <Settings className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="dropdown-menu-body">
+                    {notifications.map((notification) => (
+                      <div key={notification.id} className="dropdown-notifications-item hover:bg-menu-hover transition-colors duration-300">
+                        <div className="d-flex">
+                          <div className="flex-shrink-0">
+                            <div className="avatar avatar-sm">
+                              <div className="avatar-initial rounded-circle bg-label-primary">
+                                {notification.type === 'user' && <User className="w-4 h-4" />}
+                                {notification.type === 'payment' && <Mail className="w-4 h-4" />}
+                                {notification.type === 'system' && <Settings className="w-4 h-4" />}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex-grow-1">
+                            <h6 className="mb-1">{notification.title}</h6>
+                            <p className="mb-0">{notification.message}</p>
+                            <small className="text-muted">{notification.time}</small>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="dropdown-menu-footer">
+                    <button className="btn btn-primary btn-sm w-100 hover:bg-brand-blue-4 transition-colors duration-300">
+                      View all notifications
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* User Dropdown */}
+            <div className="nav-item dropdown" ref={userDropdownRef}>
+              <button
+                onClick={toggleUserDropdown}
+                className="nav-link d-flex align-items-center dropdown-toggle hide-arrow hover:bg-menu-hover transition-colors duration-300"
+              >
+                <div className="avatar avatar-sm position-relative">
+                  <div className="avatar-initial rounded-circle bg-brand-blue-3 hover:scale-110 transition-transform duration-300">
+                    <span className="text-white text-sm font-medium">A</span>
+                  </div>
+                </div>
+                <ChevronDown className={cn(
+                  "w-4 h-4 ms-1 transition-transform duration-300",
+                  isUserDropdownOpen && "rotate-180"
+                )} />
+              </button>
+
+              {isUserDropdownOpen && (
+                <div className="dropdown-menu dropdown-menu-end show">
+                  <div className="dropdown-item">
+                    <div className="d-flex">
+                      <div className="flex-shrink-0 me-3">
+                        <div className="avatar avatar-sm position-relative">
+                          <div className="avatar-initial rounded-circle bg-brand-blue-3">
+                            <span className="text-white text-sm font-medium">A</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex-grow-1">
+                        <span className="fw-semibold d-block">Admin User</span>
+                        <small className="text-muted">Admin</small>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="dropdown-divider"></div>
+                  <a className="dropdown-item hover:bg-menu-hover transition-colors duration-300" href="/profile">
+                    <User className="w-4 h-4 me-2" />
+                    <span>My Profile</span>
+                  </a>
+                  <a className="dropdown-item hover:bg-menu-hover transition-colors duration-300" href="/settings">
+                    <Settings className="w-4 h-4 me-2" />
+                    <span>Settings</span>
+                  </a>
+                  <div className="dropdown-divider"></div>
+                  <a className="dropdown-item hover:bg-red-50 hover:text-red-600 transition-colors duration-300" href="/logout">
+                    <LogOut className="w-4 h-4 me-2" />
+                    <span>Logout</span>
+                  </a>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -1,319 +1,400 @@
 'use client'
 
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import AuthGuard from '@/components/auth/AuthGuard'
-import StatsCard from '@/components/dashboard/StatsCard'
-import ModuleCard from '@/components/dashboard/ModuleCard'
-import AnalyticsCard from '@/components/dashboard/AnalyticsCard'
-import ActivityFeed from '@/components/dashboard/ActivityFeed'
+import { useTheme } from '@/contexts/ThemeContext'
 import { 
-  Users, 
-  DollarSign, 
-  ShoppingCart, 
-  TrendingUp,
-  Building,
-  Key,
+  BarChart3, 
+  TrendingUp, 
+  DollarSign,
+  ArrowUpRight,
+  Search,
   Settings,
-  CreditCard,
-  BarChart3,
-  FileText,
   Bell,
-  Database
+  Grid3X3,
+  Sun,
+  ChevronDown,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Star,
+  Globe,
+  Users,
+  CreditCard,
+  Activity,
+  ShoppingCart,
+  Download,
+  Plus,
+  MoreVertical
 } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
-import { DashboardStats } from '@/types'
-import { useState, useEffect } from 'react'
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const { isDarkMode } = useTheme()
 
-  useEffect(() => {
-    // Simulate API call
-    const fetchStats = async () => {
-      try {
-        // Replace with actual API call
-        // const response = await dashboardAPI.getStats()
-        
-        // Mock data
-        const mockStats: DashboardStats = {
-          total_users: 1245,
-          total_revenue: 45678900,
-          total_orders: 892,
-          growth_percentage: 12.5
-        }
-        
-        setStats(mockStats)
-      } catch (error) {
-        console.error('Error fetching stats:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
+  const websiteAnalytics = {
+    conversionRate: '28.5%',
+    sessions: '28%',
+    pageViews: '3.1k',
+    leads: '1.2k',
+    conversions: '12%'
+  }
 
-    fetchStats()
-  }, [])
+  const salesData = {
+    averageDaily: '$28,450',
+    totalMonthly: '$42.5k',
+    change: '+18.2%',
+    orders: { percentage: '62.2%', value: '6,440' },
+    visits: { percentage: '25.5%', value: '12,749' }
+  }
 
-  const modules = [
-    {
-      title: 'Tenant Management',
-      description: 'Approve / Suspend / Update tenant',
-      icon: Building,
-      href: '/tenant-management',
-      color: 'bg-blue-500'
-    },
-    {
-      title: 'User Management',
-      description: 'Lihat semua user tenant, buat akun admin tenant',
-      icon: Users,
-      href: '/user-management',
-      color: 'bg-green-500'
-    },
-    {
-      title: 'Client Credentials',
-      description: 'Lihat/generate ulang client ID & key',
-      icon: Key,
-      href: '/client-credentials',
-      color: 'bg-purple-500'
-    },
-    {
-      title: 'Global Config',
-      description: 'Default fee config, global payment provider keys',
-      icon: Settings,
-      href: '/global-config',
-      color: 'bg-orange-500'
-    },
-    {
-      title: 'Payment Method Master',
-      description: 'Buat dan kelola metode pembayaran global',
-      icon: CreditCard,
-      href: '/payment-methods',
-      color: 'bg-indigo-500'
-    },
-    {
-      title: 'Transaction Monitoring',
-      description: 'Lihat seluruh transaksi lintas tenant',
-      icon: BarChart3,
-      href: '/transaction-monitoring',
-      color: 'bg-teal-500'
-    },
-    {
-      title: 'Logs & Notifications',
-      description: 'Lihat log callback, email notifikasi',
-      icon: Bell,
-      href: '/logs-notifications',
-      color: 'bg-red-500',
-      badge: '5'
-    },
-    {
-      title: 'Reports',
-      description: 'Ringkasan performa tiap tenant, transaksi per metode',
-      icon: FileText,
-      href: '/reports',
-      color: 'bg-yellow-500'
-    },
-    {
-      title: 'System Settings',
-      description: 'Konfigurasi SMTP, integrasi eksternal',
-      icon: Database,
-      href: '/system-settings',
-      color: 'bg-gray-500'
-    }
-  ]
+  const earningReports = {
+    weekly: '$468',
+    change: '+4.2%',
+    earnings: '$545.69',
+    profit: '$256.34',
+    expense: '$74.19'
+  }
 
-  const activities = [
-    { id: 1, user: 'John Doe', action: 'membuat pesanan baru', time: '2 menit yang lalu', type: 'order' as const },
-    { id: 2, user: 'Jane Smith', action: 'mengupdate profil', time: '5 menit yang lalu', type: 'profile' as const },
-    { id: 3, user: 'Bob Johnson', action: 'menyelesaikan pembayaran', time: '10 menit yang lalu', type: 'payment' as const },
-    { id: 4, user: 'Alice Brown', action: 'mengirim pesan', time: '15 menit yang lalu', type: 'message' as const },
-    { id: 5, user: 'Charlie Wilson', action: 'membuat tenant baru', time: '20 menit yang lalu', type: 'order' as const },
-  ]
-
-  const dashboardContent = (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600">Selamat datang kembali! Berikut adalah ringkasan aktivitas Anda.</p>
-      </div>
-
-      {isLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-        </div>
-      ) : (
-        <>
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatsCard
-              title="Total Pengguna"
-              value={stats?.total_users.toLocaleString() || '0'}
-              change={{ value: 8.2, type: 'increase' }}
-              icon={Users}
-              iconColor="text-blue-600"
-              iconBgColor="bg-blue-100"
-            />
-            <StatsCard
-              title="Total Pendapatan"
-              value={formatCurrency(stats?.total_revenue || 0)}
-              change={{ value: 12.5, type: 'increase' }}
-              icon={DollarSign}
-              iconColor="text-green-600"
-              iconBgColor="bg-green-100"
-            />
-            <StatsCard
-              title="Total Pesanan"
-              value={stats?.total_orders.toLocaleString() || '0'}
-              change={{ value: 3.1, type: 'decrease' }}
-              icon={ShoppingCart}
-              iconColor="text-orange-600"
-              iconBgColor="bg-orange-100"
-            />
-            <StatsCard
-              title="Pertumbuhan"
-              value={`${stats?.growth_percentage || 0}%`}
-              change={{ value: 5.7, type: 'increase' }}
-              icon={TrendingUp}
-              iconColor="text-purple-600"
-              iconBgColor="bg-purple-100"
-            />
-          </div>
-
-          {/* Analytics Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <AnalyticsCard
-              title="Website Analytics"
-              subtitle="Total 28.5% Conversion Rate"
-              value="3.1k"
-              change={{ value: 28, type: 'increase' }}
-              bgColor="gradient"
-              iconColor="text-white"
-            >
-              <div className="grid grid-cols-2 gap-4 mt-4 text-white">
-                <div>
-                  <p className="text-sm opacity-90">Sessions</p>
-                  <p className="text-lg font-semibold">28%</p>
-                </div>
-                <div>
-                  <p className="text-sm opacity-90">Page Views</p>
-                  <p className="text-lg font-semibold">3.1k</p>
-                </div>
-                <div>
-                  <p className="text-sm opacity-90">Leads</p>
-                  <p className="text-lg font-semibold">1.2k</p>
-                </div>
-                <div>
-                  <p className="text-sm opacity-90">Conversions</p>
-                  <p className="text-lg font-semibold">12%</p>
-                </div>
-              </div>
-            </AnalyticsCard>
-
-            <AnalyticsCard
-              title="Sales Overview"
-              value="$42.5k"
-              change={{ value: 18.2, type: 'increase' }}
-              icon={ShoppingCart}
-            >
-              <div className="mt-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Order</span>
-                  <span className="text-sm font-medium">62.2% (6,440)</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Visits</span>
-                  <span className="text-sm font-medium">25.5% (12,749)</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full" style={{ width: '62.2%' }}></div>
-                </div>
-              </div>
-            </AnalyticsCard>
-
-            <AnalyticsCard
-              title="Revenue Generated"
-              value="97.5k"
-              change={{ value: 15.3, type: 'increase' }}
-              icon={DollarSign}
-              iconColor="text-green-600"
-            >
-              <div className="mt-4 h-20 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg opacity-20"></div>
-            </AnalyticsCard>
-          </div>
-
-          {/* Modules Grid */}
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Modul Sistem</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {modules.map((module, index) => (
-                <ModuleCard
-                  key={index}
-                  title={module.title}
-                  description={module.description}
-                  icon={module.icon}
-                  href={module.href}
-                  color={module.color}
-                  badge={module.badge}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Activity and Quick Actions */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ActivityFeed activities={activities} />
-            
-            {/* Quick Actions */}
-            <div className="card">
-              <div className="card-body">
-                <h3 className="card-title mb-4">Aksi Cepat</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className="text-center">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                        <Users className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <p className="text-sm font-medium text-gray-900">Tambah Pengguna</p>
-                    </div>
-                  </button>
-                  <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className="text-center">
-                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                        <Building className="w-4 h-4 text-green-600" />
-                      </div>
-                      <p className="text-sm font-medium text-gray-900">Tambah Tenant</p>
-                    </div>
-                  </button>
-                  <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className="text-center">
-                      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                        <BarChart3 className="w-4 h-4 text-orange-600" />
-                      </div>
-                      <p className="text-sm font-medium text-gray-900">Laporan</p>
-                    </div>
-                  </button>
-                  <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className="text-center">
-                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                        <Settings className="w-4 h-4 text-purple-600" />
-                      </div>
-                      <p className="text-sm font-medium text-gray-900">Pengaturan</p>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  )
+  const supportTracker = {
+    totalTickets: '164',
+    newTickets: '142',
+    openTickets: '28',
+    responseTime: '1 Day',
+    completedTask: '85%'
+  }
 
   return (
-    <AuthGuard requireAuth={true}>
-      <DashboardLayout>
-        {dashboardContent}
-      </DashboardLayout>
-    </AuthGuard>
+    <DashboardLayout>
+      <div className="container-xxl flex-grow-1 container-p-y">
+        {/* Page Header */}
+        <div className="row">
+          <div className="col-12">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <div>
+                <h4 className="fw-bold mb-1">Dashboard</h4>
+                <p className="text-muted mb-0">Welcome back! Here's what's happening with your projects today.</p>
+              </div>
+              <div className="d-flex gap-2">
+                <button className="btn btn-outline">
+                  <Download className="w-4 h-4 me-2" />
+                  Download
+                </button>
+                <button className="btn btn-primary">
+                  <Plus className="w-4 h-4 me-2" />
+                  Create Report
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="row">
+          {/* Website Analytics */}
+          <div className="col-lg-8 mb-4">
+            <div className="card analytics-card gradient">
+              <div className="card-body">
+                <div className="row">
+                  <div className="col-12">
+                    <div className="d-flex justify-content-between align-items-start mb-4">
+                      <div>
+                        <h5 className="text-white mb-1">Website Analytics</h5>
+                        <small className="text-white opacity-80">Total {websiteAnalytics.conversionRate} Conversion Rate</small>
+                      </div>
+                      <div className="dropdown">
+                        <button className="btn-icon btn-sm">
+                          <MoreVertical className="w-4 h-4 text-white" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="row">
+                    <div className="col-lg-8 col-md-8 col-12 order-2 order-md-1">
+                      <div className="row">
+                        <div className="col-12 mb-3">
+                          <h6 className="text-white mb-3">Traffic Overview</h6>
+                        </div>
+                        <div className="col-6 mb-3">
+                          <div className="d-flex align-items-center justify-content-between p-3 bg-white bg-opacity-10 rounded-lg">
+                            <div>
+                              <p className="text-white opacity-80 mb-1 text-sm">Sessions</p>
+                              <h6 className="text-white mb-0 fw-bold">{websiteAnalytics.sessions}</h6>
+                            </div>
+                            <div className="icon-container w-10 h-10">
+                              <Activity className="w-5 h-5 text-white" />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-6 mb-3">
+                          <div className="d-flex align-items-center justify-content-between p-3 bg-white bg-opacity-10 rounded-lg">
+                            <div>
+                              <p className="text-white opacity-80 mb-1 text-sm">Page Views</p>
+                              <h6 className="text-white mb-0 fw-bold">{websiteAnalytics.pageViews}</h6>
+                            </div>
+                            <div className="icon-container w-10 h-10">
+                              <BarChart3 className="w-5 h-5 text-white" />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-6 mb-3">
+                          <div className="d-flex align-items-center justify-content-between p-3 bg-white bg-opacity-10 rounded-lg">
+                            <div>
+                              <p className="text-white opacity-80 mb-1 text-sm">Leads</p>
+                              <h6 className="text-white mb-0 fw-bold">{websiteAnalytics.leads}</h6>
+                            </div>
+                            <div className="icon-container w-10 h-10">
+                              <Users className="w-5 h-5 text-white" />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-6 mb-3">
+                          <div className="d-flex align-items-center justify-content-between p-3 bg-white bg-opacity-10 rounded-lg">
+                            <div>
+                              <p className="text-white opacity-80 mb-1 text-sm">Conversions</p>
+                              <h6 className="text-white mb-0 fw-bold">{websiteAnalytics.conversions}</h6>
+                            </div>
+                            <div className="icon-container w-10 h-10">
+                              <TrendingUp className="w-5 h-5 text-white" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="col-lg-4 col-md-4 col-12 order-1 order-md-2 my-4 my-md-0 text-center">
+                      <div className="w-24 h-24 mx-auto bg-white bg-opacity-20 rounded-lg d-flex align-items-center justify-content-center mb-3">
+                        <div className="w-16 h-16 bg-gradient-to-br from-brand-blue-1 to-brand-blue-3 rounded-lg transform rotate-12"></div>
+                      </div>
+                      <div className="text-center">
+                        <h6 className="text-white mb-2">Performance</h6>
+                        <div className="progress-bar-container progress-bar-white mb-2">
+                          <div className="progress-bar-fill" style={{ width: '75%' }}></div>
+                        </div>
+                        <small className="text-white opacity-80">75% Target Achieved</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sales Overview */}
+          <div className="col-lg-4 mb-4">
+            <div className="card h-100">
+              <div className="card-header">
+                <div className="d-flex justify-content-between align-items-start">
+                  <div>
+                    <small className="d-block mb-1 text-muted">Sales Overview</small>
+                    <h4 className="card-title mb-1">$42.5k</h4>
+                  </div>
+                  <div className="d-flex align-items-center text-success">
+                    <ArrowUpRight className="w-4 h-4 me-1" />
+                    <span className="text-sm fw-medium">+18.2%</span>
+                  </div>
+                </div>
+              </div>
+              <div className="card-body">
+                <div className="row">
+                  <div className="col-6">
+                    <div className="d-flex gap-2 align-items-center mb-2">
+                      <div className="icon-container w-8 h-8">
+                        <ShoppingCart className="w-3 h-3 text-brand-blue-3" />
+                      </div>
+                      <p className="mb-0 text-sm">Order</p>
+                    </div>
+                    <h5 className="mb-0 pt-1 text-nowrap">62.2%</h5>
+                    <small className="text-muted">6,440</small>
+                  </div>
+                  <div className="col-6">
+                    <div className="d-flex gap-2 align-items-center mb-2">
+                      <div className="icon-container w-8 h-8">
+                        <Users className="w-3 h-3 text-brand-yellow" />
+                      </div>
+                      <p className="mb-0 text-sm">Visits</p>
+                    </div>
+                    <h5 className="mb-0 pt-1 text-nowrap">25.5%</h5>
+                    <small className="text-muted">12,749</small>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <span className="text-sm text-muted">Progress</span>
+                    <span className="text-sm fw-medium">85%</span>
+                  </div>
+                  <div className="progress-bar-container">
+                    <div className="progress-bar-fill" style={{ width: '85%' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Second Row */}
+        <div className="row">
+          {/* Average Daily Sales */}
+          <div className="col-lg-4 mb-4">
+            <div className="card h-100">
+              <div className="card-header">
+                <div className="d-flex justify-content-between align-items-start">
+                  <div>
+                    <small className="d-block mb-1 text-muted">Average Daily Sales</small>
+                    <h4 className="card-title mb-1">$28,450</h4>
+                  </div>
+                  <div className="icon-container w-10 h-10">
+                    <DollarSign className="w-5 h-5 text-brand-blue-3" />
+                  </div>
+                </div>
+                <small className="text-muted">Total Sales This Month</small>
+              </div>
+              <div className="card-body">
+                <div className="h-20 bg-gradient-to-r from-brand-blue-1 to-brand-blue-3 rounded-lg position-relative overflow-hidden">
+                  <div className="position-absolute inset-0 bg-white bg-opacity-20"></div>
+                  <div className="position-absolute bottom-0 left-0 w-100 h-1 bg-white bg-opacity-30"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Earning Reports */}
+          <div className="col-lg-5 mb-4">
+            <div className="card h-100">
+              <div className="card-header">
+                <div className="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h5 className="card-title mb-1">Earning Reports</h5>
+                    <p className="text-muted mb-0">Weekly Earnings Overview</p>
+                  </div>
+                  <div className="icon-container w-10 h-10">
+                    <TrendingUp className="w-5 h-5 text-brand-blue-3" />
+                  </div>
+                </div>
+              </div>
+              <div className="card-body">
+                <div className="d-flex align-items-center mb-4">
+                  <h4 className="card-title mb-0 me-2">$468</h4>
+                  <div className="d-flex align-items-center text-success">
+                    <ArrowUpRight className="w-4 h-4 me-1" />
+                    <span className="text-sm fw-medium">+4.2%</span>
+                  </div>
+                </div>
+                <p className="text-muted mb-4">You informed of this week compared to last week</p>
+                
+                {/* Chart Placeholder */}
+                <div className="h-32 mb-6 d-flex align-items-end justify-content-between">
+                  {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((day, index) => (
+                    <div key={day} className="d-flex flex-column align-items-center">
+                      <div 
+                        className={`w-8 rounded-sm transition-all duration-300 ${
+                          index === 4 ? 'bg-brand-blue-3 h-20' : 'bg-gray-300 dark:bg-gray-600 h-12'
+                        }`}
+                      ></div>
+                      <span className="text-xs text-muted mt-2">{day}</span>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="row">
+                  <div className="col-4 text-center">
+                    <div className="text-lg fw-semibold text-gray-900 dark:text-white">{earningReports.earnings}</div>
+                    <div className="text-xs text-muted">Earnings</div>
+                    <div className="w-8 h-1 bg-brand-blue-3 mx-auto mt-1 rounded"></div>
+                  </div>
+                  <div className="col-4 text-center">
+                    <div className="text-lg fw-semibold text-gray-900 dark:text-white">{earningReports.profit}</div>
+                    <div className="text-xs text-muted">Profit</div>
+                    <div className="w-8 h-1 bg-success mx-auto mt-1 rounded"></div>
+                  </div>
+                  <div className="col-4 text-center">
+                    <div className="text-lg fw-semibold text-gray-900 dark:text-white">{earningReports.expense}</div>
+                    <div className="text-xs text-muted">Expense</div>
+                    <div className="w-8 h-1 bg-danger mx-auto mt-1 rounded"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Support Tracker */}
+          <div className="col-lg-3 mb-4">
+            <div className="card h-100">
+              <div className="card-header">
+                <div className="d-flex justify-content-between align-items-start">
+                  <div>
+                    <h5 className="card-title mb-1">Support Tracker</h5>
+                    <p className="text-muted mb-0">Last 7 Days</p>
+                  </div>
+                  <div className="icon-container w-10 h-10">
+                    <Bell className="w-5 h-5 text-brand-yellow" />
+                  </div>
+                </div>
+              </div>
+              <div className="card-body">
+                <div className="d-flex align-items-center mb-4">
+                  <h4 className="card-title mb-0">{supportTracker.totalTickets} Total Tickets</h4>
+                </div>
+                
+                <div className="space-y-4 mb-6">
+                  <div className="d-flex align-items-center justify-content-between">
+                    <div className="d-flex align-items-center">
+                      <div className="icon-container w-8 h-8">
+                        <CheckCircle className="w-4 h-4 text-success" />
+                      </div>
+                      <span className="text-sm fw-medium text-gray-900 dark:text-white ms-3">New Tickets</span>
+                    </div>
+                    <span className="text-sm fw-semibold text-gray-900 dark:text-white">{supportTracker.newTickets}</span>
+                  </div>
+                  
+                  <div className="d-flex align-items-center justify-content-between">
+                    <div className="d-flex align-items-center">
+                      <div className="icon-container w-8 h-8">
+                        <AlertCircle className="w-4 h-4 text-brand-blue-3" />
+                      </div>
+                      <span className="text-sm fw-medium text-gray-900 dark:text-white ms-3">Open Tickets</span>
+                    </div>
+                    <span className="text-sm fw-semibold text-gray-900 dark:text-white">{supportTracker.openTickets}</span>
+                  </div>
+                  
+                  <div className="d-flex align-items-center justify-content-between">
+                    <div className="d-flex align-items-center">
+                      <div className="icon-container w-8 h-8">
+                        <Clock className="w-4 h-4 text-brand-blue-2" />
+                      </div>
+                      <span className="text-sm fw-medium text-gray-900 dark:text-white ms-3">Response Time</span>
+                    </div>
+                    <span className="text-sm fw-semibold text-gray-900 dark:text-white">{supportTracker.responseTime}</span>
+                  </div>
+                </div>
+                
+                <div className="text-center">
+                  <div className="text-lg fw-semibold text-gray-900 dark:text-white mb-3">Completed Task {supportTracker.completedTask}</div>
+                  <div className="progress-circle mx-auto">
+                    <svg className="w-16 h-16" viewBox="0 0 36 36">
+                      <path
+                        className="progress-bg"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        fill="none"
+                        stroke="#e5e7eb"
+                        strokeWidth="3"
+                      />
+                      <path
+                        className="progress-fill"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        fill="none"
+                        stroke="var(--brand-blue-3)"
+                        strokeWidth="3"
+                        strokeDasharray="85, 100"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="position-absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                      <span className="text-sm fw-bold text-brand-blue-3">85%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </DashboardLayout>
   )
 } 

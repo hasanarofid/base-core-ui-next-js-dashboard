@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useRouter } from 'next/navigation'
+import { authAPI } from '@/lib/api'
 import { 
   Search,
   Settings,
@@ -24,8 +26,10 @@ interface HeaderProps {
 
 export default function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProps) {
   const { isDarkMode, toggleDarkMode } = useTheme()
+  const router = useRouter()
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
   const [isNotificationsDropdownOpen, setIsNotificationsDropdownOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const userDropdownRef = useRef<HTMLDivElement>(null)
   const notificationsDropdownRef = useRef<HTMLDivElement>(null)
 
@@ -78,6 +82,33 @@ export default function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProp
   const toggleNotificationsDropdown = () => {
     setIsNotificationsDropdownOpen(!isNotificationsDropdownOpen)
     setIsUserDropdownOpen(false)
+  }
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+      setIsUserDropdownOpen(false)
+      
+      // Call logout API
+      await authAPI.logout()
+      
+      // Clear local storage with correct keys
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
+      
+      // Redirect to login page
+      router.push('/login')
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Even if logout fails, clear local storage and redirect
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
+      router.push('/login')
+    } finally {
+      setIsLoggingOut(false)
+    }
   }
 
   return (
@@ -207,10 +238,14 @@ export default function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProp
                     <span>Settings</span>
                   </a>
                   <div className="dropdown-divider"></div>
-                  <a className="dropdown-item hover:bg-red-50 hover:text-red-600 transition-colors duration-300" href="/logout">
-                    <LogOut className="w-4 h-4 me-2" />
-                    <span>Logout</span>
-                  </a>
+                  <button 
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    className="dropdown-item hover:bg-red-50 hover:text-red-600 transition-colors duration-300 w-100 text-start border-0 bg-transparent"
+                  >
+                    <LogOut className={cn("w-4 h-4 me-2", isLoggingOut && "animate-spin")} />
+                    <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
+                  </button>
                 </div>
               )}
             </div>

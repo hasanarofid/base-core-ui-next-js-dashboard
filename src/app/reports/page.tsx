@@ -1,8 +1,9 @@
 'use client'
 
+import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import AuthGuard from '@/components/auth/AuthGuard'
-import { FileText, Download, Calendar } from 'lucide-react'
+import { Download, FileText } from 'lucide-react'
 
 export default function ReportsPage() {
   return (

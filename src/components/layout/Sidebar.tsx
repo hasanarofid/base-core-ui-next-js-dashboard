@@ -1,31 +1,22 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils'
-import { useTheme } from '@/contexts/ThemeContext'
 import { 
   Home, 
-  Users, 
-  Building,
-  Key,
-  Settings,
-  CreditCard,
-  BarChart3,
-  FileText,
-  LogOut,
-  ChevronRight,
-  Database,
-  Bell,
-  Menu,
+  Building, 
+  Package, 
+  CreditCard, 
+  BarChart3, 
+  Settings, 
+  Palette, 
+  ChevronRight, 
   X,
-  Palette,
   Search,
-  ChevronDown,
-  Sun,
-  Moon
-} from 'lucide-react'
+  Menu
+} from 'lucide-react';
 
 const menuItems = [
   {
@@ -50,19 +41,19 @@ const menuItems = [
     id: 'user-management',
     title: 'User Management',
     href: '/user-management',
-    icon: Users
+    icon: Package
   },
   {
     id: 'client-credentials',
     title: 'Client Credentials',
     href: '/client-credentials',
-    icon: Key
+    icon: Settings
   },
   {
     id: 'global-config',
     title: 'Global Config',
     href: '/global-config',
-    icon: Settings
+    icon: Palette
   },
   {
     id: 'payment-methods',

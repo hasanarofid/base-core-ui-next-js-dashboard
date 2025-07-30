@@ -1,17 +1,14 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Search, Filter, MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, Filter, Edit, Trash2, Eye } from 'lucide-react';
 import Button from './Button';
 import Input from './Input';
-import Select from './Select';
-import Badge from './Badge';
-import Dropdown from './Dropdown';
 
 export interface Column<T> {
   key: string;
   header: string;
-  render?: (value: any, row: T) => React.ReactNode;
+  render?: (value: unknown, row: T) => React.ReactNode;
   sortable?: boolean;
   width?: string;
 }
@@ -30,7 +27,7 @@ export interface DataTableProps<T> {
     onPageChange: (page: number) => void;
   };
   onSearch?: (search: string) => void;
-  onFilter?: (filters: any) => void;
+  onFilter?: (filters: Record<string, unknown>) => void;
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
   onView?: (item: T) => void;
@@ -46,7 +43,7 @@ export function DataTable<T extends { id: string | number }>({
   filterable = true,
   pagination,
   onSearch,
-  onFilter,
+
   onEdit,
   onDelete,
   onView,
@@ -118,7 +115,7 @@ export function DataTable<T extends { id: string | number }>({
     <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 ${className}`}>
       {/* Header with Search and Filters */}
       {(searchable || filterable) && (
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
           <div className="flex flex-col sm:flex-row gap-4">
             {searchable && (
               <div className="flex-1">
@@ -149,13 +146,13 @@ export function DataTable<T extends { id: string | number }>({
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-gray-700">
+          <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
             <tr>
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className={`px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider ${
-                    column.sortable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600' : ''
+                  className={`px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider border-b border-gray-200 dark:border-gray-600 ${
+                    column.sortable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors' : ''
                   }`}
                   style={{ width: column.width }}
                   onClick={() => column.sortable && handleSort(column.key)}
@@ -163,33 +160,37 @@ export function DataTable<T extends { id: string | number }>({
                   <div className="flex items-center gap-1">
                     {column.header}
                     {column.sortable && (
-                      <span className="text-gray-400">{renderSortIcon(column.key)}</span>
+                      <span className="text-gray-400 text-xs">{renderSortIcon(column.key)}</span>
                     )}
                   </div>
                 </th>
               ))}
               {actions && (
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-20">
-                  Aksi
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-32 border-b border-gray-200 dark:border-gray-600">
+                  AKSI
                 </th>
               )}
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="bg-white dark:bg-gray-800">
             {loading ? (
               <tr>
-                <td colSpan={columns.length + (actions ? 1 : 0)} className="px-4 py-8 text-center">
+                <td colSpan={columns.length + (actions ? 1 : 0)} className="px-6 py-12 text-center">
                   <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                    <span className="ml-2 text-gray-500 dark:text-gray-400">Memuat data...</span>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-blue-3"></div>
+                    <span className="ml-3 text-gray-500 dark:text-gray-400 font-medium">Memuat data...</span>
                   </div>
                 </td>
               </tr>
             ) : sortedData.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + (actions ? 1 : 0)} className="px-4 py-8 text-center">
+                <td colSpan={columns.length + (actions ? 1 : 0)} className="px-6 py-12 text-center">
                   <div className="text-gray-500 dark:text-gray-400">
-                    Tidak ada data yang ditemukan
+                    <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                      <Search className="w-10 h-10 text-gray-400" />
+                    </div>
+                    <p className="text-lg font-semibold mb-2">Tidak ada data yang ditemukan</p>
+                    <p className="text-sm">Coba ubah filter atau kata kunci pencarian Anda</p>
                   </div>
                 </td>
               </tr>
@@ -197,42 +198,48 @@ export function DataTable<T extends { id: string | number }>({
               sortedData.map((row, index) => (
                 <tr
                   key={row.id}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  className={`transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                    index % 2 === 0 
+                      ? 'bg-white dark:bg-gray-800' 
+                      : 'bg-gray-50/50 dark:bg-gray-700/50'
+                  } border-b border-gray-100 dark:border-gray-700 last:border-b-0`}
                 >
                   {columns.map((column) => (
-                    <td key={column.key} className="px-4 py-3">
+                    <td key={column.key} className="px-6 py-4">
                       {renderCell(column, row)}
                     </td>
                   ))}
                   {actions && (
-                    <td className="px-4 py-3">
-                      <Dropdown
-                        trigger={
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        }
-                        items={[
-                          ...(onView ? [{
-                            label: 'Lihat',
-                            value: 'view',
-                            icon: <Eye className="w-4 h-4" />,
-                            onClick: () => onView(row)
-                          }] : []),
-                          ...(onEdit ? [{
-                            label: 'Edit',
-                            value: 'edit',
-                            icon: <Edit className="w-4 h-4" />,
-                            onClick: () => onEdit(row)
-                          }] : []),
-                          ...(onDelete ? [{
-                            label: 'Hapus',
-                            value: 'delete',
-                            icon: <Trash2 className="w-4 h-4" />,
-                            onClick: () => onDelete(row)
-                          }] : [])
-                        ]}
-                      />
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        {onView && (
+                          <button
+                            onClick={() => onView(row)}
+                            className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 flex items-center justify-center transition-all duration-200 group shadow-sm hover:shadow-md transform hover:scale-105"
+                            title="Lihat Detail"
+                          >
+                            <Eye className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+                          </button>
+                        )}
+                        {onEdit && (
+                          <button
+                            onClick={() => onEdit(row)}
+                            className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 flex items-center justify-center transition-all duration-200 group shadow-sm hover:shadow-md transform hover:scale-105"
+                            title="Edit Data"
+                          >
+                            <Edit className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+                          </button>
+                        )}
+                        {onDelete && (
+                          <button
+                            onClick={() => onDelete(row)}
+                            className="w-9 h-9 rounded-lg bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 flex items-center justify-center transition-all duration-200 group shadow-sm hover:shadow-md transform hover:scale-105"
+                            title="Hapus Data"
+                          >
+                            <Trash2 className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   )}
                 </tr>
@@ -244,10 +251,10 @@ export function DataTable<T extends { id: string | number }>({
 
       {/* Pagination */}
       {pagination && (
-        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700 dark:text-gray-300">
-              Menampilkan {((pagination.currentPage - 1) * pagination.itemsPerPage) + 1} - {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} dari {pagination.totalItems} data
+            <div className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+              Menampilkan <span className="font-bold text-brand-blue-3">{((pagination.currentPage - 1) * pagination.itemsPerPage) + 1}</span> - <span className="font-bold text-brand-blue-3">{Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)}</span> dari <span className="font-bold text-brand-blue-3">{pagination.totalItems}</span> data
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -255,33 +262,87 @@ export function DataTable<T extends { id: string | number }>({
                 size="sm"
                 onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
                 disabled={pagination.currentPage === 1}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 hover:bg-brand-blue-3 hover:text-white transition-all duration-200"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Sebelumnya
               </Button>
+              
               <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                  const page = i + 1;
-                  return (
+                {/* Previous pages */}
+                {pagination.currentPage > 3 && (
+                  <>
                     <Button
-                      key={page}
-                      variant={page === pagination.currentPage ? "primary" : "outline"}
+                      variant="outline"
                       size="sm"
-                      onClick={() => pagination.onPageChange(page)}
-                      className="w-8 h-8 p-0"
+                      onClick={() => pagination.onPageChange(1)}
+                      className="w-8 h-8 p-0 hover:bg-brand-blue-3 hover:text-white transition-all duration-200"
                     >
-                      {page}
+                      1
                     </Button>
-                  );
+                    {pagination.currentPage > 4 && (
+                      <span className="px-2 text-gray-500">...</span>
+                    )}
+                  </>
+                )}
+                
+                {/* Current page range */}
+                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                  let page;
+                  if (pagination.totalPages <= 5) {
+                    page = i + 1;
+                  } else if (pagination.currentPage <= 3) {
+                    page = i + 1;
+                  } else if (pagination.currentPage >= pagination.totalPages - 2) {
+                    page = pagination.totalPages - 4 + i;
+                  } else {
+                    page = pagination.currentPage - 2 + i;
+                  }
+                  
+                  if (page > 0 && page <= pagination.totalPages) {
+                    return (
+                      <Button
+                        key={page}
+                        variant={page === pagination.currentPage ? "primary" : "outline"}
+                        size="sm"
+                        onClick={() => pagination.onPageChange(page)}
+                        className={`w-8 h-8 p-0 transition-all duration-200 ${
+                          page === pagination.currentPage 
+                            ? 'bg-brand-blue-3 text-white shadow-md' 
+                            : 'hover:bg-brand-blue-3 hover:text-white'
+                        }`}
+                      >
+                        {page}
+                      </Button>
+                    );
+                  }
+                  return null;
                 })}
+                
+                {/* Next pages */}
+                {pagination.currentPage < pagination.totalPages - 2 && (
+                  <>
+                    {pagination.currentPage < pagination.totalPages - 3 && (
+                      <span className="px-2 text-gray-500">...</span>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => pagination.onPageChange(pagination.totalPages)}
+                      className="w-8 h-8 p-0 hover:bg-brand-blue-3 hover:text-white transition-all duration-200"
+                    >
+                      {pagination.totalPages}
+                    </Button>
+                  </>
+                )}
               </div>
+              
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
                 disabled={pagination.currentPage === pagination.totalPages}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 hover:bg-brand-blue-3 hover:text-white transition-all duration-200"
               >
                 Selanjutnya
                 <ChevronRight className="w-4 h-4" />

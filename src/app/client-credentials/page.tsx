@@ -1,8 +1,9 @@
 'use client'
 
+import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import AuthGuard from '@/components/auth/AuthGuard'
-import { Key, RefreshCw, Eye, EyeOff } from 'lucide-react'
+import { Key, RefreshCw } from 'lucide-react'
 
 export default function ClientCredentialsPage() {
   return (

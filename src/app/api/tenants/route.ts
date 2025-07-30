@@ -15,10 +15,10 @@ export async function GET(request: NextRequest) {
 
     const externalApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3030/api/v1'
     
-    console.log('Fetching user data from:', `${externalApiUrl}/user`)
+    console.log('Fetching tenants data from:', `${externalApiUrl}/tenants`)
     console.log('Using session cookie:', sessionCookie.name)
 
-    const response = await fetch(`${externalApiUrl}/user`, {
+    const response = await fetch(`${externalApiUrl}/tenants`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -29,19 +29,19 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json()
     
-    console.log('Me API response status:', response.status)
-    console.log('Me API response data:', data)
+    console.log('Tenants API response status:', response.status)
+    console.log('Tenants API response data:', data)
 
     if (!response.ok) {
       return NextResponse.json(
-        { message: data.message || 'Failed to get user data' },
+        { message: data.message || 'Gagal mengambil data tenants' },
         { status: response.status }
       )
     }
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error('Me API error:', error)
+    console.error('Tenants API error:', error)
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

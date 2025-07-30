@@ -5,7 +5,6 @@ import {
   Users, 
   ShoppingCart, 
   Activity, 
-  TrendingUp, 
   ArrowUpRight,
   ArrowDownRight
 } from 'lucide-react'

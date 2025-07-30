@@ -1,8 +1,9 @@
 'use client'
 
+import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import AuthGuard from '@/components/auth/AuthGuard'
-import { Bell, Mail, Clock } from 'lucide-react'
+import { Bell } from 'lucide-react'
 
 export default function LogsNotificationsPage() {
   return (

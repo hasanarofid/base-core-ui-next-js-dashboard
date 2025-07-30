@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { config } from '@/config'
 import { debugApiRequest, debugApiResponse, debugError } from '@/utils/debug'
+import { UserResponse, TenantListResponse } from '@/types/tenant'
 
 // Membuat instance axios dengan konfigurasi default
 export const api = axios.create({
@@ -102,4 +103,46 @@ export const dashboardAPI = {
   getStats: () => api.get('/dashboard/stats'),
   getRecentActivity: () => api.get('/dashboard/recent-activity'),
   getCharts: () => api.get('/dashboard/charts'),
+} 
+
+// Fungsi untuk mengambil data user
+export async function getUser(): Promise<UserResponse> {
+  try {
+    const response = await fetch('/api/user', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error('Gagal mengambil data user')
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching user:', error)
+    throw error
+  }
+}
+
+// Fungsi untuk mengambil data tenants
+export async function getTenants(): Promise<TenantListResponse> {
+  try {
+    const response = await fetch('/api/tenants', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error('Gagal mengambil data tenants')
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching tenants:', error)
+    throw error
+  }
 } 

@@ -29,19 +29,19 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json()
     
-    console.log('Me API response status:', response.status)
-    console.log('Me API response data:', data)
+    console.log('User API response status:', response.status)
+    console.log('User API response data:', data)
 
     if (!response.ok) {
       return NextResponse.json(
-        { message: data.message || 'Failed to get user data' },
+        { message: data.message || 'Gagal mengambil data user' },
         { status: response.status }
       )
     }
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error('Me API error:', error)
+    console.error('User API error:', error)
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

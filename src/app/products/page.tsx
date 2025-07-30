@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Plus, Package } from 'lucide-react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Button from '@/components/ui/Button';
+import { Package, Plus } from 'lucide-react'
 import { DataTable, Column } from '@/components/ui/DataTable';
-import { Product, ProductListResponse } from '@/types/product';
+import { Product } from '@/types/product';
 import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
 
 // Mock data untuk demo
 const mockProducts: Product[] = [
@@ -113,9 +113,16 @@ export default function ProductsPage() {
       header: 'Nama Produk',
       sortable: true,
       render: (value, row) => (
-        <div>
-          <div className="font-medium text-gray-900 dark:text-gray-100">{row.name}</div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">{row.description}</div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-brand-blue-3 to-brand-blue-4 rounded-lg flex items-center justify-center text-white font-semibold text-sm">
+            <Package className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
+              {String(value)}
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">{row.description}</div>
+          </div>
         </div>
       )
     },
@@ -125,7 +132,7 @@ export default function ProductsPage() {
       sortable: true,
       render: (value) => (
         <Badge variant="default" className="text-xs">
-          {value}
+          {String(value)}
         </Badge>
       )
     },
@@ -135,7 +142,7 @@ export default function ProductsPage() {
       sortable: true,
       render: (value) => (
         <span className="font-medium text-gray-900 dark:text-gray-100">
-          Rp {value.toLocaleString('id-ID')}
+          Rp {Number(value).toLocaleString('id-ID')}
         </span>
       )
     },
@@ -144,8 +151,8 @@ export default function ProductsPage() {
       header: 'Stok',
       sortable: true,
       render: (value) => (
-        <span className={`font-medium ${value > 0 ? 'text-green-600' : 'text-red-600'}`}>
-          {value}
+        <span className={`font-medium ${Number(value) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+          {String(value)}
         </span>
       )
     },
@@ -155,10 +162,10 @@ export default function ProductsPage() {
       sortable: true,
       render: (value) => (
         <Badge 
-          variant={value === 'active' ? 'success' : 'danger'}
+          variant={String(value) === 'active' ? 'success' : 'danger'}
           className="text-xs"
         >
-          {value === 'active' ? 'Aktif' : 'Tidak Aktif'}
+          {String(value) === 'active' ? 'Aktif' : 'Tidak Aktif'}
         </Badge>
       )
     },
@@ -168,7 +175,7 @@ export default function ProductsPage() {
       sortable: true,
       render: (value) => (
         <span className="text-sm text-gray-500 dark:text-gray-400">
-          {new Date(value).toLocaleDateString('id-ID')}
+          {new Date(String(value)).toLocaleDateString('id-ID')}
         </span>
       )
     }

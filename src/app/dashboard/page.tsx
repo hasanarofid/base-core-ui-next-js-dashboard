@@ -2,25 +2,18 @@
 
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import CRMStats from '@/components/dashboard/CRMStats'
+import UserInfo from '@/components/dashboard/UserInfo'
 import { useTheme } from '@/contexts/ThemeContext'
 import { 
   BarChart3, 
   TrendingUp, 
   DollarSign,
   ArrowUpRight,
-  Search,
-  Settings,
   Bell,
-  Grid3X3,
-  Sun,
-  ChevronDown,
   Clock,
   CheckCircle,
   AlertCircle,
-  Star,
-  Globe,
   Users,
-  CreditCard,
   Activity,
   ShoppingCart,
   Download,
@@ -31,7 +24,6 @@ import {
 import './crm-template-safe.css'
 
 export default function DashboardPage() {
-  const { isDarkMode } = useTheme()
 
   const websiteAnalytics = {
     conversionRate: '28.5%',
@@ -41,13 +33,7 @@ export default function DashboardPage() {
     conversions: '12%'
   }
 
-  const salesData = {
-    averageDaily: '$28,450',
-    totalMonthly: '$42.5k',
-    change: '+18.2%',
-    orders: { percentage: '62.2%', value: '6,440' },
-    visits: { percentage: '25.5%', value: '12,749' }
-  }
+
 
   const earningReports = {
     weekly: '$468',
@@ -97,7 +83,7 @@ export default function DashboardPage() {
             <div className="d-flex justify-content-between align-items-center mb-4">
               <div>
                 <h4 className="fw-bold mb-1">Dashboard</h4>
-                <p className="text-muted mb-0">Welcome back! Here's what's happening with your projects today.</p>
+                <p className="text-muted mb-0">Welcome back!  happening with your projects today.</p>
               </div>
               <div className="d-flex gap-2">
                 <button className="btn btn-outline-primary">
@@ -115,6 +101,13 @@ export default function DashboardPage() {
 
         {/* CRM Statistics Cards */}
         <CRMStats data={crmStatsData} />
+
+        {/* User Information */}
+        <div className="row mb-4">
+          <div className="col-12">
+            <UserInfo />
+          </div>
+        </div>
 
         <div className="row">
           {/* Website Analytics */}

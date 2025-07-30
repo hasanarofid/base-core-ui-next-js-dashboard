@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Image from 'next/image'
-import Link from 'next/link'
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Lock, Mail, Eye, EyeOff, Loader2, Building, Shield, Users } from 'lucide-react';
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff, Loader2, Mail, Lock, User } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/contexts/ToastContext'
 
@@ -45,7 +45,6 @@ export default function LoginForm() {
         title: 'Login Berhasil',
         message: 'Selamat datang kembali!'
       })
-      // Redirect ke dashboard
       router.push('/dashboard')
     } catch (error: unknown) {
       console.error('Login error:', error)
@@ -84,296 +83,636 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="authentication-wrapper authentication-cover authentication-bg">
-      <div className="authentication-inner row">
+    <div className="login-wrapper">
+      <div className="login-container">
         {/* Left Section - Illustration */}
-        <div className="d-none d-lg-flex col-lg-7 p-0">
-          <div className="auth-cover-bg auth-cover-bg-color d-flex justify-content-center align-items-center">
-            <Image
-              src="/images/auth-login-illustration-light.png"
-              alt="auth-login-cover"
-              width={500}
-              height={500}
-              className="img-fluid my-5 auth-illustration"
-              priority
-            />
+        <div className="auth-left">
+          <div className="auth-bg">
+            <div className="gradient-bg"></div>
+            <div className="bg-element bg-element-1"></div>
+            <div className="bg-element bg-element-2"></div>
+            <div className="bg-element bg-element-3"></div>
             
-            <Image
-              src="/images/bg-shape-image-light.png"
-              alt="auth-login-cover"
-              fill
-              className="platform-bg"
-            />
+            <div className="auth-content">
+              <div className="auth-header">
+                <div className="auth-icon">
+                  <Building className="icon" />
+                </div>
+                <h1>Tenant System</h1>
+                <p>Platform Manajemen Tenant Terdepan</p>
+              </div>
+              
+              <div className="feature-grid">
+                <div className="feature-card">
+                  <div className="feature-icon">
+                    <Building className="icon" />
+                  </div>
+                  <h3>Multi-Tenant</h3>
+                  <p>Kelola multiple tenant</p>
+                </div>
+                
+                <div className="feature-card">
+                  <div className="feature-icon">
+                    <Shield className="icon" />
+                  </div>
+                  <h3>Secure</h3>
+                  <p>Keamanan data enterprise</p>
+                </div>
+                
+                <div className="feature-card">
+                  <div className="feature-icon">
+                    <Users className="icon" />
+                  </div>
+                  <h3>Scalable</h3>
+                  <p>Tumbuh bersama bisnis</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Right Section - Login Form */}
-        <div className="d-flex col-12 col-lg-5 align-items-center p-sm-5 p-4">
-          <div className="w-px-400 mx-auto">
+        <div className="auth-right">
+          <div className="login-form-container">
             {/* Logo */}
-            <div className="app-brand mb-4">
-              <Link href="/" className="app-brand-link gap-2">
-                <span className="app-brand-logo demo">
-                  <svg width="32" height="22" viewBox="0 0 32 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M0.00172773 0V6.85398C0.00172773 6.85398 -0.133178 9.01207 1.98092 10.8388L13.6912 21.9964L19.7809 21.9181L18.8042 9.88248L16.4951 7.17289L9.23799 0H0.00172773Z"
-                      fill="#7367F0" />
-                    <path
-                      opacity="0.06"
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M7.69824 16.4364L12.5199 3.23696L16.5541 7.25596L7.69824 16.4364Z"
-                      fill="#161616" />
-                    <path
-                      opacity="0.06"
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M8.07751 15.9175L13.9419 4.63989L16.5849 7.28475L8.07751 15.9175Z"
-                      fill="#161616" />
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M7.77295 16.3566L23.6563 0H32V6.88383C32 6.88383 31.8262 9.17836 30.6591 10.4057L19.7824 22H13.6938L7.77295 16.3566Z"
-                      fill="#7367F0" />
-                  </svg>
-                </span>
+            <div className="app-brand">
+              <Link href="/" className="app-brand-link">
+                <div className="app-brand-logo">
+                  <Image
+                    src="/logo.jpeg"
+                    alt="Tenant System Logo"
+                    width={32}
+                    height={32}
+                    className="logo-image"
+                    priority
+                  />
+                </div>
+                <span className="app-brand-text">Tenant System</span>
               </Link>
             </div>
 
             {/* Welcome Text */}
-            <h3 className="mb-1 fw-bold">Welcome to Vuexy! 👋</h3>
-            <p className="mb-4">Please sign-in to your account and start the adventure</p>
+            <div className="welcome-text">
+              <h3>Selamat Datang! 👋</h3>
+              <p>Masuk ke akun Anda untuk mengelola tenant</p>
+            </div>
 
             {/* Login Form */}
-            <form id="formAuthentication" className="mb-3" onSubmit={handleSubmit(onSubmit)}>
+            <form className="login-form" onSubmit={handleSubmit(onSubmit)}>
               {error && (
-                <div className="alert alert-danger mb-3">
+                <div className="error-alert">
+                  <svg className="error-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
                   {error}
                 </div>
               )}
 
-              {/* Input Group Container */}
-              <div className="input-group-container">
-                                 {/* Email Field Group */}
-                 <div className="input-group mb-3">
-                   <span className="input-group-text">
-                     <Mail className="h-4 w-4" />
-                   </span>
-                   <div className="form-floating flex-grow-1">
-                     <input
-                       type="text"
-                       className={`form-control ${errors.email ? 'is-invalid' : ''}`}
-                       id="email"
-                       {...register('email')}
-                       placeholder=""
-                       autoFocus
-                     />
-                     <label htmlFor="email">Email or Username</label>
-                     {errors.email && (
-                       <div className="invalid-feedback">{errors.email.message}</div>
-                     )}
-                   </div>
-                 </div>
-
-                 {/* Password Field Group */}
-                 <div className="input-group mb-3">
-                   <span className="input-group-text">
-                     <Lock className="h-4 w-4" />
-                   </span>
-                   <div className="form-floating flex-grow-1">
-                     <input
-                       type={showPassword ? 'text' : 'password'}
-                       className={`form-control ${errors.password ? 'is-invalid' : ''}`}
-                       id="password"
-                       {...register('password')}
-                       placeholder=""
-                     />
-                     <label htmlFor="password">Password</label>
-                     {errors.password && (
-                       <div className="invalid-feedback">{errors.password.message}</div>
-                     )}
-                   </div>
-                   <span className="input-group-text cursor-pointer" onClick={() => setShowPassword(!showPassword)}>
-                     {showPassword ? (
-                       <EyeOff className="h-4 w-4" />
-                     ) : (
-                       <Eye className="h-4 w-4" />
-                     )}
-                   </span>
-                 </div>
-
-                {/* Forgot Password Link */}
-                <div className="text-end mb-3">
-                  <Link href="/forgot-password" className="text-decoration-none">
-                    <small>Forgot Password?</small>
-                  </Link>
+              {/* Email Field */}
+              <div className="form-group">
+                <label htmlFor="email">Email atau Username</label>
+                <div className="input-group">
+                  <span className="input-icon">
+                    <Mail className="icon" />
+                  </span>
+                  <input
+                    type="text"
+                    className={`form-input ${errors.email ? 'error' : ''}`}
+                    id="email"
+                    {...register('email')}
+                    placeholder="Masukkan email atau username"
+                    autoFocus
+                  />
                 </div>
+                {errors.email && (
+                  <div className="error-text">{errors.email.message}</div>
+                )}
               </div>
 
-              {/* Remember Me */}
-              <div className="mb-3">
-                <div className="form-check">
+              {/* Password Field */}
+              <div className="form-group">
+                <label htmlFor="password">Password</label>
+                <div className="input-group">
+                  <span className="input-icon">
+                    <Lock className="icon" />
+                  </span>
                   <input
-                    className="form-check-input"
+                    type={showPassword ? 'text' : 'password'}
+                    className={`form-input ${errors.password ? 'error' : ''}`}
+                    id="password"
+                    {...register('password')}
+                    placeholder="Masukkan password"
+                  />
+                  <span 
+                    className="password-toggle"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="icon" />
+                    ) : (
+                      <Eye className="icon" />
+                    )}
+                  </span>
+                </div>
+                {errors.password && (
+                  <div className="error-text">{errors.password.message}</div>
+                )}
+              </div>
+
+              {/* Remember Me & Forgot Password */}
+              <div className="form-options">
+                <div className="checkbox-group">
+                  <input
+                    className="checkbox"
                     type="checkbox"
                     id="remember-me"
                   />
-                  <label className="form-check-label" htmlFor="remember-me">
-                    Remember Me
-                  </label>
+                  <label htmlFor="remember-me">Ingat saya</label>
                 </div>
+                <Link href="/forgot-password" className="forgot-link">
+                  Lupa password?
+                </Link>
               </div>
 
               {/* Sign In Button */}
               <button
                 type="submit"
                 disabled={isLoading}
-                className="btn btn-primary d-grid w-100"
+                className="login-button"
               >
                 {isLoading ? (
-                  <div className="d-flex align-items-center justify-content-center">
-                    <Loader2 className="animate-spin me-2 h-4 w-4" />
-                    Signing in...
+                  <div className="button-content">
+                    <Loader2 className="spinner" />
+                    Sedang masuk...
                   </div>
                 ) : (
-                  'Sign in'
+                  'Masuk ke Sistem'
                 )}
               </button>
             </form>
+                
+            {/* Divider */}
+            {/* <div className="divider">
+              <span>atau</span>
+            </div> */}
 
             {/* Create Account Link */}
-            <p className="text-center">
-              <span>New on our platform?</span>
-              <Link href="/register">
-                <span>Create an account</span>
-              </Link>
+            <p className="register-link">
+              <span>Belum punya akun? </span>
+              <Link href="/register">Daftar sekarang</Link>
             </p>
-
-            {/* Divider */}
-            <div className="divider my-4">
-              <div className="divider-text">or</div>
-            </div>
-
-            {/* Social Login */}
-            <div className="d-flex justify-content-center">
-              <a href="javascript:;" className="btn btn-icon btn-label-facebook me-3">
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-              </a>
-
-              <a href="javascript:;" className="btn btn-icon btn-label-google-plus me-3">
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-              </a>
-
-              <a href="javascript:;" className="btn btn-icon btn-label-twitter">
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                </svg>
-              </a>
-            </div>
           </div>
         </div>
       </div>
 
       <style jsx>{`
-        .input-group-container {
-          background: #f8f9fa;
-          border-radius: 0.5rem;
+        .login-wrapper {
+          height: 100vh;
+          width: 100vw;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .login-container {
+          display: flex;
+          width: 100%;
+          height: 100%;
+          max-width: 1000px;
+          max-height: 700px;
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+          overflow: hidden;
+        }
+        
+        .auth-left {
+          flex: 1;
+          position: relative;
+          display: none;
+        }
+        
+        @media (min-width: 1024px) {
+          .auth-left {
+            display: block;
+          }
+        }
+        
+        .auth-bg {
+          position: relative;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+        
+        .gradient-bg {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .bg-element {
+          position: absolute;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.1);
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        .bg-element-1 {
+          top: 8%;
+          left: 8%;
+          width: 60px;
+          height: 60px;
+        }
+        
+        .bg-element-2 {
+          top: 15%;
+          right: 15%;
+          width: 40px;
+          height: 40px;
+          animation-delay: 1s;
+        }
+        
+        .bg-element-3 {
+          bottom: 15%;
+          left: 15%;
+          width: 70px;
+          height: 70px;
+          animation-delay: 2s;
+        }
+        
+        .auth-content {
+          position: relative;
+          z-index: 10;
+          text-align: center;
+          color: white;
           padding: 1.5rem;
+        }
+        
+        .auth-header {
+          margin-bottom: 1.5rem;
+        }
+        
+        .auth-icon {
+          width: 50px;
+          height: 50px;
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 0.75rem;
+        }
+        
+        .auth-header h1 {
+          font-size: 2rem;
+          font-weight: bold;
+          margin-bottom: 0.25rem;
+        }
+        
+        .auth-header p {
+          font-size: 1.25rem;
+          opacity: 0.9;
+        }
+        
+        .feature-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 0.75rem;
+          max-width: 300px;
+          margin: 0 auto;
+        }
+        
+        .feature-card {
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(4px);
+          border-radius: 6px;
+          padding: 0.75rem;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .feature-icon {
+          width: 24px;
+          height: 24px;
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 0.25rem;
+        }
+        
+        .feature-card h3 {
+          font-size: 0.75rem;
+          font-weight: 600;
+          margin-bottom: 0.125rem;
+        }
+        
+        .feature-card p {
+          font-size: 1rem;
+          opacity: 0.8;
+        }
+        
+        .auth-right {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 1.5rem;
+        }
+        
+        .login-form-container {
+          width: 100%;
+          max-width: 400px;
+        }
+        
+        .app-brand {
+          text-align: center;
           margin-bottom: 1rem;
         }
         
+        .app-brand-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 1rem;
+          text-decoration: none;
+          color: inherit;
+        }
+        
+        .app-brand-logo {
+          display: flex;
+          align-items: center;
+        }
+        
+        .logo-image {
+          border-radius: 4px;
+          object-fit: cover;
+        }
+        
+        .app-brand-text {
+          font-size: 1.5rem;
+          font-weight: bold;
+          color: #333;
+        }
+        
+        .welcome-text {
+          text-align: center;
+          margin-bottom: 1.5rem;
+        }
+        
+        .welcome-text h3 {
+          font-size: 1.5rem;
+          font-weight: bold;
+          color: #333;
+          margin-bottom: 0.125rem;
+        }
+        
+        .welcome-text p {
+          font-size: 1rem;
+          color: #666;
+        }
+        
+        .login-form {
+          margin-bottom: 0.75rem;
+        }
+        
+        .error-alert {
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          color: #dc2626;
+          padding: 0.5rem;
+          border-radius: 4px;
+          margin-bottom: 0.75rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.75rem;
+        }
+        
+        .error-icon {
+          width: 0.875rem;
+          height: 0.875rem;
+          flex-shrink: 0;
+        }
+        
+        .form-group {
+          margin-bottom: 0.75rem;
+        }
+        
+        .form-group label {
+          display: block;
+          font-size: 0.75rem;
+          font-weight: 500;
+          color: #374151;
+          margin-bottom: 0.25rem;
+        }
+        
         .input-group {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+        
+        .input-icon {
+          position: absolute;
+          left: 0.5rem;
+          display: flex;
+          align-items: center;
+          color: #6b7280;
+          z-index: 10;
+        }
+        
+        .form-input {
+          width: 100%;
+          padding: 0.5rem 0.5rem 0.5rem 2rem;
+          border: 1px solid #d1d5db;
+          border-radius: 4px;
+          font-size: 0.75rem;
+          background: white;
+          transition: all 0.2s;
+        }
+        
+        .form-input:focus {
+          outline: none;
+          border-color: #667eea;
+          box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-input.error {
+          border-color: #dc2626;
+        }
+        
+        .password-toggle {
+          position: absolute;
+          right: 0.5rem;
+          display: flex;
+          align-items: center;
+          color: #6b7280;
+          cursor: pointer;
+          z-index: 10;
+        }
+        
+        .password-toggle:hover {
+          color: #374151;
+        }
+        
+        .error-text {
+          color: #dc2626;
+          font-size: 0.625rem;
+          margin-top: 0.125rem;
+        }
+        
+        .form-options {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 0.75rem;
+        }
+        
+        .checkbox-group {
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+        }
+        
+        .checkbox {
+          width: 0.875rem;
+          height: 0.875rem;
+          border: 1px solid #d1d5db;
+          border-radius: 2px;
+        }
+        
+        .checkbox-group label {
+          font-size: 0.75rem;
+          color: #374151;
+          margin: 0;
+        }
+        
+        .forgot-link {
+          font-size: 0.75rem;
+          color: #667eea;
+          text-decoration: none;
+        }
+        
+        .forgot-link:hover {
+          color: #5a6fd8;
+        }
+        
+        .login-button {
+          width: 100%;
+          padding: 0.5rem;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
           border: none;
-          background: transparent;
+          border-radius: 4px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
         }
         
-        .input-group-text {
-          background: #e9ecef;
-          border: 1px solid #ced4da;
-          border-right: none;
-          color: #6c757d;
-          padding: 0.75rem 1rem;
-          transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+        .login-button:hover:not(:disabled) {
+          background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+          transform: translateY(-1px);
         }
         
-        .input-group:focus-within .input-group-text {
-          border-color: #7367F0;
-          background-color: #f8f9ff;
+        .login-button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
         }
         
-        .form-floating {
+        .button-content {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+        }
+        
+        .spinner {
+          animation: spin 1s linear infinite;
+        }
+        
+        .divider {
+          text-align: center;
+          margin: 0.75rem 0;
           position: relative;
         }
         
-        .form-floating > .form-control {
-          height: calc(3.5rem + 2px);
-          line-height: 1.25;
-          padding: 1rem 0.75rem;
-          border: 1px solid #ced4da;
-          border-left: none;
-          border-radius: 0 0.375rem 0.375rem 0;
-          transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        }
-        
-        .form-floating > .form-control:focus {
-          border-color: #7367F0;
-          box-shadow: 0 0 0 0.2rem rgba(115, 103, 240, 0.25);
-          outline: none;
-        }
-        
-        .form-floating > label {
+        .divider::before {
+          content: '';
           position: absolute;
-          top: 0;
+          top: 50%;
           left: 0;
-          height: 100%;
-          padding: 1rem 0.75rem;
-          pointer-events: none;
-          border: 1px solid transparent;
-          transform-origin: 0 0;
-          transition: all 0.2s ease-in-out;
-          color: #6c757d;
-          font-size: 1rem;
+          right: 0;
+          height: 1px;
+          background: #e5e7eb;
         }
         
-        .form-floating > .form-control:focus,
-        .form-floating > .form-control:not(:placeholder-shown) {
-          padding-top: 1.625rem;
-          padding-bottom: 0.625rem;
+        .divider span {
+          background: white;
+          padding: 0 0.75rem;
+          color: #6b7280;
+          font-size: 0.75rem;
         }
         
-        .form-floating > .form-control:focus ~ label,
-        .form-floating > .form-control:not(:placeholder-shown) ~ label {
-          opacity: 0.75;
-          transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
-          color: #7367F0;
+        .register-link {
+          text-align: center;
+          font-size: 0.75rem;
+          color: #6b7280;
+          margin: 0;
+        }
+        
+        .register-link a {
+          color: #667eea;
+          text-decoration: none;
           font-weight: 500;
         }
         
-        .input-group:last-child .input-group-text:last-child {
-          border-radius: 0 0.375rem 0.375rem 0;
-          border-left: none;
+        .register-link a:hover {
+          color: #5a6fd8;
         }
         
-        .input-group:last-child .form-floating > .form-control {
-          border-radius: 0;
-          border-left: none;
+        .icon {
+          width: 0.875rem;
+          height: 0.875rem;
         }
         
-        .cursor-pointer {
-          cursor: pointer;
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.5;
+          }
         }
         
-        .cursor-pointer:hover {
-          background-color: #dee2e6;
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+        
+        @media (max-width: 1023px) {
+          .login-container {
+            max-height: none;
+            border-radius: 0;
+            box-shadow: none;
+          }
+          
+          .auth-right {
+            padding: 1rem;
+          }
+          
+          .login-form-container {
+            max-width: 100%;
+          }
         }
       `}</style>
     </div>

@@ -19,7 +19,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="layout-wrapper">
       <Sidebar isCollapsed={isSidebarCollapsed} onToggle={toggleSidebar} />
       <div className={`layout-page ${isSidebarCollapsed ? 'collapsed' : ''}`}>
-        <Header sidebarCollapsed={isSidebarCollapsed} onToggleSidebar={toggleSidebar} />
+        <Header onToggleSidebar={toggleSidebar} />
         <div className="layout-content">
           {children}
         </div>

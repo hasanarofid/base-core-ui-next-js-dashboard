@@ -1,8 +1,9 @@
 'use client'
 
+import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import AuthGuard from '@/components/auth/AuthGuard'
-import { BarChart3, Filter, Download } from 'lucide-react'
+import { Download, BarChart3 } from 'lucide-react'
 
 export default function TransactionMonitoringPage() {
   return (

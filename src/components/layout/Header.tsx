@@ -1,37 +1,23 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { useTheme } from '@/contexts/ThemeContext'
+import React, { useState } from 'react';
+import { Bell, Settings, User, LogOut, Moon, Sun, ChevronDown, Grid3X3, Search } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'next/navigation'
-import { authAPI } from '@/lib/api'
-import { 
-  Search,
-  Settings,
-  Bell,
-  Grid3X3,
-  Sun,
-  Moon,
-  ChevronDown,
-  User,
-  LogOut,
-  Mail,
-  MessageSquare
-} from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface HeaderProps {
-  sidebarCollapsed?: boolean
   onToggleSidebar?: () => void
 }
 
-export default function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProps) {
+export default function Header({ onToggleSidebar }: HeaderProps) {
   const { isDarkMode, toggleDarkMode } = useTheme()
   const router = useRouter()
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
   const [isNotificationsDropdownOpen, setIsNotificationsDropdownOpen] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
-  const userDropdownRef = useRef<HTMLDivElement>(null)
-  const notificationsDropdownRef = useRef<HTMLDivElement>(null)
+  const userDropdownRef = React.useRef<HTMLDivElement>(null)
+  const notificationsDropdownRef = React.useRef<HTMLDivElement>(null)
 
   const notifications = [
     {
@@ -58,7 +44,7 @@ export default function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProp
   ]
 
   // Close dropdowns when clicking outside
-  useEffect(() => {
+  React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
         setIsUserDropdownOpen(false)
@@ -89,10 +75,19 @@ export default function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProp
       setIsLoggingOut(true)
       setIsUserDropdownOpen(false)
       
-      // Call logout API
-      await authAPI.logout()
-      
-      // Clear local storage with correct keys
+      // Call logout API menggunakan fetch dengan cookies
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Logout failed')
+      }
+
+      // Clear local storage
       localStorage.removeItem('token')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('user')
@@ -171,7 +166,7 @@ export default function Header({ sidebarCollapsed, onToggleSidebar }: HeaderProp
                             <div className="avatar avatar-sm">
                               <div className="avatar-initial rounded-circle bg-label-primary">
                                 {notification.type === 'user' && <User className="w-4 h-4" />}
-                                {notification.type === 'payment' && <Mail className="w-4 h-4" />}
+                                {notification.type === 'payment' && <Search className="w-4 h-4" />}
                                 {notification.type === 'system' && <Settings className="w-4 h-4" />}
                               </div>
                             </div>

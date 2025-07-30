@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Edit, Building, User, Mail, Phone, Calendar, CreditCard, Activity, Clock } from 'lucide-react';
+import { ArrowLeft, Building, Mail, Phone, Calendar, CreditCard, Edit, Trash2, Eye, Activity, Clock } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import { Tenant } from '@/types/tenant';
@@ -118,7 +118,8 @@ export default function TenantDetailPage() {
     }
   };
 
-  const getPlanBadgeVariant = (plan: string) => {
+  const getPlanBadgeVariant = (plan: string | undefined) => {
+    if (!plan) return 'default';
     switch (plan) {
       case 'enterprise': return 'primary';
       case 'premium': return 'info';
@@ -137,7 +138,8 @@ export default function TenantDetailPage() {
     }
   };
 
-  const getPlanText = (plan: string) => {
+  const getPlanText = (plan: string | undefined) => {
+    if (!plan) return 'Tidak tersedia';
     switch (plan) {
       case 'enterprise': return 'Enterprise';
       case 'premium': return 'Premium';
@@ -188,9 +190,11 @@ export default function TenantDetailPage() {
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                   {tenant.name}
                 </h2>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
-                  {tenant.company}
-                </p>
+                {tenant.company && (
+                  <p className="text-gray-600 dark:text-gray-400 mt-1">
+                    {tenant.company}
+                  </p>
+                )}
               </div>
               <div className="flex gap-2">
                 <Badge 
@@ -199,12 +203,14 @@ export default function TenantDetailPage() {
                 >
                   {getStatusText(tenant.status)}
                 </Badge>
-                <Badge 
-                  variant={getPlanBadgeVariant(tenant.plan)}
-                  className="text-xs"
-                >
-                  {getPlanText(tenant.plan)}
-                </Badge>
+                {tenant.plan && (
+                  <Badge 
+                    variant={getPlanBadgeVariant(tenant.plan)}
+                    className="text-xs"
+                  >
+                    {getPlanText(tenant.plan)}
+                  </Badge>
+                )}
               </div>
             </div>
 
@@ -217,13 +223,15 @@ export default function TenantDetailPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <Phone className="w-5 h-5 text-gray-400" />
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Telepon</p>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">{tenant.phone}</p>
+              {tenant.phone && (
+                <div className="flex items-center gap-3">
+                  <Phone className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Telepon</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{tenant.phone}</p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="flex items-center gap-3">
                 <Activity className="w-5 h-5 text-gray-400" />
@@ -235,13 +243,15 @@ export default function TenantDetailPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <CreditCard className="w-5 h-5 text-gray-400" />
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Plan</p>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">{getPlanText(tenant.plan)}</p>
+              {tenant.plan && (
+                <div className="flex items-center gap-3">
+                  <CreditCard className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Plan</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">{getPlanText(tenant.plan)}</p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 

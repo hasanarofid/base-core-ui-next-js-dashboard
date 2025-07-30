@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Save, Building, User, Mail, Phone, CreditCard, Calendar } from 'lucide-react';
+import { ArrowLeft, Save, Building, User, Calendar, CreditCard } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import * as z from 'zod';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Textarea from '@/components/ui/Textarea';
 import Select from '@/components/ui/Select';
+import Badge from '@/components/ui/Badge';
 import { Tenant, UpdateTenantData } from '@/types/tenant';
 
 const updateTenantSchema = z.object({

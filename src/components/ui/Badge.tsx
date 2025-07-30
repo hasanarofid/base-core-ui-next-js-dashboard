@@ -14,24 +14,24 @@ export default function Badge({
   className
 }: BadgeProps) {
   const variants = {
-    default: 'bg-gray-100 text-gray-800',
-    primary: 'bg-primary text-white',
-    success: 'bg-green-100 text-green-800',
-    warning: 'bg-yellow-100 text-yellow-800',
-    danger: 'bg-red-100 text-red-800',
-    info: 'bg-blue-100 text-blue-800'
+    default: 'bg-label-secondary text-secondary border-secondary',
+    primary: 'bg-label-primary text-brand-blue-3 border-brand-blue-3',
+    success: 'bg-label-success text-success border-success',
+    warning: 'bg-label-warning text-brand-yellow border-brand-yellow',
+    danger: 'bg-label-danger text-danger border-danger',
+    info: 'bg-label-info text-brand-blue-2 border-brand-blue-2'
   }
 
   const sizes = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-2.5 py-0.5 text-sm',
-    lg: 'px-3 py-1 text-base'
+    sm: 'px-2 py-0.5 text-xs font-semibold',
+    md: 'px-2.5 py-0.5 text-sm font-semibold',
+    lg: 'px-3 py-1 text-base font-semibold'
   }
 
   return (
     <span
       className={cn(
-        'inline-flex items-center font-medium rounded-full',
+        'inline-flex items-center font-medium rounded-full border transition-all duration-300 hover:scale-105',
         variants[variant],
         sizes[size],
         className

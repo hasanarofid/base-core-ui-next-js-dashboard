@@ -1,10 +1,18 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  // Konfigurasi untuk development
-  experimental: {
-    // Enable jika diperlukan
+  images: {
+    domains: ['localhost'],
   },
-};
+  // Add static file serving for template assets
+  async rewrites() {
+    return [
+      {
+        source: '/theme/:path*',
+        destination: '/public/theme/:path*',
+      },
+    ]
+  },
+}
 
-export default nextConfig;
+export default nextConfig

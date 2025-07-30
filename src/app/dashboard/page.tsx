@@ -1,6 +1,7 @@
 'use client'
 
 import DashboardLayout from '@/components/layout/DashboardLayout'
+import CRMStats from '@/components/dashboard/CRMStats'
 import { useTheme } from '@/contexts/ThemeContext'
 import { 
   BarChart3, 
@@ -26,6 +27,8 @@ import {
   Plus,
   MoreVertical
 } from 'lucide-react'
+// Use the safe CSS version that doesn't affect header and sidebar
+import './crm-template-safe.css'
 
 export default function DashboardPage() {
   const { isDarkMode } = useTheme()
@@ -62,9 +65,32 @@ export default function DashboardPage() {
     completedTask: '85%'
   }
 
+  const crmStatsData = {
+    revenue: {
+      value: '$42.5k',
+      change: '+18.2%',
+      isPositive: true
+    },
+    leads: {
+      value: '1.2k',
+      change: '+12.5%',
+      isPositive: true
+    },
+    orders: {
+      value: '6,440',
+      change: '+8.7%',
+      isPositive: true
+    },
+    conversion: {
+      value: '28.5%',
+      change: '+2.1%',
+      isPositive: true
+    }
+  }
+
   return (
     <DashboardLayout>
-      <div className="container-xxl flex-grow-1 container-p-y">
+      <div className="container-xxl flex-grow-1 container-p-y crm-dashboard">
         {/* Page Header */}
         <div className="row">
           <div className="col-12">
@@ -74,7 +100,7 @@ export default function DashboardPage() {
                 <p className="text-muted mb-0">Welcome back! Here's what's happening with your projects today.</p>
               </div>
               <div className="d-flex gap-2">
-                <button className="btn btn-outline">
+                <button className="btn btn-outline-primary">
                   <Download className="w-4 h-4 me-2" />
                   Download
                 </button>
@@ -86,6 +112,9 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* CRM Statistics Cards */}
+        <CRMStats data={crmStatsData} />
 
         <div className="row">
           {/* Website Analytics */}

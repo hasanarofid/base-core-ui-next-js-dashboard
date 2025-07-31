@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Bell, Settings, User, LogOut, Moon, Sun, ChevronDown, Grid3X3, Search } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
@@ -12,6 +13,7 @@ interface HeaderProps {
 
 export default function Header({ onToggleSidebar }: HeaderProps) {
   const { isDarkMode, toggleDarkMode } = useTheme()
+  const { logout } = useAuth()
   const router = useRouter()
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
   const [isNotificationsDropdownOpen, setIsNotificationsDropdownOpen] = useState(false)
@@ -75,28 +77,11 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
       setIsLoggingOut(true)
       setIsUserDropdownOpen(false)
       
-      // Call logout API menggunakan fetch dengan cookies
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error('Logout failed')
-      }
-
-      // Clear local storage
-      localStorage.removeItem('token')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('user')
-      
-      // Redirect to login page
-      router.push('/login')
+      // Gunakan logout dari AuthContext yang sudah menangani API call dan redirect
+      await logout()
     } catch (error) {
       console.error('Logout error:', error)
-      // Even if logout fails, clear local storage and redirect
+      // Fallback: clear local storage dan redirect manual
       localStorage.removeItem('token')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('user')

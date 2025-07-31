@@ -11,7 +11,7 @@ interface AuthContextType {
   isLoading: boolean
   isAuthenticated: boolean
   login: (email: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   checkAuth: () => Promise<void>
 }
 
@@ -103,17 +103,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const logout = () => {
-    localStorage.removeItem(config.auth.tokenKey)
-    localStorage.removeItem(config.auth.refreshTokenKey)
-    localStorage.removeItem(config.auth.userKey)
-    setUser(null)
-    
-    // Call logout API
-    authAPI.logout().catch(console.error)
-    
-    // Redirect ke login
-    router.push('/login')
+  const logout = async () => {
+    try {
+      // Call logout API terlebih dahulu
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+    } catch (error) {
+      console.error('Logout API error:', error)
+    } finally {
+      // Clear local storage dan state
+      localStorage.removeItem(config.auth.tokenKey)
+      localStorage.removeItem(config.auth.refreshTokenKey)
+      localStorage.removeItem(config.auth.userKey)
+      setUser(null)
+      
+      // Redirect ke login
+      router.push('/login')
+    }
   }
 
   useEffect(() => {

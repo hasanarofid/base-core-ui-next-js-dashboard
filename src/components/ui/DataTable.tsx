@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Search, Filter, Edit, Trash2, Eye } from 'lucide-react';
-import Button from './Button';
+import { Button } from './Button';
 import Input from './Input';
 
 export interface Column<T> {
@@ -211,32 +211,32 @@ export function DataTable<T extends { id: string | number }>({
                   ))}
                   {actions && (
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         {onView && (
                           <button
                             onClick={() => onView(row)}
-                            className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 flex items-center justify-center transition-all duration-200 group shadow-sm hover:shadow-md transform hover:scale-105"
+                            className="btn btn-outline-success d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-green-500"
                             title="Lihat Detail"
                           >
-                            <Eye className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+                            <Eye className="w-4 h-4" />
                           </button>
                         )}
                         {onEdit && (
                           <button
                             onClick={() => onEdit(row)}
-                            className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 flex items-center justify-center transition-all duration-200 group shadow-sm hover:shadow-md transform hover:scale-105"
+                            className="btn btn-outline-warning d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-yellow-500"
                             title="Edit Data"
                           >
-                            <Edit className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+                            <Edit className="w-4 h-4" />
                           </button>
                         )}
                         {onDelete && (
                           <button
                             onClick={() => onDelete(row)}
-                            className="w-9 h-9 rounded-lg bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 flex items-center justify-center transition-all duration-200 group shadow-sm hover:shadow-md transform hover:scale-105"
+                            className="btn btn-outline-danger d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-red-500"
                             title="Hapus Data"
                           >
-                            <Trash2 className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         )}
                       </div>
@@ -262,79 +262,16 @@ export function DataTable<T extends { id: string | number }>({
                 size="sm"
                 onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
                 disabled={pagination.currentPage === 1}
-                className="flex items-center gap-1 hover:bg-brand-blue-3 hover:text-white transition-all duration-200"
+                className="flex items-center gap-1 bg-white border-brand-blue-3 text-brand-blue-3 hover:bg-brand-blue-3 hover:text-white transition-all duration-200"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Sebelumnya
               </Button>
               
               <div className="flex items-center gap-1">
-                {/* Previous pages */}
-                {pagination.currentPage > 3 && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => pagination.onPageChange(1)}
-                      className="w-8 h-8 p-0 hover:bg-brand-blue-3 hover:text-white transition-all duration-200"
-                    >
-                      1
-                    </Button>
-                    {pagination.currentPage > 4 && (
-                      <span className="px-2 text-gray-500">...</span>
-                    )}
-                  </>
-                )}
-                
-                {/* Current page range */}
-                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                  let page;
-                  if (pagination.totalPages <= 5) {
-                    page = i + 1;
-                  } else if (pagination.currentPage <= 3) {
-                    page = i + 1;
-                  } else if (pagination.currentPage >= pagination.totalPages - 2) {
-                    page = pagination.totalPages - 4 + i;
-                  } else {
-                    page = pagination.currentPage - 2 + i;
-                  }
-                  
-                  if (page > 0 && page <= pagination.totalPages) {
-                    return (
-                      <Button
-                        key={page}
-                        variant={page === pagination.currentPage ? "primary" : "outline"}
-                        size="sm"
-                        onClick={() => pagination.onPageChange(page)}
-                        className={`w-8 h-8 p-0 transition-all duration-200 ${
-                          page === pagination.currentPage 
-                            ? 'bg-brand-blue-3 text-white shadow-md' 
-                            : 'hover:bg-brand-blue-3 hover:text-white'
-                        }`}
-                      >
-                        {page}
-                      </Button>
-                    );
-                  }
-                  return null;
-                })}
-                
-                {/* Next pages */}
-                {pagination.currentPage < pagination.totalPages - 2 && (
-                  <>
-                    {pagination.currentPage < pagination.totalPages - 3 && (
-                      <span className="px-2 text-gray-500">...</span>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => pagination.onPageChange(pagination.totalPages)}
-                      className="w-8 h-8 p-0 hover:bg-brand-blue-3 hover:text-white transition-all duration-200"
-                    >
-                      {pagination.totalPages}
-                    </Button>
-                  </>
-                )}
+                <span className="text-sm text-gray-600 dark:text-gray-400 px-3">
+                  Halaman {pagination.currentPage} dari {pagination.totalPages}
+                </span>
               </div>
               
               <Button
@@ -342,7 +279,7 @@ export function DataTable<T extends { id: string | number }>({
                 size="sm"
                 onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
                 disabled={pagination.currentPage === pagination.totalPages}
-                className="flex items-center gap-1 hover:bg-brand-blue-3 hover:text-white transition-all duration-200"
+                className="flex items-center gap-1 bg-white border-brand-blue-3 text-brand-blue-3 hover:bg-brand-blue-3 hover:text-white transition-all duration-200"
               >
                 Selanjutnya
                 <ChevronRight className="w-4 h-4" />

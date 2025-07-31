@@ -180,7 +180,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               )
             }
 
-            const isActive = pathname === item.href
+            const isActive = pathname === item.href || (item.href === '/tenant-management' && pathname.startsWith('/tenant-management'))
             const isHovered = hoveredItem === item.id
             const Icon = item.icon
 

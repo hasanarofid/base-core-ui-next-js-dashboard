@@ -1,339 +1,304 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Save, Building, User, Calendar, CreditCard } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Textarea from '@/components/ui/Textarea';
-import Select from '@/components/ui/Select';
-import Badge from '@/components/ui/Badge';
-import { Tenant, UpdateTenantData } from '@/types/tenant';
+import { z } from 'zod';
+import { ArrowLeft, Save, Building } from 'lucide-react';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { useToast } from '@/contexts/ToastContext';
 
-const updateTenantSchema = z.object({
+const editTenantSchema = z.object({
   name: z.string().min(1, 'Nama tenant harus diisi'),
+  logo_url: z.string().url('URL logo harus valid').optional().or(z.literal('')),
+  domain: z.string().url('Domain harus valid').optional().or(z.literal('')),
   email: z.string().email('Email harus valid'),
-  company: z.string().min(1, 'Nama perusahaan harus diisi'),
-  phone: z.string().min(1, 'Nomor telepon harus diisi'),
-  status: z.enum(['pending', 'active', 'suspended', 'inactive']),
-  plan: z.enum(['basic', 'premium', 'enterprise'])
+  contact_person: z.string().min(1, 'Kontak person harus diisi'),
 });
 
-type UpdateTenantFormData = z.infer<typeof updateTenantSchema>;
+type EditTenantForm = z.infer<typeof editTenantSchema>;
 
-const statusOptions = [
-  { value: 'pending', label: 'Menunggu Approval' },
-  { value: 'active', label: 'Aktif' },
-  { value: 'suspended', label: 'Ditangguhkan' },
-  { value: 'inactive', label: 'Tidak Aktif' }
-];
-
-const planOptions = [
-  { value: 'basic', label: 'Basic Plan' },
-  { value: 'premium', label: 'Premium Plan' },
-  { value: 'enterprise', label: 'Enterprise Plan' }
-];
-
-// Mock data untuk demo
-const mockTenants: Tenant[] = [
-  {
-    id: '1',
-    name: 'John Doe',
-    email: 'john.doe@company.com',
-    company: 'Tech Solutions Inc.',
-    phone: '+62 812-3456-7890',
-    status: 'active',
-    plan: 'premium',
-    createdAt: '2024-01-15T10:30:00Z',
-    updatedAt: '2024-01-15T10:30:00Z',
-    lastLogin: '2024-01-20T14:30:00Z',
-    subscriptionEnd: '2024-12-31T23:59:59Z'
-  },
-  {
-    id: '2',
-    name: 'Jane Smith',
-    email: 'jane.smith@startup.co.id',
-    company: 'Startup Indonesia',
-    phone: '+62 821-9876-5432',
-    status: 'pending',
-    plan: 'basic',
-    createdAt: '2024-01-18T09:15:00Z',
-    updatedAt: '2024-01-18T09:15:00Z'
-  },
-  {
-    id: '3',
-    name: 'Ahmad Rahman',
-    email: 'ahmad@enterprise.id',
-    company: 'Enterprise Solutions',
-    phone: '+62 813-4567-8901',
-    status: 'active',
-    plan: 'enterprise',
-    createdAt: '2024-01-10T14:20:00Z',
-    updatedAt: '2024-01-10T14:20:00Z',
-    lastLogin: '2024-01-19T16:45:00Z',
-    subscriptionEnd: '2025-06-30T23:59:59Z'
-  }
-];
+interface Tenant {
+  id: string;
+  name: string;
+  logo_url?: string;
+  domain?: string;
+  email: string;
+  contact_person: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function EditTenantPage() {
   const router = useRouter();
   const params = useParams();
-  const tenantId = params.id as string;
-  
-  const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
   const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [initialLoading, setInitialLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
     setValue,
-    watch,
-    reset
-  } = useForm<UpdateTenantFormData>({
-    resolver: zodResolver(updateTenantSchema)
+    formState: { errors },
+  } = useForm<EditTenantForm>({
+    resolver: zodResolver(editTenantSchema),
   });
+
+  const tenantId = params.id as string;
 
   useEffect(() => {
     const fetchTenant = async () => {
       try {
-        // Simulasi API call
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const foundTenant = mockTenants.find(t => t.id === tenantId);
-        if (foundTenant) {
-          setTenant(foundTenant);
-          reset({
-            name: foundTenant.name,
-            email: foundTenant.email,
-            company: foundTenant.company,
-            phone: foundTenant.phone,
-            status: foundTenant.status,
-            plan: foundTenant.plan
+        const response = await fetch(`/api/tenants/${tenantId}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          showToast({ 
+            type: 'error', 
+            title: 'Error', 
+            message: data.message || 'Gagal mengambil data tenant' 
           });
-        } else {
-          // Tenant not found, redirect to list
           router.push('/tenant-management');
+          return;
         }
+
+        const tenantData = data.data || data;
+        setTenant(tenantData);
+        
+        // Set form values
+        setValue('name', tenantData.name);
+        setValue('logo_url', tenantData.logo_url || '');
+        setValue('domain', tenantData.domain || '');
+        setValue('email', tenantData.email);
+        setValue('contact_person', tenantData.contact_person);
       } catch (error) {
         console.error('Error fetching tenant:', error);
+        showToast({ 
+          type: 'error', 
+          title: 'Error', 
+          message: 'Gagal mengambil data tenant' 
+        });
         router.push('/tenant-management');
       } finally {
-        setInitialLoading(false);
+        setLoading(false);
       }
     };
 
     if (tenantId) {
       fetchTenant();
     }
-  }, [tenantId, router, reset]);
+  }, [tenantId, setValue, showToast, router]);
 
-  const onSubmit = async (data: UpdateTenantFormData) => {
-    setLoading(true);
+  const onSubmit = async (data: EditTenantForm) => {
+    setUpdating(true);
     try {
-      // Simulasi API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      console.log('Updated tenant data:', { id: tenantId, ...data });
-      
-      // Redirect ke halaman list
-      router.push('/tenant-management');
+      const response = await fetch(`/api/tenants/${tenantId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        showToast({ 
+          type: 'error', 
+          title: 'Error', 
+          message: result.message || 'Gagal memperbarui tenant' 
+        });
+        return;
+      }
+
+      showToast({ 
+        type: 'success', 
+        title: 'Berhasil', 
+        message: 'Tenant berhasil diperbarui' 
+      });
+      router.push(`/tenant-management/${tenantId}`);
     } catch (error) {
       console.error('Error updating tenant:', error);
+      showToast({ 
+        type: 'error', 
+        title: 'Error', 
+        message: 'Gagal memperbarui tenant' 
+      });
     } finally {
-      setLoading(false);
+      setUpdating(false);
     }
   };
 
-  if (initialLoading) {
+  if (loading) {
     return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="ml-2 text-gray-500">Memuat data tenant...</span>
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-blue-3 mx-auto mb-4"></div>
+            <p className="text-gray-600">Memuat data tenant...</p>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (!tenant) {
     return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="text-center">
-          <p className="text-gray-500">Tenant tidak ditemukan</p>
-          <Button onClick={() => router.push('/tenant-management')} className="mt-4">
-            Kembali ke Daftar Tenant
-          </Button>
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <p className="text-gray-600">Tenant tidak ditemukan</p>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="outline"
-          onClick={() => router.back()}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Kembali
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <Building className="w-6 h-6 text-primary" />
-            Edit Tenant
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Edit informasi tenant: {tenant.name}
-          </p>
+    <DashboardLayout>
+      <div className="container mx-auto px-4 py-6">
+        {/* Page Header */}
+        <div className="page-header d-flex align-items-center justify-content-between mb-6">
+          <div className="page-title">
+            <div className="page-pretitle">
+              Tenant Management
+            </div>
+            <h2 className="page-title d-flex align-items-center gap-2">
+              <Building className="w-6 h-6 text-brand-blue-3" />
+              Edit Tenant
+            </h2>
+          </div>
+          <div className="page-actions">
+            <button 
+              className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-brand-blue-3"
+              onClick={() => router.push(`/tenant-management/${tenantId}`)}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Kembali</span>
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Form */}
-      <div className="max-w-2xl">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            {/* Basic Information */}
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Informasi Dasar
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <Input
-                    label="Nama Tenant"
-                    placeholder="Masukkan nama tenant"
-                    error={errors.name?.message}
-                    {...register('name')}
-                  />
-                </div>
-                
-                <div className="md:col-span-2">
-                  <Input
-                    label="Nama Perusahaan"
-                    placeholder="Masukkan nama perusahaan"
-                    error={errors.company?.message}
-                    {...register('company')}
-                  />
-                </div>
-
-                <div>
-                  <Input
-                    label="Email"
-                    type="email"
-                    placeholder="tenant@company.com"
-                    error={errors.email?.message}
-                    {...register('email')}
-                  />
-                </div>
-
-                <div>
-                  <Input
-                    label="Nomor Telepon"
-                    placeholder="+62 812-3456-7890"
-                    error={errors.phone?.message}
-                    {...register('phone')}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Subscription Information */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                <CreditCard className="w-5 h-5" />
-                Informasi Langganan
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Select
-                    label="Status"
-                    placeholder="Pilih status"
-                    options={statusOptions}
-                    error={errors.status?.message}
-                    onChange={(value) => setValue('status', value as 'pending' | 'active' | 'suspended' | 'inactive')}
-                    value={watch('status')}
-                  />
-                </div>
-
-                <div>
-                  <Select
-                    label="Plan"
-                    placeholder="Pilih plan"
-                    options={planOptions}
-                    error={errors.plan?.message}
-                    onChange={(value) => setValue('plan', value as 'basic' | 'premium' | 'enterprise')}
-                    value={watch('plan')}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Tenant Info */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-              <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Informasi Sistem
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500 dark:text-gray-400">ID Tenant:</span>
-                  <span className="ml-2 text-gray-900 dark:text-gray-100">{tenant.id}</span>
-                </div>
-                <div>
-                  <span className="text-gray-500 dark:text-gray-400">Dibuat:</span>
-                  <span className="ml-2 text-gray-900 dark:text-gray-100">
-                    {new Date(tenant.createdAt).toLocaleDateString('id-ID')}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-500 dark:text-gray-400">Terakhir Diupdate:</span>
-                  <span className="ml-2 text-gray-900 dark:text-gray-100">
-                    {new Date(tenant.updatedAt).toLocaleDateString('id-ID')}
-                  </span>
-                </div>
-                {tenant.lastLogin && (
-                  <div>
-                    <span className="text-gray-500 dark:text-gray-400">Login Terakhir:</span>
-                    <span className="ml-2 text-gray-900 dark:text-gray-100">
-                      {new Date(tenant.lastLogin).toLocaleDateString('id-ID')}
-                    </span>
+        {/* Form Card */}
+        <Card className="max-w-4xl mx-auto">
+          <div className="card-header">
+            <h4 className="card-title mb-1">Form Edit Tenant</h4>
+            <p className="card-subtitle text-muted mb-0">Perbarui data tenant yang ada</p>
+          </div>
+          <div className="card-body">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div className="row g-4">
+                <div className="col-md-6">
+                  <div className="form-group">
+                    <label className="form-label">
+                      Nama Tenant <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className={`form-control ${errors.name ? 'is-invalid' : ''}`}
+                      placeholder="Masukkan nama tenant"
+                      {...register('name')}
+                    />
+                    {errors.name && (
+                      <div className="invalid-feedback">{errors.name.message}</div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
-          </div>
+                </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.back()}
-            >
-              Batal
-            </Button>
-            <Button
-              type="submit"
-              loading={loading}
-              className="flex items-center gap-2"
-            >
-              <Save className="w-4 h-4" />
-              Update Tenant
-            </Button>
+                <div className="col-md-6">
+                  <div className="form-group">
+                    <label className="form-label">URL Logo</label>
+                    <input
+                      type="url"
+                      className={`form-control ${errors.logo_url ? 'is-invalid' : ''}`}
+                      placeholder="https://example.com/logo.png"
+                      {...register('logo_url')}
+                    />
+                    {errors.logo_url && (
+                      <div className="invalid-feedback">{errors.logo_url.message}</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="col-md-6">
+                  <div className="form-group">
+                    <label className="form-label">Domain</label>
+                    <input
+                      type="url"
+                      className={`form-control ${errors.domain ? 'is-invalid' : ''}`}
+                      placeholder="https://example.com"
+                      {...register('domain')}
+                    />
+                    {errors.domain && (
+                      <div className="invalid-feedback">{errors.domain.message}</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="col-md-6">
+                  <div className="form-group">
+                    <label className="form-label">
+                      Email <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                      placeholder="email@example.com"
+                      {...register('email')}
+                    />
+                    {errors.email && (
+                      <div className="invalid-feedback">{errors.email.message}</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="col-6">
+                  <div className="form-group">
+                    <label className="form-label">
+                      Kontak Person <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className={`form-control ${errors.contact_person ? 'is-invalid' : ''}`}
+                      placeholder="Masukkan nomor kontak"
+                      {...register('contact_person')}
+                    />
+                    {errors.contact_person && (
+                      <div className="invalid-feedback">{errors.contact_person.message}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="d-flex justify-content-end gap-3 pt-4 border-top">
+                <button 
+                  type="button"
+                  className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-brand-blue-3"
+                  onClick={() => router.push(`/tenant-management/${tenantId}`)}
+                  disabled={updating}
+                >
+                  <span>Batal</span>
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 bg-gradient-to-r from-brand-blue-3 to-brand-blue-4 hover:from-brand-blue-4 hover:to-brand-blue-5"
+                  disabled={updating}
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{updating ? 'Memperbarui...' : 'Update Tenant'}</span>
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
+        </Card>
       </div>
-    </div>
+    </DashboardLayout>
   );
 } 

@@ -6,7 +6,7 @@ import { Plus, Package, Save, ArrowLeft } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { CreateProductData } from '@/types/product';
@@ -177,11 +177,11 @@ export default function CreateProductPage() {
             </Button>
             <Button
               type="submit"
-              loading={loading}
-              className="flex items-center gap-2"
+              variant="primary"
+              disabled={loading}
             >
               <Save className="w-4 h-4" />
-              Simpan Produk
+              <span>{loading ? 'Menyimpan...' : 'Simpan Produk'}</span>
             </Button>
           </div>
         </form>

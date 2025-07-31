@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Edit, Package, Calendar, Tag, DollarSign, Box, Activity } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import { Product } from '@/types/product';
 

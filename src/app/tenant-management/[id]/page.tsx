@@ -1,73 +1,57 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Building, Mail, Phone, Calendar, CreditCard, Edit, Trash2, Eye, Activity, Clock } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import Badge from '@/components/ui/Badge';
-import { Tenant } from '@/types/tenant';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { ArrowLeft, Edit, Calendar, Mail, Phone, Globe, User, Building, Download } from 'lucide-react';
+import { useToast } from '@/contexts/ToastContext';
 
-// Mock data untuk demo
-const mockTenants: Tenant[] = [
-  {
-    id: '1',
-    name: 'John Doe',
-    email: 'john.doe@company.com',
-    company: 'Tech Solutions Inc.',
-    phone: '+62 812-3456-7890',
-    status: 'active',
-    plan: 'premium',
-    createdAt: '2024-01-15T10:30:00Z',
-    updatedAt: '2024-01-15T10:30:00Z',
-    lastLogin: '2024-01-20T14:30:00Z',
-    subscriptionEnd: '2024-12-31T23:59:59Z'
-  },
-  {
-    id: '2',
-    name: 'Jane Smith',
-    email: 'jane.smith@startup.co.id',
-    company: 'Startup Indonesia',
-    phone: '+62 821-9876-5432',
-    status: 'pending',
-    plan: 'basic',
-    createdAt: '2024-01-18T09:15:00Z',
-    updatedAt: '2024-01-18T09:15:00Z'
-  },
-  {
-    id: '3',
-    name: 'Ahmad Rahman',
-    email: 'ahmad@enterprise.id',
-    company: 'Enterprise Solutions',
-    phone: '+62 813-4567-8901',
-    status: 'active',
-    plan: 'enterprise',
-    createdAt: '2024-01-10T14:20:00Z',
-    updatedAt: '2024-01-10T14:20:00Z',
-    lastLogin: '2024-01-19T16:45:00Z',
-    subscriptionEnd: '2025-06-30T23:59:59Z'
-  }
-];
+interface Tenant {
+  id: string;
+  name: string;
+  logo_url: string;
+  domain: string;
+  email: string;
+  contact_person: string;
+  status: string;
+  client_id?: string;
+  client_key?: string;
+  lastLogin?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
-export default function TenantDetailPage() {
+export default function TenantViewPage() {
   const router = useRouter();
   const params = useParams();
-  const tenantId = params.id as string;
-  
+  const { showToast } = useToast();
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const tenantId = params.id as string;
 
   useEffect(() => {
     const fetchTenant = async () => {
       try {
-        // Simulasi API call
-        await new Promise(resolve => setTimeout(resolve, 500));
+        setLoading(true);
+        const response = await fetch(`/api/tenants/${tenantId}`);
+        const data = await response.json();
         
-        const foundTenant = mockTenants.find(t => t.id === tenantId);
-        if (foundTenant) {
-          setTenant(foundTenant);
+        if (!response.ok) {
+          throw new Error(data.message || 'Gagal mengambil data tenant');
         }
+        
+        setTenant(data.data || data); // Handle both response formats
       } catch (error) {
-        console.error('Error fetching tenant:', error);
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError('Terjadi kesalahan yang tidak diketahui');
+        }
       } finally {
         setLoading(false);
       }
@@ -78,299 +62,265 @@ export default function TenantDetailPage() {
     }
   }, [tenantId]);
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="ml-2 text-gray-500">Memuat data tenant...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (!tenant) {
-    return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="text-center">
-          <Building className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-            Tenant Tidak Ditemukan
-          </h2>
-          <p className="text-gray-500 mb-4">
-            Tenant yang Anda cari tidak ditemukan atau telah dihapus.
-          </p>
-          <Button onClick={() => router.push('/tenant-management')}>
-            Kembali ke Daftar Tenant
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'active': return 'success';
-      case 'pending': return 'warning';
-      case 'suspended': return 'danger';
-      case 'inactive': return 'default';
-      default: return 'default';
-    }
-  };
-
-  const getPlanBadgeVariant = (plan: string | undefined) => {
-    if (!plan) return 'default';
-    switch (plan) {
-      case 'enterprise': return 'primary';
-      case 'premium': return 'info';
-      case 'basic': return 'default';
-      default: return 'default';
+      case 'active':
+        return 'success';
+      case 'pending':
+        return 'warning';
+      case 'suspended':
+        return 'danger';
+      default:
+        return 'default';
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'active': return 'Aktif';
-      case 'pending': return 'Menunggu';
-      case 'suspended': return 'Ditangguhkan';
-      case 'inactive': return 'Tidak Aktif';
-      default: return status;
+      case 'active':
+        return 'Aktif';
+      case 'pending':
+        return 'Menunggu';
+      case 'suspended':
+        return 'Ditangguhkan';
+      default:
+        return 'Tidak Aktif';
     }
   };
 
-  const getPlanText = (plan: string | undefined) => {
-    if (!plan) return 'Tidak tersedia';
-    switch (plan) {
-      case 'enterprise': return 'Enterprise';
-      case 'premium': return 'Premium';
-      case 'basic': return 'Basic';
-      default: return plan;
-    }
-  };
-
-  return (
-    <div className="container mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            onClick={() => router.back()}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Kembali
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-              <Building className="w-6 h-6 text-primary" />
-              Detail Tenant
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Informasi lengkap tenant
-            </p>
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="container-xxl flex-grow-1 container-p-y">
+          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
           </div>
         </div>
-        <Button
-          onClick={() => router.push(`/tenant-management/${tenant.id}/edit`)}
-          className="flex items-center gap-2"
-        >
-          <Edit className="w-4 h-4" />
-          Edit Tenant
-        </Button>
-      </div>
+      </DashboardLayout>
+    );
+  }
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Tenant Information */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  {tenant.name}
+  if (error || !tenant) {
+    return (
+      <DashboardLayout>
+        <div className="container-xxl flex-grow-1 container-p-y">
+          <div className="alert alert-danger" role="alert">
+            <h4 className="alert-heading">Error!</h4>
+            <p>{error || 'Tenant tidak ditemukan'}</p>
+            <Button 
+              variant="outline" 
+              onClick={() => router.push('/tenant-management')}
+              className="mt-3"
+            >
+              Kembali ke Daftar Tenant
+            </Button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout>
+      <div className="container-xxl flex-grow-1 container-p-y">
+        {/* Header */}
+        <div className="page-header d-print-none">
+          <div className="container-xl">
+            <div className="row g-2 align-items-center">
+              <div className="col">
+                <div className="page-pretitle">
+                  Tenant Management
+                </div>
+                <h2 className="page-title d-flex align-items-center gap-2">
+                  <Building className="w-5 h-5" />
+                  Detail Tenant
                 </h2>
-                {tenant.company && (
-                  <p className="text-gray-600 dark:text-gray-400 mt-1">
-                    {tenant.company}
-                  </p>
-                )}
               </div>
-              <div className="flex gap-2">
+              <div className="col-auto ms-auto d-print-none">
+                <div className="d-flex gap-2">
+                  <button className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-brand-blue-3">
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Kembali</span>
+                  </button>
+                  <button 
+                    className="btn btn-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 bg-gradient-to-r from-brand-blue-3 to-brand-blue-4 hover:from-brand-blue-4 hover:to-brand-blue-5"
+                    onClick={() => router.push(`/tenant-management/${tenantId}/edit`)}
+                  >
+                    <Edit className="w-4 h-4" />
+                    <span>Edit Tenant</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tenant Information */}
+        <div className="row g-5">
+          <div className="col-lg-7">
+            <Card className="mb-4">
+              <div className="card-header d-flex align-items-center justify-content-between">
+                <div>
+                  <h4 className="card-title mb-1">Informasi Tenant</h4>
+                  <p className="card-subtitle text-muted mb-0">Data lengkap tenant dalam sistem</p>
+                </div>
                 <Badge 
                   variant={getStatusBadgeVariant(tenant.status)}
-                  className="text-xs"
+                  className="text-sm px-4 py-2 font-semibold rounded-full shadow-sm border-0"
                 >
                   {getStatusText(tenant.status)}
                 </Badge>
-                {tenant.plan && (
-                  <Badge 
-                    variant={getPlanBadgeVariant(tenant.plan)}
-                    className="text-xs"
-                  >
-                    {getPlanText(tenant.plan)}
-                  </Badge>
-                )}
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-gray-400" />
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">{tenant.email}</p>
-                </div>
-              </div>
-
-              {tenant.phone && (
-                <div className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Telepon</p>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">{tenant.phone}</p>
+              <div className="card-body">
+                <div className="row g-4">
+                  <div className="col-md-6">
+                    <div className="d-flex align-items-center gap-5 p-4 bg-light rounded-lg">
+                      <div className="w-14 h-14 rounded-lg bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0">
+                        <User className="w-7 h-7 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-muted mb-2 fw-medium">Nama Tenant</p>
+                        <h6 className="mb-0 text-truncate fw-bold">{tenant.name}</h6>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="d-flex align-items-center gap-5 p-4 bg-light rounded-lg">
+                      <div className="w-14 h-14 rounded-lg bg-success bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0">
+                        <Globe className="w-7 h-7 text-success" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-muted mb-2 fw-medium">Domain</p>
+                        <h6 className="mb-0 text-truncate fw-bold">{tenant.domain}</h6>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="d-flex align-items-center gap-5 p-4 bg-light rounded-lg">
+                      <div className="w-14 h-14 rounded-lg bg-info bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0">
+                        <Mail className="w-7 h-7 text-info" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-muted mb-2 fw-medium">Email</p>
+                        <h6 className="mb-0 text-truncate fw-bold">{tenant.email}</h6>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="d-flex align-items-center gap-5 p-4 bg-light rounded-lg">
+                      <div className="w-14 h-14 rounded-lg bg-warning bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0">
+                        <Phone className="w-7 h-7 text-warning" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-muted mb-2 fw-medium">Kontak Person</p>
+                        <h6 className="mb-0 text-truncate fw-bold">{tenant.contact_person}</h6>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              )}
-
-              <div className="flex items-center gap-3">
-                <Activity className="w-5 h-5 text-gray-400" />
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Status</p>
-                  <p className={`font-medium ${tenant.status === 'active' ? 'text-green-600' : tenant.status === 'pending' ? 'text-yellow-600' : 'text-red-600'}`}>
-                    {getStatusText(tenant.status)}
-                  </p>
-                </div>
               </div>
+            </Card>
 
-              {tenant.plan && (
-                <div className="flex items-center gap-3">
-                  <CreditCard className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Plan</p>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">{getPlanText(tenant.plan)}</p>
+            {/* Client Information */}
+            <Card>
+              <div className="card-header">
+                <h4 className="card-title mb-1">Informasi Client</h4>
+                <p className="card-subtitle text-muted mb-0">Kredensial untuk integrasi API</p>
+              </div>
+              <div className="card-body">
+                <div className="row g-4">
+                  <div className="col-md-6">
+                    <div className="p-4 bg-light rounded-lg">
+                      <p className="text-muted mb-3 fw-medium">Client ID</p>
+                      <code className="bg-white p-3 rounded d-block text-break fw-bold fs-6 border">{tenant.client_id || 'Tidak tersedia'}</code>
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="p-4 bg-light rounded-lg">
+                      <p className="text-muted mb-3 fw-medium">Client Key</p>
+                      <code className="bg-white p-3 rounded d-block text-break fw-bold fs-6 border">
+                        {tenant.client_key ? `${tenant.client_key.substring(0, 8)}...` : 'Tidak tersedia'}
+                      </code>
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            </Card>
           </div>
 
-          {/* Activity Information */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Informasi Aktivitas
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-gray-400" />
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Tanggal Daftar</p>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">
-                    {new Date(tenant.createdAt).toLocaleDateString('id-ID', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
-                </div>
+          <div className="col-lg-5">
+            {/* Activity Information */}
+            <Card className="mb-4">
+              <div className="card-header">
+                <h4 className="card-title mb-1">Aktivitas</h4>
+                <p className="card-subtitle text-muted mb-0">Riwayat aktivitas tenant</p>
               </div>
-
-              <div className="flex items-center gap-3">
-                <Clock className="w-5 h-5 text-gray-400" />
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Terakhir Diupdate</p>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">
-                    {new Date(tenant.updatedAt).toLocaleDateString('id-ID', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
+              <div className="card-body">
+                <div className="d-flex align-items-center gap-5 p-4 bg-light rounded-lg mb-4">
+                  <div className="w-14 h-14 rounded-lg bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0">
+                    <Calendar className="w-7 h-7 text-secondary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-muted mb-2 fw-medium">Login Terakhir</p>
+                    <h6 className="mb-0 fw-bold">
+                      {tenant.lastLogin 
+                        ? new Date(tenant.lastLogin).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })
+                        : 'Belum pernah login'
+                      }
+                    </h6>
+                  </div>
                 </div>
-              </div>
-
-              {tenant.lastLogin && (
-                <div className="flex items-center gap-3">
-                  <Activity className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Login Terakhir</p>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">
-                      {new Date(tenant.lastLogin).toLocaleDateString('id-ID', {
-                        year: 'numeric',
-                        month: 'long',
+                <div className="d-flex align-items-center gap-5 p-4 bg-light rounded-lg">
+                  <div className="w-14 h-14 rounded-lg bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0">
+                    <Calendar className="w-7 h-7 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-muted mb-2 fw-medium">Tanggal Pendaftaran</p>
+                    <h6 className="mb-0 fw-bold">
+                      {new Date(tenant.createdAt).toLocaleDateString('id-ID', {
                         day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
                         hour: '2-digit',
                         minute: '2-digit'
                       })}
-                    </p>
+                    </h6>
                   </div>
                 </div>
-              )}
-
-              {tenant.subscriptionEnd && (
-                <div className="flex items-center gap-3">
-                  <CreditCard className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Berakhir Langganan</p>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">
-                      {new Date(tenant.subscriptionEnd).toLocaleDateString('id-ID', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Tenant ID Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Informasi Sistem
-            </h3>
-            <div className="space-y-3">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">ID Tenant</p>
-                <p className="font-mono text-sm bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded mt-1">
-                  {tenant.id}
-                </p>
               </div>
-            </div>
-          </div>
+            </Card>
 
-          {/* Quick Actions */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Aksi Cepat
-            </h3>
-            <div className="space-y-3">
-              <Button
-                onClick={() => router.push(`/tenant-management/${tenant.id}/edit`)}
-                className="w-full justify-center"
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit Tenant
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => router.push('/tenant-management')}
-                className="w-full justify-center"
-              >
-                Kembali ke Daftar
-              </Button>
-            </div>
+            {/* Logo Preview */}
+            {tenant.logo_url && (
+              <Card>
+                <div className="card-header">
+                  <h4 className="card-title mb-1">Logo Tenant</h4>
+                  <p className="card-subtitle text-muted mb-0">Preview logo tenant</p>
+                </div>
+                <div className="card-body text-center p-4">
+                  <img 
+                    src={tenant.logo_url} 
+                    alt={`Logo ${tenant.name}`}
+                    className="img-fluid rounded shadow-sm"
+                    style={{ maxHeight: '250px', maxWidth: '100%' }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+              </Card>
+            )}
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 } 

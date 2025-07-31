@@ -1,14 +1,17 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import AuthGuard from '@/components/auth/AuthGuard'
-import { Building, Plus, Mail, Phone, Calendar, Search, Filter, Download, FileText } from 'lucide-react'
+import { Building, Plus, Search, Filter, Download, ChevronLeft, ChevronRight, Eye, Edit, Trash2 } from 'lucide-react'
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { Tenant } from '@/types/tenant';
 import Badge from '@/components/ui/Badge';
 import { getTenants } from '@/lib/api';
+import { environment } from '@/config/environment';
+import axios from 'axios';
+import Swal from 'sweetalert2';
 
 export default function TenantManagementPage() {
   const router = useRouter();
@@ -61,9 +64,42 @@ export default function TenantManagementPage() {
     router.push(`/tenant-management/${tenant.id}/edit`);
   };
 
-  const handleDelete = (tenant: Tenant) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus tenant "${tenant.name}"?`)) {
-      setTenants(tenants.filter(t => t.id !== tenant.id));
+    const handleDelete = async (tenant: Tenant) => {
+    const result = await Swal.fire({
+      title: `Apakah Anda yakin ingin menghapus tenant "${tenant.name}"?`,
+      text: "Data yang dihapus tidak dapat dikembalikan!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc3545",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Ya, hapus!",
+      cancelButtonText: "Batal",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`/api/tenants/${tenant.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.message || 'Gagal menghapus tenant');
+        }
+
+        setTenants(tenants.filter(t => t.id !== tenant.id));
+        Swal.fire("Berhasil!", "Tenant berhasil dihapus.", "success");
+      } catch (error) {
+        if (error instanceof Error) {
+          Swal.fire("Error!", error.message, "error");
+        } else {
+          Swal.fire("Error!", "Terjadi kesalahan yang tidak diketahui", "error");
+        }
+      }
     }
   };
 
@@ -99,20 +135,12 @@ export default function TenantManagementPage() {
       header: 'INFORMASI TENANT',
       sortable: true,
       render: (value, row) => (
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-brand-blue-3 to-brand-blue-4 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-              {row.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-            </div>
-            <div className="flex-1">
-              <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
-                {row.name}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
-                <Building className="w-3 h-3" />
-                {row.domain || 'Domain tidak tersedia'}
-              </div>
-            </div>
+        <div className="space-y-1">
+          <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
+            {row.name}
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {row.domain || 'Domain tidak tersedia'}
           </div>
         </div>
       )
@@ -122,25 +150,15 @@ export default function TenantManagementPage() {
       header: 'INFORMASI KONTAK',
       sortable: true,
       render: (value, row) => (
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-brand-blue-1 to-brand-blue-3 rounded-full flex items-center justify-center">
-              <Mail className="w-4 h-4 text-white" />
-            </div>
-            <div className="flex-1">
-              <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">{row.email}</span>
-              <div className="text-xs text-gray-400 mt-1">Email Utama</div>
-            </div>
+        <div className="space-y-2">
+          <div>
+            <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">{row.email}</span>
+            <div className="text-xs text-gray-400">Email Utama</div>
           </div>
           {row.contact_person && (
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center">
-                <Phone className="w-4 h-4 text-white" />
-              </div>
-              <div className="flex-1">
-                <span className="text-sm text-gray-700 dark:text-gray-300">{row.contact_person}</span>
-                <div className="text-xs text-gray-400 mt-1">Kontak Person</div>
-              </div>
+            <div>
+              <span className="text-sm text-gray-700 dark:text-gray-300">{row.contact_person}</span>
+              <div className="text-xs text-gray-400">Kontak Person</div>
             </div>
           )}
         </div>
@@ -151,27 +169,13 @@ export default function TenantManagementPage() {
       header: 'STATUS AKUN',
       sortable: true,
       render: (value) => (
-        <div className="flex flex-col items-start gap-2">
+        <div className="flex flex-col items-start">
           <Badge 
             variant={getStatusBadgeVariant(value)}
-            className="text-xs px-3 py-1.5 font-semibold"
+            className="text-xs px-4 py-2 font-semibold rounded-full shadow-sm border-0"
           >
             {getStatusText(value)}
           </Badge>
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${
-              value === 'active' ? 'bg-green-500' :
-              value === 'pending' ? 'bg-yellow-500' :
-              value === 'suspended' ? 'bg-red-500' :
-              'bg-gray-400'
-            }`}></div>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {value === 'active' ? 'Akun aktif dan dapat digunakan' :
-               value === 'pending' ? 'Menunggu verifikasi admin' :
-               value === 'suspended' ? 'Akun ditangguhkan sementara' :
-               'Akun tidak aktif'}
-            </span>
-          </div>
         </div>
       )
     },
@@ -197,25 +201,20 @@ export default function TenantManagementPage() {
       header: 'AKTIVITAS TERAKHIR',
       sortable: true,
       render: (value) => (
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center">
-            <Calendar className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
-              {value ? new Date(String(value)).toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric'
-              }) : 'Belum pernah login'}
-            </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {value ? new Date(String(value)).toLocaleTimeString('id-ID', {
-                hour: '2-digit',
-                minute: '2-digit'
-              }) : 'Akun baru'}
-            </span>
-          </div>
+        <div className="flex flex-col">
+          <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+            {value ? new Date(String(value)).toLocaleDateString('id-ID', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric'
+            }) : 'Belum pernah login'}
+          </span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {value ? new Date(String(value)).toLocaleTimeString('id-ID', {
+              hour: '2-digit',
+              minute: '2-digit'
+            }) : 'Akun baru'}
+          </span>
         </div>
       )
     },
@@ -224,25 +223,20 @@ export default function TenantManagementPage() {
       header: 'TANGGAL PENDAFTARAN',
       sortable: true,
       render: (value) => (
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-brand-blue-1 to-brand-blue-3 rounded-full flex items-center justify-center">
-            <FileText className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
-              {new Date(String(value)).toLocaleDateString('id-ID', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-              })}
-            </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {new Date(String(value)).toLocaleTimeString('id-ID', {
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </span>
-          </div>
+        <div className="flex flex-col">
+          <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+            {new Date(String(value)).toLocaleDateString('id-ID', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            })}
+          </span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {new Date(String(value)).toLocaleTimeString('id-ID', {
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </span>
         </div>
       )
     }
@@ -285,12 +279,12 @@ export default function TenantManagementPage() {
                   <p className="text-muted mb-0">Kelola dan monitor semua tenant dalam sistem Anda</p>
                 </div>
                 <div className="d-flex gap-2">
-                  <button className="btn btn-outline-primary d-flex align-items-center gap-2">
+                  <button className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-brand-blue-3">
                     <Download className="w-4 h-4" />
                     <span>Ekspor Data</span>
                   </button>
                   <button 
-                    className="btn btn-primary d-flex align-items-center gap-2"
+                    className="btn btn-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 bg-gradient-to-r from-brand-blue-3 to-brand-blue-4 hover:from-brand-blue-4 hover:to-brand-blue-5"
                     onClick={() => router.push('/tenant-management/create')}
                   >
                     <Plus className="w-4 h-4" />
@@ -313,22 +307,22 @@ export default function TenantManagementPage() {
                         {loading ? 'Memuat data...' : `${tenants.length} tenant ditemukan`}
                       </p>
                     </div>
-                    <div className="d-flex gap-2">
-                      <div className="position-relative">
-                        <Search className="position-absolute start-0 top-50 translate-middle-y ms-3 w-4 h-4 text-muted" />
+                    <div className="d-flex align-items-center gap-6">
+                      <div className="flex-1" style={{ minWidth: '300px' }}>
                         <input
                           type="text"
-                          className="form-control ps-5"
                           placeholder="Cari berdasarkan nama, email, atau domain..."
+                          className="form-control"
                           value={searchTerm}
-                          onChange={(e) => handleSearch(e.target.value)}
-                          style={{ minWidth: '300px' }}
+                          onChange={(e) => setSearchTerm(e.target.value)}
                         />
                       </div>
-                      <button className="btn btn-outline-primary d-flex align-items-center gap-2">
-                        <Filter className="w-4 h-4" />
-                        <span>Filter Lanjutan</span>
-                      </button>
+                      <div className="flex-shrink-0">
+                        <button className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-brand-blue-3">
+                          <Filter className="w-4 h-4" />
+                          <span>Filter Lanjutan</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

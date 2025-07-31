@@ -6,7 +6,7 @@ import { Package, Plus } from 'lucide-react'
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { Product } from '@/types/product';
 import Badge from '@/components/ui/Badge';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui/Button';
 
 // Mock data untuk demo
 const mockProducts: Product[] = [

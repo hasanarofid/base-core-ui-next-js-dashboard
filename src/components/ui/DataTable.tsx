@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Search, Filter, Edit, Trash2, Eye } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, Filter, Edit, Trash2, Eye, CheckCircle, Settings } from 'lucide-react';
 import { Button } from './Button';
 import Input from './Input';
 
@@ -31,6 +31,11 @@ export interface DataTableProps<T> {
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
   onView?: (item: T) => void;
+  onApprove?: (item: T) => void;
+  onStatusChange?: (item: T) => void;
+  showApproveButton?: (item: T) => boolean;
+  showStatusButton?: (item: T) => boolean;
+  showDeleteButton?: (item: T) => boolean;
   actions?: boolean;
   className?: string;
 }
@@ -43,10 +48,14 @@ export function DataTable<T extends { id: string | number }>({
   filterable = true,
   pagination,
   onSearch,
-
   onEdit,
   onDelete,
   onView,
+  onApprove,
+  onStatusChange,
+  showApproveButton,
+  showStatusButton,
+  showDeleteButton,
   actions = true,
   className = ''
 }: DataTableProps<T>) {
@@ -166,7 +175,7 @@ export function DataTable<T extends { id: string | number }>({
                 </th>
               ))}
               {actions && (
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-32 border-b border-gray-200 dark:border-gray-600">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-48 border-b border-gray-200 dark:border-gray-600">
                   AKSI
                 </th>
               )}
@@ -215,28 +224,46 @@ export function DataTable<T extends { id: string | number }>({
                         {onView && (
                           <button
                             onClick={() => onView(row)}
-                            className="btn btn-outline-success d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-green-500"
+                            className="btn btn-outline-success d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-green-500 bg-white hover:bg-green-50"
                             title="Lihat Detail"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-4 h-4 text-green-600" />
                           </button>
                         )}
                         {onEdit && (
                           <button
                             onClick={() => onEdit(row)}
-                            className="btn btn-outline-warning d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-yellow-500"
+                            className="btn btn-outline-warning d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-yellow-500 bg-white hover:bg-yellow-50"
                             title="Edit Data"
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit className="w-4 h-4 text-yellow-600" />
                           </button>
                         )}
-                        {onDelete && (
+                        {onApprove && (!showApproveButton || showApproveButton(row)) && (
+                          <button
+                            onClick={() => onApprove(row)}
+                            className="btn btn-outline-primary d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-blue-500 bg-white hover:bg-blue-50"
+                            title="Approve Tenant"
+                          >
+                            <CheckCircle className="w-4 h-4 text-blue-600" />
+                          </button>
+                        )}
+                        {onStatusChange && (!showStatusButton || showStatusButton(row)) && (
+                          <button
+                            onClick={() => onStatusChange(row)}
+                            className="btn btn-outline-purple d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5"
+                            title="Ubah Status"
+                          >
+                            <Settings className="w-4 h-4" />
+                          </button>
+                        )}
+                        {onDelete && (!showDeleteButton || showDeleteButton(row)) && (
                           <button
                             onClick={() => onDelete(row)}
-                            className="btn btn-outline-danger d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-red-500"
+                            className="btn btn-outline-danger d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-red-500 bg-white hover:bg-red-50"
                             title="Hapus Data"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4 text-red-600" />
                           </button>
                         )}
                       </div>

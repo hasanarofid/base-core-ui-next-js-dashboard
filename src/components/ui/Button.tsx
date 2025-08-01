@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'outline' | 'secondary' | 'danger' | 'success' | 'warning';
+  variant?: 'primary' | 'outline' | 'secondary' | 'danger' | 'success' | 'warning' | 'info' | 'purple';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
 }
@@ -17,7 +17,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       secondary: 'px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300',
       danger: 'px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 bg-red-500 hover:bg-red-600 text-white border-0',
       success: 'px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 bg-green-500 hover:bg-green-600 text-white border-0',
-      warning: 'px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 bg-yellow-500 hover:bg-yellow-600 text-white border-0'
+      warning: 'px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 bg-yellow-500 hover:bg-yellow-600 text-white border-0',
+      info: 'px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 bg-blue-500 hover:bg-blue-600 text-white border-0',
+      purple: 'px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 bg-purple-500 hover:bg-purple-600 text-white border-0'
     };
 
     const sizeClasses = {

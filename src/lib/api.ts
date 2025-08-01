@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { config } from '@/config'
 import { debugApiRequest, debugApiResponse, debugError } from '@/utils/debug'
-import { UserResponse, TenantListResponse } from '@/types/tenant'
+import { UserResponse, TenantListResponse, Tenant, CreateTenantData } from '@/types/tenant'
 
 // Membuat instance axios dengan konfigurasi default
 export const api = axios.create({
@@ -145,4 +145,68 @@ export async function getTenants(): Promise<TenantListResponse> {
     console.error('Error fetching tenants:', error)
     throw error
   }
+} 
+
+// Fungsi utility untuk API calls dengan cookies
+export async function apiWithCookies(endpoint: string, options: RequestInit = {}) {
+  const defaultOptions: RequestInit = {
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    credentials: 'include', // Penting: untuk mengirim cookies
+    ...options,
+  }
+
+  const response = await fetch(`/api${endpoint}`, defaultOptions)
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: 'Terjadi kesalahan' }))
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+  }
+
+  return response.json()
+}
+
+// Fungsi untuk mengambil data tenant dengan cookies
+export async function getTenantsWithCookies(): Promise<TenantListResponse> {
+  return apiWithCookies('/tenants')
+}
+
+// Fungsi untuk membuat tenant baru dengan cookies
+export async function createTenantWithCookies(tenantData: CreateTenantData): Promise<{ message: string; data: Tenant }> {
+  return apiWithCookies('/tenants', {
+    method: 'POST',
+    body: JSON.stringify(tenantData),
+  })
+}
+
+// Fungsi untuk update tenant dengan cookies
+export async function updateTenantWithCookies(id: string, tenantData: Partial<CreateTenantData>): Promise<{ message: string; data: Tenant }> {
+  return apiWithCookies(`/tenants/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(tenantData),
+  })
+}
+
+// Fungsi untuk delete tenant dengan cookies
+export async function deleteTenantWithCookies(id: string): Promise<{ message: string }> {
+  return apiWithCookies(`/tenants/${id}`, {
+    method: 'DELETE',
+  })
+} 
+
+// Fungsi untuk approve tenant dengan cookies
+export async function approveTenantWithCookies(id: string): Promise<{ message: string; data: Tenant }> {
+  return apiWithCookies(`/tenants/${id}/approve`, {
+    method: 'POST',
+  })
+}
+
+// Fungsi untuk update status tenant dengan cookies
+export async function updateTenantStatusWithCookies(id: string, status: string): Promise<{ message: string; data: Tenant }> {
+  return apiWithCookies(`/tenants/${id}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ status }),
+  })
 } 

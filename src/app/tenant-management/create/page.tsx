@@ -6,12 +6,12 @@ import { ArrowLeft, Save, Building } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import axios from 'axios';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { environment } from '@/config/environment';
 import { useToast } from '@/contexts/ToastContext';
+import { createTenantWithCookies } from '@/lib/api';
 
 const createTenantSchema = z.object({
   name: z.string().min(1, 'Nama tenant harus diisi'),
@@ -57,19 +57,9 @@ export default function CreateTenantPage() {
 
       console.log('Sending tenant data:', payload);
 
-      const response = await axios.post(
-        `${environment.externalApiUrl}/tenants/register`,
-        payload,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          timeout: 10000,
-        }
-      );
-
-      console.log('Tenant created successfully:', response.data);
+      // Gunakan API route internal yang akan menangani cookies
+      const result = await createTenantWithCookies(payload);
+      console.log('Tenant created successfully:', result);
       
       showToast({
         type: 'success',
@@ -84,30 +74,13 @@ export default function CreateTenantPage() {
       console.error('Error creating tenant:', error);
       
       // Handle error response
-      if (axios.isAxiosError(error)) {
-        if (error.response) {
-          const errorMessage = error.response.data?.message || 'Terjadi kesalahan saat membuat tenant';
-          showToast({
-            type: 'error',
-            title: 'Error!',
-            message: errorMessage,
-            duration: 5000
-          });
-        } else if (error.request) {
-          showToast({
-            type: 'error',
-            title: 'Error!',
-            message: 'Tidak dapat terhubung ke server. Silakan coba lagi.',
-            duration: 5000
-          });
-        } else {
-          showToast({
-            type: 'error',
-            title: 'Error!',
-            message: 'Terjadi kesalahan yang tidak diketahui.',
-            duration: 5000
-          });
-        }
+      if (error instanceof Error) {
+        showToast({
+          type: 'error',
+          title: 'Error!',
+          message: error.message,
+          duration: 5000
+        });
       } else {
         showToast({
           type: 'error',

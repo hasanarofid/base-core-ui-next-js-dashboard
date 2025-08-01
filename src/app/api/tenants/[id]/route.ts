@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Ambil cookies dari request
@@ -17,7 +17,7 @@ export async function GET(
     }
 
     const externalApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3030/api/v1'
-    const tenantId = params.id
+    const { id: tenantId } = await params
     
     console.log('Fetching tenant data from:', `${externalApiUrl}/tenants/${tenantId}`)
     console.log('Using session cookie:', sessionCookie.name)
@@ -55,7 +55,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Ambil cookies dari request
@@ -70,7 +70,7 @@ export async function PUT(
     }
 
     const externalApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3030/api/v1'
-    const tenantId = params.id
+    const { id: tenantId } = await params
     const body = await request.json()
     
     console.log('Updating tenant data from:', `${externalApiUrl}/tenants/${tenantId}`)
@@ -111,7 +111,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Ambil cookies dari request
@@ -126,7 +126,7 @@ export async function DELETE(
     }
 
     const externalApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3030/api/v1'
-    const tenantId = params.id
+    const { id: tenantId } = await params
     
     console.log('Deleting tenant from:', `${externalApiUrl}/tenants/${tenantId}`)
     console.log('Using session cookie:', sessionCookie.name)

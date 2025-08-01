@@ -8,7 +8,7 @@ import { Building, Plus, Search, Filter, Download, ChevronLeft, ChevronRight, Ey
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { Tenant } from '@/types/tenant';
 import Badge from '@/components/ui/Badge';
-import { getTenants } from '@/lib/api';
+import { getTenants, approveTenantWithCookies, updateTenantStatusWithCookies } from '@/lib/api';
 import { environment } from '@/config/environment';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -65,6 +65,17 @@ export default function TenantManagementPage() {
   };
 
     const handleDelete = async (tenant: Tenant) => {
+    // Validasi: tidak bisa hapus jika status aktif
+    if (tenant.status === 'active') {
+      Swal.fire({
+        title: "Tidak dapat menghapus!",
+        text: "Tenant dengan status aktif tidak dapat dihapus. Ubah status terlebih dahulu.",
+        icon: "warning",
+        confirmButtonColor: "#3085d6",
+      });
+      return;
+    }
+
     const result = await Swal.fire({
       title: `Apakah Anda yakin ingin menghapus tenant "${tenant.name}"?`,
       text: "Data yang dihapus tidak dapat dikembalikan!",
@@ -83,6 +94,7 @@ export default function TenantManagementPage() {
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
         });
 
         const data = await response.json();
@@ -101,6 +113,120 @@ export default function TenantManagementPage() {
         }
       }
     }
+  };
+
+  const handleApprove = async (tenant: Tenant) => {
+    // Validasi: hanya bisa approve jika status pending
+    if (tenant.status !== 'pending') {
+      Swal.fire({
+        title: "Tidak dapat approve!",
+        text: "Hanya tenant dengan status pending yang dapat diapprove.",
+        icon: "warning",
+        confirmButtonColor: "#3085d6",
+      });
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: `Apakah Anda yakin ingin approve tenant "${tenant.name}"?`,
+      text: "Tenant akan diaktifkan dan dapat mengakses sistem.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#28a745",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Ya, approve!",
+      cancelButtonText: "Batal",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const result = await approveTenantWithCookies(tenant.id);
+        
+        // Update tenant status di state
+        setTenants(tenants.map(t => 
+          t.id === tenant.id 
+            ? { ...t, status: 'active' as const }
+            : t
+        ));
+        
+        Swal.fire("Berhasil!", "Tenant berhasil diapprove.", "success");
+      } catch (error) {
+        if (error instanceof Error) {
+          Swal.fire("Error!", error.message, "error");
+        } else {
+          Swal.fire("Error!", "Terjadi kesalahan yang tidak diketahui", "error");
+        }
+      }
+    }
+  };
+
+  const handleStatusChange = async (tenant: Tenant) => {
+    // Validasi: tidak bisa ubah status jika sudah aktif
+    if (tenant.status === 'active') {
+      Swal.fire({
+        title: "Tidak dapat mengubah status!",
+        text: "Tenant dengan status aktif tidak dapat diubah statusnya.",
+        icon: "warning",
+        confirmButtonColor: "#3085d6",
+      });
+      return;
+    }
+
+    const { value: newStatus } = await Swal.fire({
+      title: `Ubah Status Tenant "${tenant.name}"`,
+      text: "Pilih status baru untuk tenant ini:",
+      input: 'select',
+      inputOptions: {
+        'pending': 'Pending',
+        'suspended': 'Suspended',
+        'inactive': 'Inactive'
+      },
+      inputValue: tenant.status,
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Ubah Status",
+      cancelButtonText: "Batal",
+      inputValidator: (value) => {
+        if (!value) {
+          return 'Anda harus memilih status!'
+        }
+      }
+    });
+
+    if (newStatus) {
+      try {
+        const result = await updateTenantStatusWithCookies(tenant.id, newStatus);
+        
+        // Update tenant status di state
+        setTenants(tenants.map(t => 
+          t.id === tenant.id 
+            ? { ...t, status: newStatus as 'pending' | 'suspended' | 'inactive' }
+            : t
+        ));
+        
+        Swal.fire("Berhasil!", `Status tenant berhasil diubah menjadi ${newStatus}.`, "success");
+      } catch (error) {
+        if (error instanceof Error) {
+          Swal.fire("Error!", error.message, "error");
+        } else {
+          Swal.fire("Error!", "Terjadi kesalahan yang tidak diketahui", "error");
+        }
+      }
+    }
+  };
+
+  // Conditional rendering functions untuk action buttons
+  const showApproveButton = (tenant: Tenant) => {
+    return tenant.status === 'pending';
+  };
+
+  const showStatusButton = (tenant: Tenant) => {
+    return tenant.status !== 'active';
+  };
+
+  const showDeleteButton = (tenant: Tenant) => {
+    return tenant.status !== 'active';
   };
 
   const handleView = (tenant: Tenant) => {
@@ -336,6 +462,11 @@ export default function TenantManagementPage() {
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onView={handleView}
+                    onApprove={handleApprove}
+                    onStatusChange={handleStatusChange}
+                    showApproveButton={showApproveButton}
+                    showStatusButton={showStatusButton}
+                    showDeleteButton={showDeleteButton}
                     pagination={{
                       currentPage,
                       totalPages,

@@ -13,6 +13,27 @@ import { environment } from '@/config/environment';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
+/**
+ * Tenant Management Page
+ * 
+ * Fitur yang tersedia:
+ * 1. Update Status Tenant - Mengubah status tenant (pending, suspended, active)
+ * 2. Approve Status Tenant - Mengubah status dari pending ke active
+ * 3. Validasi Status - Hanya status yang diizinkan: pending, suspended, active
+ * 4. Splash Success Messages - Notifikasi sukses dengan timer dan progress bar
+ * 5. Error Messages - Notifikasi error dengan timer dan progress bar
+ * 6. Loading States - Indikator loading saat proses berlangsung
+ * 
+ * API Methods:
+ * - PATCH /api/tenants/[id]/status - Update status tenant
+ * - PATCH /api/tenants/[id]/approve - Approve tenant
+ * 
+ * Status yang diizinkan:
+ * - pending: Tenant menunggu approval
+ * - suspended: Tenant ditangguhkan
+ * - active: Tenant aktif dan dapat mengakses sistem
+ */
+
 export default function TenantManagementPage() {
   const router = useRouter();
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -89,6 +110,16 @@ export default function TenantManagementPage() {
 
     if (result.isConfirmed) {
       try {
+        // Tampilkan loading
+        Swal.fire({
+          title: 'Memproses...',
+          text: 'Sedang menghapus tenant',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+
         const response = await fetch(`/api/tenants/${tenant.id}`, {
           method: 'DELETE',
           headers: {
@@ -104,12 +135,37 @@ export default function TenantManagementPage() {
         }
 
         setTenants(tenants.filter(t => t.id !== tenant.id));
-        Swal.fire("Berhasil!", "Tenant berhasil dihapus.", "success");
+        
+        // Tampilkan splash success
+        Swal.fire({
+          title: "Berhasil!",
+          text: `Tenant "${tenant.name}" berhasil dihapus.`,
+          icon: "success",
+          confirmButtonColor: "#28a745",
+          timer: 3000,
+          timerProgressBar: true,
+          showConfirmButton: false
+        });
       } catch (error) {
+        // Tampilkan splash error
         if (error instanceof Error) {
-          Swal.fire("Error!", error.message, "error");
+          Swal.fire({
+            title: "Error!",
+            text: error.message,
+            icon: "error",
+            confirmButtonColor: "#dc3545",
+            timer: 5000,
+            timerProgressBar: true
+          });
         } else {
-          Swal.fire("Error!", "Terjadi kesalahan yang tidak diketahui", "error");
+          Swal.fire({
+            title: "Error!",
+            text: "Terjadi kesalahan yang tidak diketahui",
+            icon: "error",
+            confirmButtonColor: "#dc3545",
+            timer: 5000,
+            timerProgressBar: true
+          });
         }
       }
     }
@@ -140,6 +196,16 @@ export default function TenantManagementPage() {
 
     if (result.isConfirmed) {
       try {
+        // Tampilkan loading
+        Swal.fire({
+          title: 'Memproses...',
+          text: 'Sedang approve tenant',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+
         const result = await approveTenantWithCookies(tenant.id);
         
         // Update tenant status di state
@@ -149,12 +215,36 @@ export default function TenantManagementPage() {
             : t
         ));
         
-        Swal.fire("Berhasil!", "Tenant berhasil diapprove.", "success");
+        // Tampilkan splash success
+        Swal.fire({
+          title: "Berhasil!",
+          text: `Tenant "${tenant.name}" berhasil diapprove dan diaktifkan.`,
+          icon: "success",
+          confirmButtonColor: "#28a745",
+          timer: 3000,
+          timerProgressBar: true,
+          showConfirmButton: false
+        });
       } catch (error) {
+        // Tampilkan splash error
         if (error instanceof Error) {
-          Swal.fire("Error!", error.message, "error");
+          Swal.fire({
+            title: "Error!",
+            text: error.message,
+            icon: "error",
+            confirmButtonColor: "#dc3545",
+            timer: 5000,
+            timerProgressBar: true
+          });
         } else {
-          Swal.fire("Error!", "Terjadi kesalahan yang tidak diketahui", "error");
+          Swal.fire({
+            title: "Error!",
+            text: "Terjadi kesalahan yang tidak diketahui",
+            icon: "error",
+            confirmButtonColor: "#dc3545",
+            timer: 5000,
+            timerProgressBar: true
+          });
         }
       }
     }
@@ -179,7 +269,7 @@ export default function TenantManagementPage() {
       inputOptions: {
         'pending': 'Pending',
         'suspended': 'Suspended',
-        'inactive': 'Inactive'
+        'active': 'Active'
       },
       inputValue: tenant.status,
       showCancelButton: true,
@@ -191,26 +281,64 @@ export default function TenantManagementPage() {
         if (!value) {
           return 'Anda harus memilih status!'
         }
+        // Validasi status yang diizinkan
+        if (!['pending', 'suspended', 'active'].includes(value)) {
+          return 'Status yang dipilih tidak valid!'
+        }
       }
     });
 
     if (newStatus) {
       try {
+        // Tampilkan loading
+        Swal.fire({
+          title: 'Memproses...',
+          text: 'Sedang mengubah status tenant',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+
         const result = await updateTenantStatusWithCookies(tenant.id, newStatus);
         
         // Update tenant status di state
         setTenants(tenants.map(t => 
           t.id === tenant.id 
-            ? { ...t, status: newStatus as 'pending' | 'suspended' | 'inactive' }
+            ? { ...t, status: newStatus as 'pending' | 'suspended' | 'active' }
             : t
         ));
         
-        Swal.fire("Berhasil!", `Status tenant berhasil diubah menjadi ${newStatus}.`, "success");
+        // Tampilkan splash success
+        Swal.fire({
+          title: "Berhasil!",
+          text: `Status tenant "${tenant.name}" berhasil diubah menjadi ${getStatusText(newStatus)}.`,
+          icon: "success",
+          confirmButtonColor: "#28a745",
+          timer: 3000,
+          timerProgressBar: true,
+          showConfirmButton: false
+        });
       } catch (error) {
+        // Tampilkan splash error
         if (error instanceof Error) {
-          Swal.fire("Error!", error.message, "error");
+          Swal.fire({
+            title: "Error!",
+            text: error.message,
+            icon: "error",
+            confirmButtonColor: "#dc3545",
+            timer: 5000,
+            timerProgressBar: true
+          });
         } else {
-          Swal.fire("Error!", "Terjadi kesalahan yang tidak diketahui", "error");
+          Swal.fire({
+            title: "Error!",
+            text: "Terjadi kesalahan yang tidak diketahui",
+            icon: "error",
+            confirmButtonColor: "#dc3545",
+            timer: 5000,
+            timerProgressBar: true
+          });
         }
       }
     }
@@ -222,7 +350,9 @@ export default function TenantManagementPage() {
   };
 
   const showStatusButton = (tenant: Tenant) => {
-    return tenant.status !== 'active';
+    // Hanya tampilkan tombol status jika status bukan active
+    // dan status yang ada adalah salah satu dari yang diizinkan
+    return tenant.status !== 'active' && ['pending', 'suspended', 'active'].includes(tenant.status);
   };
 
   const showDeleteButton = (tenant: Tenant) => {
@@ -239,7 +369,6 @@ export default function TenantManagementPage() {
       case 'active': return 'success';
       case 'pending': return 'warning';
       case 'suspended': return 'danger';
-      case 'inactive': return 'default';
       default: return 'default';
     }
   };
@@ -250,7 +379,6 @@ export default function TenantManagementPage() {
       case 'active': return 'Aktif';
       case 'pending': return 'Menunggu';
       case 'suspended': return 'Ditangguhkan';
-      case 'inactive': return 'Tidak Aktif';
       default: return statusStr;
     }
   };

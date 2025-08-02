@@ -6,7 +6,7 @@ export interface Tenant {
   email: string;
   contact_person?: string;
   config_json?: Record<string, unknown>;
-  status: 'pending' | 'active' | 'suspended' | 'inactive';
+  status: 'pending' | 'active' | 'suspended';
   client_id?: string;
   client_key?: string;
   createdAt: string;
@@ -26,7 +26,7 @@ export interface CreateTenantData {
   domain?: string;
   contact_person?: string;
   config_json?: Record<string, unknown>;
-  status?: 'pending' | 'active' | 'suspended' | 'inactive';
+  status?: 'pending' | 'active' | 'suspended';
 }
 
 export interface UpdateTenantData extends Partial<CreateTenantData> {
@@ -35,7 +35,7 @@ export interface UpdateTenantData extends Partial<CreateTenantData> {
 
 export interface TenantFilters {
   search?: string;
-  status?: 'pending' | 'active' | 'suspended' | 'inactive';
+  status?: 'pending' | 'active' | 'suspended';
   plan?: 'basic' | 'premium' | 'enterprise';
 }
 

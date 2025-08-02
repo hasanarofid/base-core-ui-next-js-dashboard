@@ -201,7 +201,7 @@ export default function TenantManagementPage() {
         // Update tenant status di state
         setTenants(tenants.map(t => 
           t.id === tenant.id 
-            ? { ...t, status: newStatus as 'pending' | 'suspended' | 'inactive' }
+            ? { ...t, status: newStatus as 'suspended' | 'pending' | 'active' }
             : t
         ));
         

@@ -6,7 +6,7 @@ export interface Tenant {
   email: string;
   contact_person?: string;
   config_json?: Record<string, unknown>;
-  status: 'pending' | 'active' | 'suspended' | 'inactive';
+  status: 'suspended' | 'pending' | 'active';
   client_id?: string;
   client_key?: string;
   createdAt: string;

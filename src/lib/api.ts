@@ -159,14 +159,23 @@ export async function apiWithCookies(endpoint: string, options: RequestInit = {}
     ...options,
   }
 
+  console.log(`Making API call to: /api${endpoint}`)
+  console.log('Request options:', defaultOptions)
+
   const response = await fetch(`/api${endpoint}`, defaultOptions)
+  
+  console.log('Response status:', response.status)
+  console.log('Response headers:', Object.fromEntries(response.headers.entries()))
   
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ message: 'Terjadi kesalahan' }))
+    console.error('API Error:', errorData)
     throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
   }
 
-  return response.json()
+  const data = await response.json()
+  console.log('API Response data:', data)
+  return data
 }
 
 // Fungsi untuk mengambil data tenant dengan cookies
@@ -200,14 +209,14 @@ export async function deleteTenantWithCookies(id: string): Promise<{ message: st
 // Fungsi untuk approve tenant dengan cookies
 export async function approveTenantWithCookies(id: string): Promise<{ message: string; data: Tenant }> {
   return apiWithCookies(`/tenants/${id}/approve`, {
-    method: 'POST',
+    method: 'PATCH',
   })
 }
 
 // Fungsi untuk update status tenant dengan cookies
 export async function updateTenantStatusWithCookies(id: string, status: string): Promise<{ message: string; data: Tenant }> {
   return apiWithCookies(`/tenants/${id}/status`, {
-    method: 'PUT',
+    method: 'PATCH',
     body: JSON.stringify({ status }),
   })
 } 

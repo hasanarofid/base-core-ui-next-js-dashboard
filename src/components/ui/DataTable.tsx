@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Search, Filter, Edit, Trash2, Eye, CheckCircle, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, Filter, Edit, Trash2, Eye, CheckCircle, Settings, Mail, Key } from 'lucide-react';
 import { Button } from './Button';
 import Input from './Input';
 
@@ -33,9 +33,15 @@ export interface DataTableProps<T> {
   onView?: (item: T) => void;
   onApprove?: (item: T) => void;
   onStatusChange?: (item: T) => void;
+  onVerifyEmail?: (item: T) => void;
+  onVerifyUser?: (item: T) => void;
+  onResetPassword?: (item: T) => void;
   showApproveButton?: (item: T) => boolean;
   showStatusButton?: (item: T) => boolean;
   showDeleteButton?: (item: T) => boolean;
+  showVerifyEmailButton?: (item: T) => boolean;
+  showVerifyUserButton?: (item: T) => boolean;
+  showResetPasswordButton?: (item: T) => boolean;
   actions?: boolean;
   className?: string;
 }
@@ -53,9 +59,15 @@ export function DataTable<T extends { id: string | number }>({
   onView,
   onApprove,
   onStatusChange,
+  onVerifyEmail,
+  onVerifyUser,
+  onResetPassword,
   showApproveButton,
   showStatusButton,
   showDeleteButton,
+  showVerifyEmailButton,
+  showVerifyUserButton,
+  showResetPasswordButton,
   actions = true,
   className = ''
 }: DataTableProps<T>) {
@@ -264,6 +276,33 @@ export function DataTable<T extends { id: string | number }>({
                             title="Hapus Data"
                           >
                             <Trash2 className="w-4 h-4 text-red-600" />
+                          </button>
+                        )}
+                        {onVerifyEmail && (!showVerifyEmailButton || showVerifyEmailButton(row)) && (
+                          <button
+                            onClick={() => onVerifyEmail(row)}
+                            className="btn btn-outline-info d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-blue-500 bg-white hover:bg-blue-50"
+                            title="Verifikasi Email"
+                          >
+                            <Mail className="w-4 h-4 text-blue-600" />
+                          </button>
+                        )}
+                        {onVerifyUser && (!showVerifyUserButton || showVerifyUserButton(row)) && (
+                          <button
+                            onClick={() => onVerifyUser(row)}
+                            className="btn btn-outline-success d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-green-500 bg-white hover:bg-green-50"
+                            title="Verifikasi User"
+                          >
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                          </button>
+                        )}
+                        {onResetPassword && (!showResetPasswordButton || showResetPasswordButton(row)) && (
+                          <button
+                            onClick={() => onResetPassword(row)}
+                            className="btn btn-outline-warning d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-yellow-500 bg-white hover:bg-yellow-50"
+                            title="Reset Password"
+                          >
+                            <Key className="w-4 h-4 text-yellow-600" />
                           </button>
                         )}
                       </div>

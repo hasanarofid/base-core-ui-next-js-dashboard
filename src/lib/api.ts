@@ -2,6 +2,7 @@ import axios from 'axios'
 import { config } from '@/config'
 import { debugApiRequest, debugApiResponse, debugError } from '@/utils/debug'
 import { UserResponse, TenantListResponse, Tenant, CreateTenantData } from '@/types/tenant'
+import { UserListResponse, User, CreateUserData, VerifyEmailData, VerifyUserData, ResetPasswordData } from '@/types/user'
 
 // Membuat instance axios dengan konfigurasi default
 export const api = axios.create({
@@ -217,5 +218,51 @@ export async function updateTenantStatusWithCookies(id: string, status: string):
   return apiWithCookies(`/tenants/${id}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ status }),
+  })
+}
+
+// ===== USER MANAGEMENT API FUNCTIONS =====
+
+// Fungsi untuk mengambil data users dengan cookies
+export async function getUsersWithCookies(): Promise<UserListResponse> {
+  return apiWithCookies('/user')
+}
+
+// Fungsi untuk membuat user baru dengan cookies
+export async function createUserWithCookies(userData: CreateUserData): Promise<{ message: string; data: User }> {
+  return apiWithCookies('/register', {
+    method: 'POST',
+    body: JSON.stringify(userData),
+  })
+}
+
+// Fungsi untuk update user dengan cookies
+export async function updateUserWithCookies(id: string, userData: Partial<CreateUserData>): Promise<{ message: string; data: User }> {
+  return apiWithCookies('/user', {
+    method: 'PATCH',
+    body: JSON.stringify({ id, ...userData }),
+  })
+}
+
+// Fungsi untuk verifikasi email dengan cookies
+export async function verifyEmailWithCookies(emailData: VerifyEmailData): Promise<{ message: string }> {
+  return apiWithCookies('/verify-email', {
+    method: 'POST',
+    body: JSON.stringify(emailData),
+  })
+}
+
+// Fungsi untuk verifikasi user dengan cookies
+export async function verifyUserWithCookies(id: string): Promise<{ message: string; data: User }> {
+  return apiWithCookies(`/verify-user/${id}`, {
+    method: 'POST',
+  })
+}
+
+// Fungsi untuk reset password user dengan cookies
+export async function resetPasswordWithCookies(id: string, newPassword?: string): Promise<{ message: string }> {
+  return apiWithCookies(`/reset-password/${id}`, {
+    method: 'POST',
+    body: JSON.stringify({ new_password: newPassword }),
   })
 } 

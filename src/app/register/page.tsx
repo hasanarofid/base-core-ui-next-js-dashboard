@@ -1,86 +1,124 @@
-'use client'
+'use client';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
-import { Lock, Mail, Eye, EyeOff, Loader2, Building, Shield, Users } from 'lucide-react';
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { useAuth } from '@/contexts/AuthContext'
-import { useToast } from '@/contexts/ToastContext'
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Building, Shield, Users, Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import Swal from 'sweetalert2';
+import AuthGuard from '@/components/auth/AuthGuard';
 
-const loginSchema = z.object({
-  email: z.string().email('Email tidak valid'),
+const registerSchema = z.object({
+  fullName: z.string().min(1, 'Nama lengkap harus diisi'),
+  email: z.string().email('Email harus valid'),
   password: z.string().min(6, 'Password minimal 6 karakter'),
-})
+  confirmPassword: z.string().min(1, 'Konfirmasi password harus diisi')
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Password tidak cocok",
+  path: ["confirmPassword"],
+});
 
-type LoginFormData = z.infer<typeof loginSchema>
+type RegisterForm = z.infer<typeof registerSchema>;
 
-export default function LoginForm() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const router = useRouter()
-  const { login } = useAuth()
-  const { showToast } = useToast()
+export default function RegisterPage() {
+  return (
+    <AuthGuard requireAuth={false} redirectTo="/dashboard">
+      <RegisterForm />
+    </AuthGuard>
+  );
+}
+
+function RegisterForm() {
+  const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-  })
-
-  const onSubmit = async (data: LoginFormData) => {
-    setIsLoading(true)
-    setError('')
-
-    try {
-      await login(data.email, data.password)
-      showToast({
-        type: 'success',
-        title: 'Login Berhasil',
-        message: 'Selamat datang kembali!'
-      })
-      router.push('/dashboard')
-    } catch (error: unknown) {
-      console.error('Login error:', error)
-      
-      let errorMessage = 'Terjadi kesalahan saat login'
-      
-      if (error instanceof Error) {
-        errorMessage = error.message
-      } else if (error && typeof error === 'object' && 'response' in error) {
-        const apiError = error as { 
-          response?: { 
-            data?: { message?: string },
-            status?: number 
-          } 
-        }
-        if (apiError.response?.data?.message) {
-          errorMessage = apiError.response.data.message
-        } else if (apiError.response?.status === 401) {
-          errorMessage = 'Email atau password salah'
-        } else if (apiError.response?.status === 500) {
-          errorMessage = 'Server error, silakan coba lagi nanti'
-        } else if (apiError.response?.status === 0) {
-          errorMessage = 'Tidak dapat terhubung ke server'
-        }
-      }
-      
-      setError(errorMessage)
-      showToast({
-        type: 'error',
-        title: 'Login Gagal',
-        message: errorMessage
-      })
-    } finally {
-      setIsLoading(false)
+    reset
+  } = useForm<RegisterForm>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      fullName: '',
+      email: '',
+      password: '',
+      confirmPassword: ''
     }
-  }
+  });
+
+  const onSubmit = async (data: RegisterForm) => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName: data.fullName,
+          email: data.email,
+          password: data.password
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Terjadi kesalahan saat registrasi');
+      }
+
+      // Tampilkan splash success
+      Swal.fire({
+        title: "Registrasi Berhasil!",
+        text: "Silakan cek email Anda untuk verifikasi",
+        icon: "success",
+        confirmButtonColor: "#28a745",
+        timer: 3000,
+        timerProgressBar: true,
+        showConfirmButton: false
+      });
+
+      // Reset form
+      reset();
+      
+      // Redirect ke login setelah 3 detik
+      setTimeout(() => {
+        router.push('/login');
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error registering:', error);
+      
+      // Tampilkan splash error
+      if (error instanceof Error) {
+        Swal.fire({
+          title: "Error!",
+          text: error.message,
+          icon: "error",
+          confirmButtonColor: "#dc3545",
+          timer: 5000,
+          timerProgressBar: true
+        });
+      } else {
+        Swal.fire({
+          title: "Error!",
+          text: "Terjadi kesalahan yang tidak diketahui",
+          icon: "error",
+          confirmButtonColor: "#dc3545",
+          timer: 5000,
+          timerProgressBar: true
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="login-wrapper">
@@ -131,7 +169,7 @@ export default function LoginForm() {
           </div>
         </div>
 
-        {/* Right Section - Login Form */}
+        {/* Right Section - Register Form */}
         <div className="auth-right">
           <div className="login-form-container">
             {/* Logo */}
@@ -153,35 +191,46 @@ export default function LoginForm() {
 
             {/* Welcome Text */}
             <div className="welcome-text">
-              <h3>Selamat Datang! 👋</h3>
-              <p>Masuk ke akun Anda untuk mengelola tenant</p>
+              <h3>Selamat Datang di Tenant Core! 👋</h3>
+              <p>Silakan daftar untuk membuat akun baru</p>
             </div>
 
-            {/* Login Form */}
+            {/* Register Form */}
             <form className="login-form" onSubmit={handleSubmit(onSubmit)}>
-              {error && (
-                <div className="error-alert">
-                  <svg className="error-icon" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  {error}
+              {/* Full Name Field */}
+              <div className="form-group">
+                <label htmlFor="fullName">Nama Lengkap</label>
+                <div className="input-group">
+                  <span className="input-icon">
+                    <User className="icon" />
+                  </span>
+                  <input
+                    type="text"
+                    className={`form-input ${errors.fullName ? 'error' : ''}`}
+                    id="fullName"
+                    {...register('fullName')}
+                    placeholder="Masukkan nama lengkap"
+                    autoFocus
+                  />
                 </div>
-              )}
+                {errors.fullName && (
+                  <div className="error-text">{errors.fullName.message}</div>
+                )}
+              </div>
 
               {/* Email Field */}
               <div className="form-group">
-                <label htmlFor="email">Email atau Username</label>
+                <label htmlFor="email">Email</label>
                 <div className="input-group">
                   <span className="input-icon">
                     <Mail className="icon" />
                   </span>
                   <input
-                    type="text"
+                    type="email"
                     className={`form-input ${errors.email ? 'error' : ''}`}
                     id="email"
                     {...register('email')}
-                    placeholder="Masukkan email atau username"
-                    autoFocus
+                    placeholder="john@example.com"
                   />
                 </div>
                 {errors.email && (
@@ -219,34 +268,52 @@ export default function LoginForm() {
                 )}
               </div>
 
-              {/* Remember Me & Forgot Password */}
-              <div className="form-options">
-                <div className="checkbox-group">
+              {/* Confirm Password Field */}
+              <div className="form-group">
+                <label htmlFor="confirmPassword">Konfirmasi Password</label>
+                <div className="input-group">
+                  <span className="input-icon">
+                    <Lock className="icon" />
+                  </span>
                   <input
-                    className="checkbox"
-                    type="checkbox"
-                    id="remember-me"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    className={`form-input ${errors.confirmPassword ? 'error' : ''}`}
+                    id="confirmPassword"
+                    {...register('confirmPassword')}
+                    placeholder="Konfirmasi password"
                   />
-                  <label htmlFor="remember-me">Ingat saya</label>
+                  <span 
+                    className="password-toggle"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="icon" />
+                    ) : (
+                      <Eye className="icon" />
+                    )}
+                  </span>
                 </div>
-                <Link href="/forgot-password" className="forgot-link">
-                  Lupa password?
-                </Link>
+                {errors.confirmPassword && (
+                  <div className="error-text">{errors.confirmPassword.message}</div>
+                )}
               </div>
 
-              {/* Sign In Button */}
+              {/* Submit Button */}
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={loading}
                 className="login-button"
               >
-                {isLoading ? (
+                {loading ? (
                   <div className="button-content">
                     <Loader2 className="spinner" />
-                    Sedang masuk...
+                    Mendaftar...
                   </div>
                 ) : (
-                  'Masuk ke Sistem'
+                  <div className="button-content">
+                    Daftar
+                    <ArrowRight className="icon" />
+                  </div>
                 )}
               </button>
             </form>
@@ -256,10 +323,10 @@ export default function LoginForm() {
               <span>atau</span>
             </div> */}
 
-            {/* Create Account Link */}
+            {/* Login Link */}
             <p className="register-link">
-              <span>Belum punya akun? </span>
-              <Link href="/register">Daftar sekarang</Link>
+              <span>Sudah punya akun? </span>
+              <Link href="/login">Masuk di sini</Link>
             </p>
           </div>
         </div>
@@ -354,7 +421,16 @@ export default function LoginForm() {
           max-width: 400px;
         }
         
-        .auth-header {
+        .auth-header h1 {
+          font-size: 2.5rem;
+          font-weight: 700;
+          margin-bottom: 0.5rem;
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .auth-header p {
+          font-size: 1.1rem;
+          opacity: 0.9;
           margin-bottom: 2rem;
         }
         
@@ -370,17 +446,10 @@ export default function LoginForm() {
           backdrop-filter: blur(10px);
         }
         
-        .auth-header h1 {
-          font-size: 2.5rem;
-          font-weight: 700;
-          margin-bottom: 0.5rem;
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .auth-header p {
-          font-size: 1.1rem;
-          opacity: 0.9;
-          margin-bottom: 2rem;
+        .auth-icon .icon {
+          width: 2.5rem;
+          height: 2.5rem;
+          color: white;
         }
         
         .feature-grid {
@@ -434,6 +503,7 @@ export default function LoginForm() {
           align-items: center;
           justify-content: center;
           padding: 2rem;
+          background: white;
           overflow-y: auto;
           max-height: 100vh;
           scroll-behavior: smooth;
@@ -492,12 +562,6 @@ export default function LoginForm() {
           object-fit: cover;
         }
         
-        .app-brand-text {
-          font-size: 1.25rem;
-          font-weight: 600;
-          color: #374151;
-        }
-        
         .welcome-text {
           text-align: center;
           margin-bottom: 2rem;
@@ -519,25 +583,6 @@ export default function LoginForm() {
           display: flex;
           flex-direction: column;
           gap: 1.5rem;
-        }
-        
-        .error-alert {
-          background: #fef2f2;
-          border: 1px solid #fecaca;
-          color: #ef4444;
-          padding: 0.75rem;
-          border-radius: 8px;
-          margin-bottom: 1rem;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-size: 0.875rem;
-        }
-        
-        .error-icon {
-          width: 0.875rem;
-          height: 0.875rem;
-          flex-shrink: 0;
         }
         
         .form-group {
@@ -565,6 +610,11 @@ export default function LoginForm() {
           transform: translateY(-50%);
           color: #9ca3af;
           z-index: 10;
+        }
+        
+        .input-icon .icon {
+          width: 1rem;
+          height: 1rem;
         }
         
         .form-input {
@@ -598,6 +648,11 @@ export default function LoginForm() {
           z-index: 10;
         }
         
+        .password-toggle .icon {
+          width: 1rem;
+          height: 1rem;
+        }
+        
         .password-toggle:hover {
           color: #6b7280;
         }
@@ -606,43 +661,6 @@ export default function LoginForm() {
           color: #ef4444;
           font-size: 0.75rem;
           margin-top: 0.25rem;
-        }
-        
-        .form-options {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1rem;
-        }
-        
-        .checkbox-group {
-          display: flex;
-          align-items: center;
-          gap: 0.25rem;
-        }
-        
-        .checkbox {
-          width: 1rem;
-          height: 1rem;
-          border: 1px solid #d1d5db;
-          border-radius: 4px;
-        }
-        
-        .checkbox-group label {
-          font-size: 0.875rem;
-          color: #374151;
-          margin: 0;
-        }
-        
-        .forgot-link {
-          font-size: 0.875rem;
-          color: #667eea;
-          text-decoration: none;
-          font-weight: 500;
-        }
-        
-        .forgot-link:hover {
-          color: #5a6fd8;
         }
         
         .login-button {
@@ -685,7 +703,7 @@ export default function LoginForm() {
         
         .divider {
           text-align: center;
-          margin: 1rem 0;
+          margin: 0.75rem 0;
           position: relative;
         }
         
@@ -701,14 +719,14 @@ export default function LoginForm() {
         
         .divider span {
           background: white;
-          padding: 0 1rem;
+          padding: 0 0.75rem;
           color: #6b7280;
-          font-size: 0.875rem;
+          font-size: 0.75rem;
         }
         
         .register-link {
           text-align: center;
-          font-size: 0.875rem;
+          font-size: 0.75rem;
           color: #6b7280;
           margin: 1rem 0 0 0;
         }
@@ -724,8 +742,8 @@ export default function LoginForm() {
         }
         
         .icon {
-          width: 1rem;
-          height: 1rem;
+          width: 0.875rem;
+          height: 0.875rem;
         }
         
         @keyframes pulse {
@@ -762,22 +780,10 @@ export default function LoginForm() {
           .login-form-container {
             max-width: 100%;
             min-height: fit-content;
-            padding: 1rem 0 2rem 0;
-          }
-          
-          .auth-content {
-            padding: 1rem;
-          }
-          
-          .auth-header h1 {
-            font-size: 2rem;
-          }
-          
-          .auth-header p {
-            font-size: 1rem;
+            padding: 1rem 0;
           }
         }
       `}</style>
     </div>
-  )
+  );
 } 

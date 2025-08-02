@@ -1,86 +1,111 @@
-'use client'
+'use client';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
-import { Lock, Mail, Eye, EyeOff, Loader2, Building, Shield, Users } from 'lucide-react';
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { useAuth } from '@/contexts/AuthContext'
-import { useToast } from '@/contexts/ToastContext'
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Mail, ArrowRight, Building, Shield, Users, Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import Swal from 'sweetalert2';
+import AuthGuard from '@/components/auth/AuthGuard';
 
-const loginSchema = z.object({
-  email: z.string().email('Email tidak valid'),
-  password: z.string().min(6, 'Password minimal 6 karakter'),
-})
+const forgotPasswordSchema = z.object({
+  email: z.string().email('Email harus valid'),
+});
 
-type LoginFormData = z.infer<typeof loginSchema>
+type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>;
 
-export default function LoginForm() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const router = useRouter()
-  const { login } = useAuth()
-  const { showToast } = useToast()
+export default function ForgotPasswordPage() {
+  return (
+    <AuthGuard requireAuth={false} redirectTo="/dashboard">
+      <ForgotPasswordForm />
+    </AuthGuard>
+  );
+}
+
+function ForgotPasswordForm() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-  })
-
-  const onSubmit = async (data: LoginFormData) => {
-    setIsLoading(true)
-    setError('')
-
-    try {
-      await login(data.email, data.password)
-      showToast({
-        type: 'success',
-        title: 'Login Berhasil',
-        message: 'Selamat datang kembali!'
-      })
-      router.push('/dashboard')
-    } catch (error: unknown) {
-      console.error('Login error:', error)
-      
-      let errorMessage = 'Terjadi kesalahan saat login'
-      
-      if (error instanceof Error) {
-        errorMessage = error.message
-      } else if (error && typeof error === 'object' && 'response' in error) {
-        const apiError = error as { 
-          response?: { 
-            data?: { message?: string },
-            status?: number 
-          } 
-        }
-        if (apiError.response?.data?.message) {
-          errorMessage = apiError.response.data.message
-        } else if (apiError.response?.status === 401) {
-          errorMessage = 'Email atau password salah'
-        } else if (apiError.response?.status === 500) {
-          errorMessage = 'Server error, silakan coba lagi nanti'
-        } else if (apiError.response?.status === 0) {
-          errorMessage = 'Tidak dapat terhubung ke server'
-        }
-      }
-      
-      setError(errorMessage)
-      showToast({
-        type: 'error',
-        title: 'Login Gagal',
-        message: errorMessage
-      })
-    } finally {
-      setIsLoading(false)
+    reset
+  } = useForm<ForgotPasswordForm>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: ''
     }
-  }
+  });
+
+  const onSubmit = async (data: ForgotPasswordForm) => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Terjadi kesalahan saat mengirim email reset password');
+      }
+
+      // Tampilkan splash success
+      Swal.fire({
+        title: "Email Terkirim!",
+        text: "Silakan cek email Anda untuk instruksi reset password",
+        icon: "success",
+        confirmButtonColor: "#28a745",
+        timer: 3000,
+        timerProgressBar: true,
+        showConfirmButton: false
+      });
+
+      // Reset form
+      reset();
+      
+      // Redirect ke login setelah 3 detik
+      setTimeout(() => {
+        router.push('/login');
+      }, 3000);
+
+    } catch (error) {
+      console.error('Error sending forgot password email:', error);
+      
+      // Tampilkan splash error
+      if (error instanceof Error) {
+        Swal.fire({
+          title: "Error!",
+          text: error.message,
+          icon: "error",
+          confirmButtonColor: "#dc3545",
+          timer: 5000,
+          timerProgressBar: true
+        });
+      } else {
+        Swal.fire({
+          title: "Error!",
+          text: "Terjadi kesalahan yang tidak diketahui",
+          icon: "error",
+          confirmButtonColor: "#dc3545",
+          timer: 5000,
+          timerProgressBar: true
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="login-wrapper">
@@ -131,7 +156,7 @@ export default function LoginForm() {
           </div>
         </div>
 
-        {/* Right Section - Login Form */}
+        {/* Right Section - Forgot Password Form */}
         <div className="auth-right">
           <div className="login-form-container">
             {/* Logo */}
@@ -153,34 +178,25 @@ export default function LoginForm() {
 
             {/* Welcome Text */}
             <div className="welcome-text">
-              <h3>Selamat Datang! 👋</h3>
-              <p>Masuk ke akun Anda untuk mengelola tenant</p>
+              <h3>Lupa Password? 🔐</h3>
+              <p>Masukkan email Anda untuk reset password</p>
             </div>
 
-            {/* Login Form */}
+            {/* Forgot Password Form */}
             <form className="login-form" onSubmit={handleSubmit(onSubmit)}>
-              {error && (
-                <div className="error-alert">
-                  <svg className="error-icon" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  {error}
-                </div>
-              )}
-
               {/* Email Field */}
               <div className="form-group">
-                <label htmlFor="email">Email atau Username</label>
+                <label htmlFor="email">Email</label>
                 <div className="input-group">
                   <span className="input-icon">
                     <Mail className="icon" />
                   </span>
                   <input
-                    type="text"
+                    type="email"
                     className={`form-input ${errors.email ? 'error' : ''}`}
                     id="email"
                     {...register('email')}
-                    placeholder="Masukkan email atau username"
+                    placeholder="john@example.com"
                     autoFocus
                   />
                 </div>
@@ -189,64 +205,22 @@ export default function LoginForm() {
                 )}
               </div>
 
-              {/* Password Field */}
-              <div className="form-group">
-                <label htmlFor="password">Password</label>
-                <div className="input-group">
-                  <span className="input-icon">
-                    <Lock className="icon" />
-                  </span>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    className={`form-input ${errors.password ? 'error' : ''}`}
-                    id="password"
-                    {...register('password')}
-                    placeholder="Masukkan password"
-                  />
-                  <span 
-                    className="password-toggle"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="icon" />
-                    ) : (
-                      <Eye className="icon" />
-                    )}
-                  </span>
-                </div>
-                {errors.password && (
-                  <div className="error-text">{errors.password.message}</div>
-                )}
-              </div>
-
-              {/* Remember Me & Forgot Password */}
-              <div className="form-options">
-                <div className="checkbox-group">
-                  <input
-                    className="checkbox"
-                    type="checkbox"
-                    id="remember-me"
-                  />
-                  <label htmlFor="remember-me">Ingat saya</label>
-                </div>
-                <Link href="/forgot-password" className="forgot-link">
-                  Lupa password?
-                </Link>
-              </div>
-
-              {/* Sign In Button */}
+              {/* Submit Button */}
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={loading}
                 className="login-button"
               >
-                {isLoading ? (
+                {loading ? (
                   <div className="button-content">
                     <Loader2 className="spinner" />
-                    Sedang masuk...
+                    Mengirim Email...
                   </div>
                 ) : (
-                  'Masuk ke Sistem'
+                  <div className="button-content">
+                    Kirim Email Reset
+                    <ArrowRight className="icon" />
+                  </div>
                 )}
               </button>
             </form>
@@ -256,10 +230,10 @@ export default function LoginForm() {
               <span>atau</span>
             </div> */}
 
-            {/* Create Account Link */}
+            {/* Login Link */}
             <p className="register-link">
-              <span>Belum punya akun? </span>
-              <Link href="/register">Daftar sekarang</Link>
+              <span>Ingat password? </span>
+              <Link href="/login">Masuk di sini</Link>
             </p>
           </div>
         </div>
@@ -354,7 +328,16 @@ export default function LoginForm() {
           max-width: 400px;
         }
         
-        .auth-header {
+        .auth-header h1 {
+          font-size: 2.5rem;
+          font-weight: 700;
+          margin-bottom: 0.5rem;
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .auth-header p {
+          font-size: 1.1rem;
+          opacity: 0.9;
           margin-bottom: 2rem;
         }
         
@@ -370,17 +353,10 @@ export default function LoginForm() {
           backdrop-filter: blur(10px);
         }
         
-        .auth-header h1 {
-          font-size: 2.5rem;
-          font-weight: 700;
-          margin-bottom: 0.5rem;
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .auth-header p {
-          font-size: 1.1rem;
-          opacity: 0.9;
-          margin-bottom: 2rem;
+        .auth-icon .icon {
+          width: 2.5rem;
+          height: 2.5rem;
+          color: white;
         }
         
         .feature-grid {
@@ -434,6 +410,7 @@ export default function LoginForm() {
           align-items: center;
           justify-content: center;
           padding: 2rem;
+          background: white;
           overflow-y: auto;
           max-height: 100vh;
           scroll-behavior: smooth;
@@ -521,25 +498,6 @@ export default function LoginForm() {
           gap: 1.5rem;
         }
         
-        .error-alert {
-          background: #fef2f2;
-          border: 1px solid #fecaca;
-          color: #ef4444;
-          padding: 0.75rem;
-          border-radius: 8px;
-          margin-bottom: 1rem;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-size: 0.875rem;
-        }
-        
-        .error-icon {
-          width: 0.875rem;
-          height: 0.875rem;
-          flex-shrink: 0;
-        }
-        
         .form-group {
           display: flex;
           flex-direction: column;
@@ -567,6 +525,11 @@ export default function LoginForm() {
           z-index: 10;
         }
         
+        .input-icon .icon {
+          width: 1rem;
+          height: 1rem;
+        }
+        
         .form-input {
           width: 100%;
           padding: 0.75rem 0.75rem 0.75rem 2.5rem;
@@ -588,61 +551,10 @@ export default function LoginForm() {
           box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
         }
         
-        .password-toggle {
-          position: absolute;
-          right: 0.75rem;
-          top: 50%;
-          transform: translateY(-50%);
-          color: #9ca3af;
-          cursor: pointer;
-          z-index: 10;
-        }
-        
-        .password-toggle:hover {
-          color: #6b7280;
-        }
-        
         .error-text {
           color: #ef4444;
           font-size: 0.75rem;
           margin-top: 0.25rem;
-        }
-        
-        .form-options {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1rem;
-        }
-        
-        .checkbox-group {
-          display: flex;
-          align-items: center;
-          gap: 0.25rem;
-        }
-        
-        .checkbox {
-          width: 1rem;
-          height: 1rem;
-          border: 1px solid #d1d5db;
-          border-radius: 4px;
-        }
-        
-        .checkbox-group label {
-          font-size: 0.875rem;
-          color: #374151;
-          margin: 0;
-        }
-        
-        .forgot-link {
-          font-size: 0.875rem;
-          color: #667eea;
-          text-decoration: none;
-          font-weight: 500;
-        }
-        
-        .forgot-link:hover {
-          color: #5a6fd8;
         }
         
         .login-button {
@@ -779,5 +691,5 @@ export default function LoginForm() {
         }
       `}</style>
     </div>
-  )
+  );
 } 

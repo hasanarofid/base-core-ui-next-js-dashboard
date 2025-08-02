@@ -26,7 +26,7 @@ export interface UpdateProductData extends Partial<CreateProductData> {
 export interface ProductFilters {
   search?: string;
   category?: string;
-  status?: 'active' | 'inactive';
+  status?: 'active' | 'pending' | 'suspended';
   minPrice?: number;
   maxPrice?: number;
 }

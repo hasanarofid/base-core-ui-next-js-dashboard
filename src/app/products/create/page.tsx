@@ -17,7 +17,7 @@ const createProductSchema = z.object({
   price: z.number().min(0, 'Harga harus lebih dari 0'),
   category: z.string().min(1, 'Kategori harus dipilih'),
   stock: z.number().min(0, 'Stok harus lebih dari atau sama dengan 0'),
-  status: z.enum(['active', 'inactive'])
+  status: z.enum(['active', 'pending', 'suspended'])
 });
 
 type CreateProductFormData = z.infer<typeof createProductSchema>;
@@ -33,7 +33,8 @@ const categories = [
 
 const statusOptions = [
   { value: 'active', label: 'Aktif' },
-  { value: 'inactive', label: 'Tidak Aktif' }
+  { value: 'pending', label: 'Menunggu' },
+  { value: 'suspended', label: 'Ditangguhkan' }
 ];
 
 export default function CreateProductPage() {
@@ -158,7 +159,7 @@ export default function CreateProductPage() {
                     placeholder="Pilih status"
                     options={statusOptions}
                     error={errors.status?.message}
-                    onChange={(value) => setValue('status', value as 'active' | 'inactive')}
+                    onChange={(value) => setValue('status', value as 'active' | 'pending' | 'suspended')}
                     value={watch('status')}
                   />
                 </div>

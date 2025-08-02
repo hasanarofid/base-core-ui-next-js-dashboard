@@ -50,7 +50,7 @@ const mockProducts: Product[] = [
     price: 12000000,
     category: 'Electronics',
     stock: 0,
-    status: 'inactive',
+    status: 'suspended',
     createdAt: '2024-01-12T11:45:00Z',
     updatedAt: '2024-01-12T11:45:00Z'
   },

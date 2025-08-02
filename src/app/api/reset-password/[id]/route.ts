@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Ambil cookies dari request (opsional untuk reset password publik)
@@ -17,8 +17,9 @@ export async function POST(
     console.log('Environment variables:')
     console.log('NEXT_PUBLIC_API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL)
     console.log('External API URL:', externalApiUrl)
+    const { id: userId } = await params
     console.log('Reset password data:', body)
-    console.log('User ID:', params.id)
+    console.log('User ID:', userId)
 
     // Validasi body request
     if (!body || !body.new_password) {
@@ -40,7 +41,7 @@ export async function POST(
       headers['Authorization'] = `Bearer ${sessionCookie.value}`;
     }
 
-    const response = await fetch(`${externalApiUrl}/reset-password/${params.id}`, {
+    const response = await fetch(`${externalApiUrl}/reset-password/${userId}`, {
       method: 'POST',
       headers,
       body: JSON.stringify({

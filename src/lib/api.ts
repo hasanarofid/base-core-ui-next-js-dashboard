@@ -3,6 +3,7 @@ import { config } from '@/config'
 import { debugApiRequest, debugApiResponse, debugError } from '@/utils/debug'
 import { UserResponse, TenantListResponse, Tenant, CreateTenantData } from '@/types/tenant'
 import { UserListResponse, User, CreateUserData, VerifyEmailData, VerifyUserData, ResetPasswordData } from '@/types/user'
+import { PaymentMethod, PaymentMethodListResponse, CreatePaymentMethodData } from '@/types/paymentMethod'
 
 // Membuat instance axios dengan konfigurasi default
 export const api = axios.create({
@@ -178,6 +179,8 @@ export async function apiWithCookies(endpoint: string, options: RequestInit = {}
   return data
 }
 
+// ===== TENANT MANAGEMENT API FUNCTIONS =====
+
 // Fungsi untuk mengambil data tenant dengan cookies
 export async function getTenantsWithCookies(): Promise<TenantListResponse> {
   return apiWithCookies('/tenants')
@@ -265,4 +268,73 @@ export async function resetPasswordWithCookies(id: string, newPassword?: string)
     method: 'POST',
     body: JSON.stringify({ new_password: newPassword }),
   })
+}
+
+// ===== PAYMENT METHOD API FUNCTIONS =====
+
+// Fungsi untuk mengambil data payment method (tanpa cookies)
+export async function getPaymentMethod(): Promise<PaymentMethodListResponse> {
+  try {
+    const response = await fetch('/api/payment-method', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Gagal mengambil data payment method');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching payment method:', error);
+    throw error;
+  }
+}
+
+// Fungsi untuk mengambil data payment method dengan cookies
+export async function getPaymentMethodWithCookies(): Promise<PaymentMethodListResponse> {
+  return apiWithCookies('/payment-method');
+}
+
+// Fungsi untuk membuat payment method baru dengan cookies
+export async function createPaymentMethodWithCookies(paymentMethodData: CreatePaymentMethodData): Promise<{ message: string; data: PaymentMethod }> {
+  return apiWithCookies('/payment-method', {
+    method: 'POST',
+    body: JSON.stringify(paymentMethodData),
+  });
+}
+
+// Fungsi untuk update payment method dengan cookies
+export async function updatePaymentMethodWithCookies(id: string, paymentMethodData: Partial<CreatePaymentMethodData>): Promise<{ message: string; data: PaymentMethod }> {
+  return apiWithCookies(`/payment-method/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(paymentMethodData),
+  });
+}
+
+// Fungsi untuk approve payment method dengan cookies
+export async function approvePaymentMethodWithCookies(id: string): Promise<{ message: string; data: PaymentMethod }> {
+  return apiWithCookies(`/payment-method/${id}/approve`, {
+    method: 'POST',
+  })
+}
+
+// Fungsi untuk update status payment method dengan cookies
+export async function updatePaymentMethodStatusWithCookies(id: string, status: string): Promise<{ message: string; data: PaymentMethod }> {
+  return apiWithCookies(`/payment-method/${id}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ status }),
+  })
 } 
+
+export async function getPaymentMethodByIdWithCookies(id: string): Promise<{ message: string; data: PaymentMethod }> {
+  return apiWithCookies(`/payment-method/${id}`);
+}
+
+export async function deletePaymentMethodWithCookies(id: string): Promise<{ message: string }> {
+  return apiWithCookies(`/payment-method/${id}`, {
+    method: 'DELETE',
+  });
+}

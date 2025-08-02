@@ -5,7 +5,7 @@ export interface Product {
   price: number;
   category: string;
   stock: number;
-  status: 'active' | 'inactive';
+  status: 'suspended' | 'pending' | 'active';
   createdAt: string;
   updatedAt: string;
 }
@@ -16,7 +16,7 @@ export interface CreateProductData {
   price: number;
   category: string;
   stock: number;
-  status: 'active' | 'inactive';
+  status: 'suspended' | 'pending' | 'active';
 }
 
 export interface UpdateProductData extends Partial<CreateProductData> {

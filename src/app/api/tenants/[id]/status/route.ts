@@ -71,15 +71,15 @@ export async function PATCH(
         
         response = await fetch(endpoint, {
           method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Cookie': `${sessionCookie.name}=${sessionCookie.value}`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Cookie': `${sessionCookie.name}=${sessionCookie.value}`,
             // Tambahkan Authorization header sebagai backup
             'Authorization': `Bearer ${sessionCookie.value}`,
-          },
-          body: JSON.stringify(body),
-        })
+      },
+      body: JSON.stringify(body),
+    })
 
         console.log(`Endpoint ${endpoint} response status:`, response.status)
         console.log(`Endpoint ${endpoint} response headers:`, Object.fromEntries(response.headers.entries()))

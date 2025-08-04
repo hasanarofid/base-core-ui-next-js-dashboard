@@ -13,7 +13,7 @@ interface HeaderProps {
 
 export default function Header({ onToggleSidebar }: HeaderProps) {
   const { isDarkMode, toggleDarkMode } = useTheme()
-  const { logout } = useAuth()
+  const { user, logout } = useAuth()
   const router = useRouter()
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
   const [isNotificationsDropdownOpen, setIsNotificationsDropdownOpen] = useState(false)
@@ -182,7 +182,9 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
               >
                 <div className="avatar avatar-sm position-relative">
                   <div className="avatar-initial rounded-circle bg-brand-blue-3 hover:scale-110 transition-transform duration-300">
-                    <span className="text-white text-sm font-medium">A</span>
+                    <span className="text-white text-sm font-medium">
+                      {user?.fullName?.charAt(0)?.toUpperCase() || 'A'}
+                    </span>
                   </div>
                 </div>
                 <ChevronDown className={cn(
@@ -198,13 +200,15 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                       <div className="flex-shrink-0 me-3">
                         <div className="avatar avatar-sm position-relative">
                           <div className="avatar-initial rounded-circle bg-brand-blue-3">
-                            <span className="text-white text-sm font-medium">A</span>
+                            <span className="text-white text-sm font-medium">
+                              {user?.fullName?.charAt(0)?.toUpperCase() || 'A'}
+                            </span>
                           </div>
                         </div>
                       </div>
                       <div className="flex-grow-1">
-                        <span className="fw-semibold d-block">Admin User</span>
-                        <small className="text-muted">Admin</small>
+                        <span className="fw-semibold d-block">{user?.fullName || 'User'}</span>
+                        <small className="text-muted">{user?.role || 'User'}</small>
                       </div>
                     </div>
                   </div>

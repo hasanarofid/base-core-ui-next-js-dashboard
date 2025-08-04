@@ -2,23 +2,24 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { User } from '@/types'
+import { LoginUser, LoginResponse } from '@/types/auth'
 import { authAPI } from '@/lib/api'
 import { config } from '@/config'
 
 interface AuthContextType {
-  user: User | null
+  user: LoginUser | null
   isLoading: boolean
   isAuthenticated: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   checkAuth: () => Promise<void>
+  updateUser: (user: LoginUser) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<LoginUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
@@ -35,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Jika ada user data di localStorage, gunakan itu
       if (userData) {
         try {
-          const user = JSON.parse(userData)
+          const user = JSON.parse(userData) as LoginUser
           setUser(user)
           setIsLoading(false)
           return
@@ -47,7 +48,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Jika tidak ada user data, coba ambil dari API
       try {
         const response = await authAPI.me()
-        setUser(response.data.user)
+        const userData = response.data as LoginResponse
+        setUser(userData.data.user)
       } catch (apiError) {
         console.error('Auth API check failed:', apiError)
         // Jika API gagal, hapus token dan user data
@@ -73,17 +75,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Handle response structure sesuai dengan Postman
       // Response: { message: "User logged in successfully", data: { user: {...}, token: "..." } }
-      const { data } = response.data
+      const loginData = response.data as LoginResponse
       
-      if (!data || !data.token || !data.user) {
+      if (!loginData.data || !loginData.data.token || !loginData.data.user) {
         throw new Error('Response tidak valid dari server')
       }
 
-      const { token, user } = data
+      const { token, user } = loginData.data
 
       localStorage.setItem(config.auth.tokenKey, token)
       localStorage.setItem(config.auth.userKey, JSON.stringify(user))
       setUser(user)
+      
+      // Redirect to dashboard
+      router.push('/dashboard')
     } catch (error: unknown) {
       console.error('Login error:', error)
       
@@ -126,6 +131,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const updateUser = (user: LoginUser) => {
+    // Update localStorage
+    localStorage.setItem(config.auth.userKey, JSON.stringify(user))
+    
+    // Update state
+    setUser(user)
+  }
+
   useEffect(() => {
     checkAuth()
   }, [])
@@ -137,6 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     logout,
     checkAuth,
+    updateUser,
   }
 
   return (

@@ -45,7 +45,7 @@ export default function LoginForm() {
         title: 'Login Berhasil',
         message: 'Selamat datang kembali!'
       })
-      router.push('/dashboard')
+      // Redirect sudah ditangani di AuthContext
     } catch (error: unknown) {
       console.error('Login error:', error)
       

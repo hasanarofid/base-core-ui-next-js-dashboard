@@ -281,7 +281,7 @@ export default function UserManagementPage() {
           <div className="row">
             <div className="col-12">
               <div className="d-flex justify-content-between align-items-center mb-4">
-                <div>
+            <div>
                   <h4 className="fw-bold mb-1 flex items-center gap-2">
                     <Users className="w-6 h-6 text-brand-blue-3" />
                     Manajemen User
@@ -321,21 +321,21 @@ export default function UserManagementPage() {
                     </div>
                     <div className="d-flex align-items-center gap-6">
                       <div className="flex-1" style={{ minWidth: '300px' }}>
-                        <input
-                          type="text"
+                <input
+                  type="text"
                           placeholder="Cari berdasarkan nama, email, atau role..."
                           className="form-control"
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                      </div>
+                />
+              </div>
                       <div className="flex-shrink-0">
                         <button className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-brand-blue-3">
-                          <Filter className="w-4 h-4" />
+                <Filter className="w-4 h-4" />
                           <span>Filter Lanjutan</span>
-                        </button>
-                      </div>
-                    </div>
+              </button>
+            </div>
+          </div>
                   </div>
                 </div>
                 <div className="card-body p-0">

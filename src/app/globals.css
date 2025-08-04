@@ -1564,20 +1564,20 @@
   }
 
   /* Scrollbar Styling */
-  ::-webkit-scrollbar {
+::-webkit-scrollbar {
     width: 0.375rem;
-  }
+}
 
-  ::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
     background: var(--bg-secondary);
-  }
+}
 
-  ::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
     background: var(--border-color);
     border-radius: 0.25rem;
-  }
+}
 
-  ::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
     background: var(--text-secondary);
   }
 
@@ -3409,4 +3409,4 @@
 
   .btn-icon .h-5 {
     height: 1.25rem;
-  }
+}

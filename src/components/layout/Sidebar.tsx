@@ -4,10 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 import { 
   Home, 
   Building, 
-  Package, 
+  Users, 
   CreditCard, 
   BarChart3, 
   Settings, 
@@ -15,10 +16,21 @@ import {
   ChevronRight, 
   X,
   Search,
-  Menu
+  Menu,
+  Key,
+  FileText,
+  Bell,
+  Wrench,
+  DollarSign,
+  RefreshCw,
+  Folder,
+  BookOpen,
+  Shield,
+  Globe
 } from 'lucide-react';
 
-const menuItems = [
+// Menu items untuk Superadmin
+const superadminMenuItems = [
   {
     id: 'dashboard',
     title: 'Dashboard',
@@ -27,8 +39,8 @@ const menuItems = [
     active: true
   },
   {
-    id: 'apps-pages',
-    title: 'Apps & Pages',
+    id: 'superadmin-modules',
+    title: 'Superadmin Modules',
     type: 'header'
   },
   {
@@ -41,19 +53,19 @@ const menuItems = [
     id: 'user-management',
     title: 'User Management',
     href: '/user-management',
-    icon: Package
+    icon: Users
   },
   {
     id: 'client-credentials',
     title: 'Client Credentials',
     href: '/client-credentials',
-    icon: Settings
+    icon: Key
   },
   {
     id: 'global-config',
     title: 'Global Config',
     href: '/global-config',
-    icon: Palette
+    icon: Settings
   },
   {
     id: 'payment-methods',
@@ -66,6 +78,88 @@ const menuItems = [
     title: 'Transaction Monitoring',
     href: '/transaction-monitoring',
     icon: BarChart3
+  },
+  {
+    id: 'logs-notifications',
+    title: 'Logs & Notifications',
+    href: '/logs-notifications',
+    icon: FileText
+  },
+  {
+    id: 'reports',
+    title: 'Reports',
+    href: '/reports',
+    icon: BarChart3
+  },
+  {
+    id: 'system-settings',
+    title: 'System Settings',
+    href: '/system-settings',
+    icon: Settings
+  }
+]
+
+// Menu items untuk Tenant Admin
+const tenantAdminMenuItems = [
+  {
+    id: 'dashboard',
+    title: 'Dashboard',
+    href: '/dashboard',
+    icon: Home,
+    active: true
+  },
+  {
+    id: 'tenant-modules',
+    title: 'Tenant Modules',
+    type: 'header'
+  },
+  {
+    id: 'user-management',
+    title: 'User Management',
+    href: '/user-management',
+    icon: Users
+  },
+  {
+    id: 'payment-config',
+    title: 'Payment Config',
+    href: '/payment-config',
+    icon: CreditCard
+  },
+  {
+    id: 'fee-rules',
+    title: 'Fee Rules',
+    href: '/fee-rules',
+    icon: DollarSign
+  },
+  {
+    id: 'callback-config',
+    title: 'Callback Config',
+    href: '/callback-config',
+    icon: RefreshCw
+  },
+  {
+    id: 'api-credential',
+    title: 'API Credential',
+    href: '/api-credential',
+    icon: Folder
+  },
+  {
+    id: 'transaction-logs',
+    title: 'Transaction Logs',
+    href: '/transaction-logs',
+    icon: FileText
+  },
+  {
+    id: 'notifications',
+    title: 'Notifications',
+    href: '/notifications',
+    icon: Bell
+  },
+  {
+    id: 'integration-guide',
+    title: 'Integration Guide',
+    href: '/integration-guide',
+    icon: BookOpen
   }
 ]
 
@@ -76,8 +170,25 @@ interface SidebarProps {
 
 export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const pathname = usePathname()
+  const { user } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+
+  // Tentukan menu berdasarkan role user
+  const getMenuItems = () => {
+    if (!user) return []
+    
+    if (user.role === 'superadmin') {
+      return superadminMenuItems
+    } else if (user.role === 'tenant_admin') {
+      return tenantAdminMenuItems
+    }
+    
+    // Default fallback
+    return superadminMenuItems
+  }
+
+  const menuItems = getMenuItems()
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
@@ -87,6 +198,18 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   useEffect(() => {
     setIsMobileMenuOpen(false)
   }, [pathname])
+
+  // Get role display name
+  const getRoleDisplayName = (role: string) => {
+    switch (role) {
+      case 'superadmin':
+        return 'Superadmin Dashboard'
+      case 'tenant_admin':
+        return 'Merchant Admin'
+      default:
+        return 'Dashboard'
+    }
+  }
 
   return (
     <>
@@ -155,6 +278,25 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           </button>
         </div>
 
+        {/* User Info */}
+        {user && !isCollapsed && (
+          <div className="px-4 mb-4">
+            <div className="d-flex align-items-center p-3 bg-menu-hover rounded">
+              <div className="avatar avatar-sm me-3">
+                <div className="avatar-initial rounded-circle bg-brand-blue-3">
+                  <span className="text-white text-sm font-medium">
+                    {user.fullName?.charAt(0)?.toUpperCase() || 'U'}
+                  </span>
+                </div>
+              </div>
+              <div className="flex-grow-1">
+                <div className="fw-semibold text-sm">{user.fullName}</div>
+                <div className="text-muted text-xs">{user.role}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Search Bar */}
         <div className="px-4 mb-4">
           <div className="input-group input-group-merge">
@@ -180,7 +322,11 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               )
             }
 
-            const isActive = pathname === item.href || (item.href === '/tenant-management' && pathname.startsWith('/tenant-management'))
+            const isActive = pathname === item.href || 
+              (item.href === '/tenant-management' && pathname.startsWith('/tenant-management')) ||
+              (item.href === '/user-management' && pathname.startsWith('/user-management')) ||
+              (item.href === '/payment-methods' && pathname.startsWith('/payment-methods'))
+            
             const isHovered = hoveredItem === item.id
             const Icon = item.icon
 
@@ -197,9 +343,9 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                     isHovered && "scale-110"
                   )} />}
                   <div className="menu-text" data-i18n={item.title}>
-                    {item.title}
-                  </div>
-                </Link>
+                                      {item.title}
+                </div>
+              </Link>
               </li>
             )
           })}

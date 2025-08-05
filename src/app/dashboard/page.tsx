@@ -88,33 +88,7 @@ export default function DashboardPage() {
     <DashboardLayout>
       <div className="container-xxl flex-grow-1 container-p-y crm-dashboard">
         {/* Page Header */}
-        <div className="row">
-          <div className="col-12">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <div>
-                <h4 className="fw-bold mb-1">
-                  {user?.role === 'superadmin' ? 'Superadmin Dashboard' : 'Merchant Admin Dashboard'}
-                </h4>
-                <p className="text-muted mb-0">
-                  {user?.role === 'superadmin' 
-                    ? 'Manajemen seluruh tenant dan sistem secara global.' 
-                    : 'Statistik transaksi, income, callback success rate'
-                  }
-                </p>
-              </div>
-              <div className="d-flex gap-2">
-                <button className="btn btn-outline-primary">
-                  <Download className="w-4 h-4 me-2" />
-                  Download
-                </button>
-                <button className="btn btn-primary">
-                  <Plus className="w-4 h-4 me-2" />
-                  Create Report
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        
 
         {/* CRM Statistics Cards */}
         <CRMStats data={crmStatsData} />

@@ -22,10 +22,10 @@ export async function POST(
     console.log('User ID:', userId)
 
     // Validasi body request
-    if (!body || !body.new_password) {
+    if (!body || !body.password) {
       console.error('Invalid request body:', body)
       return NextResponse.json(
-        { message: 'Password baru harus diisi' },
+        { message: 'Password harus diisi' },
         { status: 400 }
       )
     }
@@ -45,7 +45,7 @@ export async function POST(
       method: 'POST',
       headers,
       body: JSON.stringify({
-        new_password: body.new_password
+        password: body.password
       }),
     })
 

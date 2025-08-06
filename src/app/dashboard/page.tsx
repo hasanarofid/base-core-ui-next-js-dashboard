@@ -4,7 +4,6 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import CRMStats from '@/components/dashboard/CRMStats'
 import UserInfo from '@/components/dashboard/UserInfo'
 import { useAuth } from '@/contexts/AuthContext'
-import { useTheme } from '@/contexts/ThemeContext'
 import { 
   BarChart3, 
   TrendingUp, 
@@ -17,15 +16,12 @@ import {
   Users,
   Activity,
   ShoppingCart,
-  Download,
-  Plus,
   MoreVertical,
   Building,
   CreditCard,
   FileText,
   Key,
   Settings,
-  Globe,
   RefreshCw,
   BookOpen
 } from 'lucide-react'

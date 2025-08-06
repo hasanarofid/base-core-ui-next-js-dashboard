@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowLeft, Save, Building } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Button } from '@/components/ui/Button';
+
 import { Card } from '@/components/ui/Card';
 import { useToast } from '@/contexts/ToastContext';
 

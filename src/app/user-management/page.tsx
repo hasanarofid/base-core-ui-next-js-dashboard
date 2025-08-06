@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import AuthGuard from '@/components/auth/AuthGuard'
-import { Users, Plus, Search, Filter, Download, ChevronLeft, ChevronRight, Eye, Edit, Trash2, CheckCircle, Settings, Mail, Key } from 'lucide-react'
+import { Users, Plus, Filter, Download } from 'lucide-react'
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { User } from '@/types/user';
 import Badge from '@/components/ui/Badge';
@@ -101,10 +101,7 @@ export default function UserManagementPage() {
 
   const totalPages = Math.ceil((filteredUsers?.length || 0) / itemsPerPage);
 
-  const handleSearch = (search: string) => {
-    setSearchTerm(search);
-    setCurrentPage(1);
-  };
+
 
   const handleView = (user: User) => {
     router.push(`/user-management/${user.id}`);

@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Button } from '@/components/ui/Button';
+
 import { Card } from '@/components/ui/Card';
 import { createUserWithCookies } from '@/lib/api';
 import { Tenant } from '@/types/tenant';
@@ -34,9 +34,7 @@ export default function CreateUserPage() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
-    setValue,
-    watch
+    formState: { errors }
   } = useForm<CreateUserForm>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
@@ -90,8 +88,8 @@ export default function CreateUserPage() {
 
       console.log('Sending user data:', payload);
 
-      const result = await createUserWithCookies(payload);
-      console.log('User created successfully:', result);
+      await createUserWithCookies(payload);
+      console.log('User created successfully');
       
       // Tampilkan splash success
       Swal.fire({

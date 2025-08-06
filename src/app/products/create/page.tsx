@@ -2,14 +2,14 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Package, Save, ArrowLeft } from 'lucide-react';
+import { Package, Save, ArrowLeft } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import { CreateProductData } from '@/types/product';
+
 
 const createProductSchema = z.object({
   name: z.string().min(1, 'Nama produk harus diisi'),

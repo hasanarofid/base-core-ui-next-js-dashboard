@@ -6,8 +6,9 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import Badge from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { ArrowLeft, Edit, Calendar, Mail, Phone, Globe, User, Building, Download } from 'lucide-react';
+import { ArrowLeft, Edit, Calendar, Mail, Phone, Globe, User, Building } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
+import Image from 'next/image';
 
 interface Tenant {
   id: string;
@@ -27,7 +28,7 @@ interface Tenant {
 export default function TenantViewPage() {
   const router = useRouter();
   const params = useParams();
-  const { showToast } = useToast();
+
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -306,10 +307,12 @@ export default function TenantViewPage() {
                   <p className="card-subtitle text-muted mb-0">Preview logo tenant</p>
                 </div>
                 <div className="card-body text-center p-4">
-                  <img 
+                  <Image 
                     src={tenant.logo_url} 
                     alt={`Logo ${tenant.name}`}
-                    className="img-fluid rounded shadow-sm"
+                    width={300}
+                    height={250}
+                    className="rounded shadow-sm"
                     style={{ maxHeight: '250px', maxWidth: '100%' }}
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';

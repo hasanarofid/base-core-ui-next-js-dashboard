@@ -12,21 +12,16 @@ import {
   CreditCard, 
   BarChart3, 
   Settings, 
-  Palette, 
   ChevronRight, 
   X,
-  Search,
   Menu,
   Key,
   FileText,
   Bell,
-  Wrench,
   DollarSign,
   RefreshCw,
   Folder,
-  BookOpen,
-  Shield,
-  Globe
+  BookOpen
 } from 'lucide-react';
 
 // Menu items untuk Superadmin
@@ -199,17 +194,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     setIsMobileMenuOpen(false)
   }, [pathname])
 
-  // Get role display name
-  const getRoleDisplayName = (role: string) => {
-    switch (role) {
-      case 'superadmin':
-        return 'Superadmin Dashboard'
-      case 'tenant_admin':
-        return 'Merchant Admin'
-      default:
-        return 'Dashboard'
-    }
-  }
+
 
   return (
     <>
@@ -280,7 +265,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
         {/* User Info */}
         {user && !isCollapsed && (
-          <div className="px-4 mb-4">
+          <div className="px-4 mb-4 mt-4">
             <div className="d-flex align-items-center p-3 bg-menu-hover rounded">
               <div className="avatar avatar-sm me-3">
                 <div className="avatar-initial rounded-circle bg-brand-blue-3">
@@ -298,7 +283,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         )}
 
         {/* Search Bar */}
-        <div className="px-4 mb-4">
+        {/* <div className="px-4 mb-4">
           <div className="input-group input-group-merge">
             <span className="input-group-text">
               <Search className="w-4 h-4" />
@@ -309,7 +294,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               placeholder="Search [CTRL + K]"
             />
           </div>
-        </div>
+        </div> */}
 
         {/* Menu Items */}
         <ul className="menu-inner py-1">

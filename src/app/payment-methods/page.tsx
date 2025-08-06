@@ -8,9 +8,9 @@ import { Building, Plus, Filter, Download } from 'lucide-react';
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { PaymentMethod } from '@/types/paymentMethod';
 import Badge from '@/components/ui/Badge';
-import { getPaymentMethod, approvePaymentMethodWithCookies, updatePaymentMethodStatusWithCookies, deletePaymentMethodWithCookies  } from '@/lib/api';
+import Image from 'next/image';
+import { getPaymentMethod, deletePaymentMethodWithCookies  } from '@/lib/api';
 import Swal from 'sweetalert2';
-import axios from 'axios';
 
 export default function PaymentMethodPage() {
   const router = useRouter();
@@ -118,7 +118,7 @@ export default function PaymentMethodPage() {
       header: 'LOGO',
       render: (_, row) => (
         <div className="flex items-center gap-3">
-          {row.logo_url && <img src={row.logo_url} alt={row.name} className="w-3 h-3" />}
+          {row.logo_url && <Image src={row.logo_url} alt={row.name} width={12} height={12} />}
           <span className="font-semibold">{row.name || '-'}</span>
         </div>
       )

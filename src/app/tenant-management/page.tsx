@@ -1,16 +1,14 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import AuthGuard from '@/components/auth/AuthGuard'
-import { Building, Plus, Search, Filter, Download, ChevronLeft, ChevronRight, Eye, Edit, Trash2 } from 'lucide-react'
+import { Building, Plus, Filter, Download } from 'lucide-react'
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { Tenant } from '@/types/tenant';
 import Badge from '@/components/ui/Badge';
 import { getTenants, approveTenantWithCookies, updateTenantStatusWithCookies } from '@/lib/api';
-import { environment } from '@/config/environment';
-import axios from 'axios';
 import Swal from 'sweetalert2';
 
 /**
@@ -76,10 +74,7 @@ export default function TenantManagementPage() {
 
   const totalPages = Math.ceil(filteredTenants.length / itemsPerPage);
 
-  const handleSearch = (search: string) => {
-    setSearchTerm(search);
-    setCurrentPage(1);
-  };
+
 
   const handleEdit = (tenant: Tenant) => {
     router.push(`/tenant-management/${tenant.id}/edit`);
@@ -206,7 +201,7 @@ export default function TenantManagementPage() {
           }
         });
 
-        const result = await approveTenantWithCookies(tenant.id);
+        await approveTenantWithCookies(tenant.id);
         
         // Update tenant status di state
         setTenants(tenants.map(t => 
@@ -300,7 +295,7 @@ export default function TenantManagementPage() {
           }
         });
 
-        const result = await updateTenantStatusWithCookies(tenant.id, newStatus);
+        await updateTenantStatusWithCookies(tenant.id, newStatus);
         
         // Update tenant status di state
         setTenants(tenants.map(t => 

@@ -22,7 +22,7 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const router = useRouter()
+
   const { login } = useAuth()
   const { showToast } = useToast()
 

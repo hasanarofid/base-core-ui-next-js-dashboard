@@ -2,7 +2,7 @@ import axios from 'axios'
 import { config } from '@/config'
 import { debugApiRequest, debugApiResponse, debugError } from '@/utils/debug'
 import { UserResponse, TenantListResponse, Tenant, CreateTenantData } from '@/types/tenant'
-import { UserListResponse, User, CreateUserData, VerifyEmailData, VerifyUserData, ResetPasswordData } from '@/types/user'
+import { UserListResponse, User, CreateUserData, VerifyEmailData } from '@/types/user'
 import { PaymentMethod, PaymentMethodListResponse, CreatePaymentMethodData } from '@/types/paymentMethod'
 
 // Membuat instance axios dengan konfigurasi default

@@ -7,9 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { environment } from '@/config/environment';
 import { useToast } from '@/contexts/ToastContext';
 import { createTenantWithCookies } from '@/lib/api';
 
@@ -31,9 +29,7 @@ export default function CreateTenantPage() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
-    setValue,
-    watch
+    formState: { errors }
   } = useForm<CreateTenantForm>({
     resolver: zodResolver(createTenantSchema),
     defaultValues: {
@@ -58,8 +54,8 @@ export default function CreateTenantPage() {
       console.log('Sending tenant data:', payload);
 
       // Gunakan API route internal yang akan menangani cookies
-      const result = await createTenantWithCookies(payload);
-      console.log('Tenant created successfully:', result);
+      await createTenantWithCookies(payload);
+      console.log('Tenant created successfully');
       
       showToast({
         type: 'success',

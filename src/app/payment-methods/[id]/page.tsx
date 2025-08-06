@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Edit, Building } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import Image from 'next/image';
 import { PaymentMethod } from '@/types/paymentMethod';
 import { getPaymentMethodByIdWithCookies } from '@/lib/api';
 
@@ -81,7 +82,7 @@ export default function PaymentMethodDetailPage() {
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            {method.logo_url && <img src={method.logo_url} alt={method.name} className="w-6 h-6 rounded" />}
+            {method.logo_url && <Image src={method.logo_url} alt={method.name} width={24} height={24} className="rounded" />}
             <div>
               <h2 className="text-xl font-semibold">{method.name}</h2>
               <p className="text-sm text-gray-600">{method.code}</p>

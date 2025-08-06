@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import { Product, UpdateProductData } from '@/types/product';
+import { Product } from '@/types/product';
 
 const updateProductSchema = z.object({
   name: z.string().min(1, 'Nama produk harus diisi'),

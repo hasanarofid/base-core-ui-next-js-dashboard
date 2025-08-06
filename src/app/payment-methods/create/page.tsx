@@ -7,9 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { environment } from '@/config/environment';
 import { useToast } from '@/contexts/ToastContext';
 import { createPaymentMethodWithCookies } from '@/lib/api';
 
@@ -30,9 +28,7 @@ export default function CreatePaymentMethodPage() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
-    setValue,
-    watch
+    formState: { errors }
   } = useForm<CreatePaymentMethodForm>({
     resolver: zodResolver(createPaymentMethodSchema),
     defaultValues: {
@@ -52,7 +48,7 @@ export default function CreatePaymentMethodPage() {
         type: data.type
       };
 
-      const result = await createPaymentMethodWithCookies(payload);
+      await createPaymentMethodWithCookies(payload);
 
       showToast({
         type: 'success',

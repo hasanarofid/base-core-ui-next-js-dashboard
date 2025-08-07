@@ -35,7 +35,7 @@
   /* Layout */
   --sidebar-width: 260px;
   --sidebar-collapsed-width: 70px;
-  --header-height: 64px;
+  --header-height: 3.875rem;
   --border-radius: 0.375rem;
   --box-shadow: 0 0.25rem 1.125rem rgba(75, 70, 92, 0.1);
   
@@ -653,12 +653,12 @@
     transition: all 0.3s ease;
   }
 
-  .menu-item:hover {
+  /* .menu-item:hover {
     background-color: var(--menu-hover);
     border-radius: var(--border-radius);
     transform: translateX(4px);
     color:#fff;
-  }
+  } */
 
   .menu-item.active {
     background: linear-gradient(72.47deg, #776bf0 22.16%, rgba(119, 107, 240, 0.7) 76.47%);
@@ -666,7 +666,7 @@
     color: #fff !important;
   }
 
-  .menu-item.active::before {
+  /* .menu-item.active::before {
     content: "";
     position: absolute;
     right: 0;
@@ -675,7 +675,7 @@
     background-color: var(--menu-active);
     border-radius: 0.375rem 0 0 0.375rem;
     animation: slideIn 0.3s ease;
-  }
+  } */
 
   /* Menu Header */
   .menu-header {
@@ -733,7 +733,7 @@
 
   .menu-item:hover .menu-icon {
     transform: scale(1.1);
-    color: #fff;
+    /* color: #fff; */
   }
 
   .menu-link {
@@ -762,16 +762,16 @@
     transition: left 0.5s;
   }
 
-  .menu-link:hover::before {
+  /* .menu-link:hover::before {
     left: 100%;
     color: #fff;
-  }
+  } */
 
-  .menu-link:hover {
+  /* .menu-link:hover {
     background-color: var(--menu-hover);
     color: #fff;
     transform: translateX(4px);
-  }
+  } */
 
   .menu-inner {
     list-style: none;

@@ -3,29 +3,34 @@
 @tailwind utilities;
 
 :root {
-  /* Brand Colors - Based on Brand.txt */
-  --brand-blue-1: #7367f0;
-  --brand-blue-2: #7367f0;
-  --brand-blue-3: #7367f0;
-  --brand-blue-4: #7367f0;
-  --brand-blue-5: #7367f0;
-  --brand-yellow: #F6B80C;
-  --brand-typeface: #0C4558;
+  /* Vuexy Theme Colors - Based on theme-default.css */
+  --bs-blue: #007bff;
+  --bs-indigo: #6610f2;
+  --bs-purple: #7367f0;
+  --bs-pink: #e83e8c;
+  --bs-red: #ea5455;
+  --bs-orange: #fd7e14;
+  --bs-yellow: #ff9f43;
+  --bs-green: #28c76f;
+  --bs-teal: #20c997;
+  --bs-cyan: #00cfe8;
+  --bs-black: #4b465c;
+  --bs-white: #fff;
+  --bs-gray: rgba(75, 70, 92, 0.6);
+  --bs-gray-dark: rgba(75, 70, 92, 0.8);
+  --bs-gray-25: rgba(75, 70, 92, 0.015);
+  --bs-gray-50: rgba(75, 70, 92, 0.03);
   
-  /* Vuexy Theme Colors - Updated with brand colors */
-  --vuexy-purple: var(--brand-blue-3);
-  --vuexy-purple-dark: var(--brand-blue-4);
-  --vuexy-gradient-start: var(--brand-blue-1);
-  --vuexy-gradient-end: var(--brand-blue-5);
-  
-  /* Primary Colors - Using brand colors */
-  --primary: var(--brand-blue-3);
-  --primary-dark: var(--brand-blue-4);
-  --secondary: #82868B;
-  --success: #28C76F;
-  --warning: var(--brand-yellow);
-  --danger: #EA5455;
-  --info: var(--brand-blue-2);
+  /* Primary Colors - Vuexy Theme */
+  --primary: #7367f0;
+  --primary-dark: #685dd8;
+  --secondary: #a8aaae;
+  --success: #28c76f;
+  --warning: #ff9f43;
+  --danger: #ea5455;
+  --info: #00cfe8;
+  --light: #dfdfe3;
+  --dark: #4b4b4b;
   
   /* Layout */
   --sidebar-width: 260px;
@@ -34,24 +39,24 @@
   --border-radius: 0.375rem;
   --box-shadow: 0 0.25rem 1.125rem rgba(75, 70, 92, 0.1);
   
-  /* Light Mode Colors */
+  /* Light Mode Colors - Vuexy Theme */
   --bg-primary: #f8f7fa;
   --bg-secondary: #ffffff;
-  --text-primary: var(--brand-typeface);
-  --text-secondary: #6e6b7b;
-  --border-color: #d9dee3;
+  --text-primary: #6f6b7d;
+  --text-secondary: #a8aaae;
+  --border-color: #dbdade;
   --card-bg: #ffffff;
   --sidebar-bg: #ffffff;
   --header-bg: #ffffff;
   --menu-bg: #ffffff;
-  --menu-text: var(--brand-typeface);
-  --menu-hover: #7367f0;
-  --menu-active: var(--brand-blue-3);
+  --menu-text: #6f6b7d;
+  --menu-hover: rgba(115, 103, 240, 0.08);
+  --menu-active: #7367f0;
   --menu-active-bg: linear-gradient(72.47deg, #7367f0 22.16%, rgba(115, 103, 240, 0.7) 76.47%);
 }
 
 .dark {
-  /* Dark Mode Colors */
+  /* Dark Mode Colors - Vuexy Theme */
   --bg-primary: #161d31;
   --bg-secondary: #283046;
   --text-primary: #d0d2d6;
@@ -63,21 +68,25 @@
   --menu-bg: #283046;
   --menu-text: #7367f0;
   --menu-hover: #2f3749;
-  --menu-active: var(--brand-blue-2);
+  --menu-active: #7367f0;
   --menu-active-bg: linear-gradient(72.47deg, #7367f0 22.16%, rgba(115, 103, 240, 0.7) 76.47%);
 }
 
 @layer base {
   html {
-    font-family: 'Public Sans', 'Inter', system-ui, sans-serif;
+    font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    font-size: 16px;
   }
   
   body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
     font-size: 0.9375rem;
-    line-height: 1.53;
+    font-weight: 400;
+    line-height: 1.47;
     transition: background-color 0.3s ease, color 0.3s ease;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: rgba(75, 70, 92, 0);
   }
   
   * {
@@ -86,13 +95,13 @@
 }
 
 @layer components {
-  /* Primary Colors */
+  /* Primary Colors - Vuexy Theme */
   .bg-primary {
-    background-color: var(--primary);
+    background-color: var(--primary) !important;
   }
   
   .text-primary {
-    color: var(--primary);
+    color: var(--primary) !important;
   }
   
   .border-primary {
@@ -111,29 +120,38 @@
     color: var(--primary-dark);
   }
   
-  /* Brand Colors */
-  .bg-brand-blue-1 { background-color: var(--brand-blue-1); }
-  .bg-brand-blue-2 { background-color: var(--brand-blue-2); }
-  .bg-brand-blue-3 { background-color: var(--brand-blue-3); }
-  .bg-brand-blue-4 { background-color: var(--brand-blue-4); }
-  .bg-brand-blue-5 { background-color: var(--brand-blue-5); }
-  .bg-brand-yellow { background-color: var(--brand-yellow); }
+  /* Vuexy Theme Colors */
+  .bg-bs-purple { background-color: var(--bs-purple); }
+  .bg-bs-pink { background-color: var(--bs-pink); }
+  .bg-bs-red { background-color: var(--bs-red); }
+  .bg-bs-orange { background-color: var(--bs-orange); }
+  .bg-bs-yellow { background-color: var(--bs-yellow); }
+  .bg-bs-green { background-color: var(--bs-green); }
+  .bg-bs-teal { background-color: var(--bs-teal); }
+  .bg-bs-cyan { background-color: var(--bs-cyan); }
+  .bg-bs-black { background-color: var(--bs-black); }
+  .bg-bs-white { background-color: var(--bs-white); }
   
-  .text-brand-blue-1 { color: var(--brand-blue-1); }
-  .text-brand-blue-2 { color: var(--brand-blue-2); }
-  .text-brand-blue-3 { color: var(--brand-blue-3); }
-  .text-brand-blue-4 { color: var(--brand-blue-4); }
-  .text-brand-blue-5 { color: var(--brand-blue-5); }
-  .text-brand-yellow { color: var(--brand-yellow); }
-  .text-brand-typeface { color: var(--brand-typeface); }
+  .text-bs-purple { color: var(--bs-purple); }
+  .text-bs-pink { color: var(--bs-pink); }
+  .text-bs-red { color: var(--bs-red); }
+  .text-bs-orange { color: var(--bs-orange); }
+  .text-bs-yellow { color: var(--bs-yellow); }
+  .text-bs-green { color: var(--bs-green); }
+  .text-bs-teal { color: var(--bs-teal); }
+  .text-bs-cyan { color: var(--bs-cyan); }
+  .text-bs-black { color: var(--bs-black); }
+  .text-bs-white { color: var(--bs-white); }
 
-  /* Brand Color with Opacity */
-  .bg-brand-blue-1\/10 { background-color: rgba(110, 204, 221, 0.1); }
-  .bg-brand-blue-2\/10 { background-color: rgba(84, 200, 221, 0.1); }
-  .bg-brand-blue-3\/10 { background-color: rgba(20, 184, 218, 0.1); }
-  .bg-brand-blue-4\/10 { background-color: rgba(1, 152, 197, 0.1); }
-  .bg-brand-blue-5\/10 { background-color: rgba(0, 136, 186, 0.1); }
-  .bg-brand-yellow\/10 { background-color: rgba(246, 184, 12, 0.1); }
+  /* Vuexy Color with Opacity */
+  .bg-bs-purple\/10 { background-color: rgba(115, 103, 240, 0.1); }
+  .bg-bs-pink\/10 { background-color: rgba(232, 62, 140, 0.1); }
+  .bg-bs-red\/10 { background-color: rgba(234, 84, 85, 0.1); }
+  .bg-bs-orange\/10 { background-color: rgba(253, 126, 20, 0.1); }
+  .bg-bs-yellow\/10 { background-color: rgba(255, 159, 67, 0.1); }
+  .bg-bs-green\/10 { background-color: rgba(40, 199, 111, 0.1); }
+  .bg-bs-teal\/10 { background-color: rgba(32, 201, 151, 0.1); }
+  .bg-bs-cyan\/10 { background-color: rgba(0, 207, 232, 0.1); }
 
   /* Layout Components */
   .layout-wrapper {
@@ -542,17 +560,17 @@
     height: 0.75rem;
   }
 
-  /* Badge Label Colors */
+  /* Badge Label Colors - Vuexy Theme */
   .bg-label-info {
-    background: linear-gradient(135deg, rgba(20, 184, 218, 0.15), rgba(20, 184, 218, 0.1));
-    color: var(--brand-blue-3);
-    border-color: rgba(20, 184, 218, 0.2);
+    background: linear-gradient(135deg, rgba(0, 207, 232, 0.15), rgba(0, 207, 232, 0.1));
+    color: var(--bs-cyan);
+    border-color: rgba(0, 207, 232, 0.2);
   }
 
   .bg-label-warning {
-    background: linear-gradient(135deg, rgba(246, 184, 12, 0.15), rgba(246, 184, 12, 0.1));
-    color: var(--brand-yellow);
-    border-color: rgba(246, 184, 12, 0.2);
+    background: linear-gradient(135deg, rgba(255, 159, 67, 0.15), rgba(255, 159, 67, 0.1));
+    color: var(--bs-yellow);
+    border-color: rgba(255, 159, 67, 0.2);
   }
 
   .bg-label-success {
@@ -568,15 +586,15 @@
   }
 
   .bg-label-primary {
-    background: linear-gradient(135deg, rgba(20, 184, 218, 0.15), rgba(20, 184, 218, 0.1));
-    color: var(--brand-blue-3);
-    border-color: rgba(20, 184, 218, 0.2);
+    background: linear-gradient(135deg, rgba(115, 103, 240, 0.15), rgba(115, 103, 240, 0.1));
+    color: var(--bs-purple);
+    border-color: rgba(115, 103, 240, 0.2);
   }
 
   .bg-label-secondary {
-    background: linear-gradient(135deg, rgba(130, 134, 139, 0.15), rgba(130, 134, 139, 0.1));
+    background: linear-gradient(135deg, rgba(168, 170, 174, 0.15), rgba(168, 170, 174, 0.1));
     color: var(--secondary);
-    border-color: rgba(130, 134, 139, 0.2);
+    border-color: rgba(168, 170, 174, 0.2);
   }
 
   /* List Styles */
@@ -3242,17 +3260,17 @@
     height: 0.75rem;
   }
 
-  /* Badge Label Colors */
+  /* Badge Label Colors - Vuexy Theme */
   .bg-label-info {
-    background: linear-gradient(135deg, rgba(20, 184, 218, 0.15), rgba(20, 184, 218, 0.1));
-    color: var(--brand-blue-3);
-    border-color: rgba(20, 184, 218, 0.2);
+    background: linear-gradient(135deg, rgba(0, 207, 232, 0.15), rgba(0, 207, 232, 0.1));
+    color: var(--bs-cyan);
+    border-color: rgba(0, 207, 232, 0.2);
   }
 
   .bg-label-warning {
-    background: linear-gradient(135deg, rgba(246, 184, 12, 0.15), rgba(246, 184, 12, 0.1));
-    color: var(--brand-yellow);
-    border-color: rgba(246, 184, 12, 0.2);
+    background: linear-gradient(135deg, rgba(255, 159, 67, 0.15), rgba(255, 159, 67, 0.1));
+    color: var(--bs-yellow);
+    border-color: rgba(255, 159, 67, 0.2);
   }
 
   .bg-label-success {
@@ -3268,15 +3286,15 @@
   }
 
   .bg-label-primary {
-    background: linear-gradient(135deg, rgba(20, 184, 218, 0.15), rgba(20, 184, 218, 0.1));
-    color: var(--brand-blue-3);
-    border-color: rgba(20, 184, 218, 0.2);
+    background: linear-gradient(135deg, rgba(115, 103, 240, 0.15), rgba(115, 103, 240, 0.1));
+    color: var(--bs-purple);
+    border-color: rgba(115, 103, 240, 0.2);
   }
 
   .bg-label-secondary {
-    background: linear-gradient(135deg, rgba(130, 134, 139, 0.15), rgba(130, 134, 139, 0.1));
+    background: linear-gradient(135deg, rgba(168, 170, 174, 0.15), rgba(168, 170, 174, 0.1));
     color: var(--secondary);
-    border-color: rgba(130, 134, 139, 0.2);
+    border-color: rgba(168, 170, 174, 0.2);
   }
 
   @keyframes pulse {

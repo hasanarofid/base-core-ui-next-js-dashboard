@@ -87,8 +87,7 @@ export default function DashboardPage() {
         
 
         {/* CRM Statistics Cards */}
-        <CRMStats data={crmStatsData} />
-
+       
         {/* Quick Access Menu berdasarkan Role */}
         <div className="row mb-4">
           <div className="col-12">

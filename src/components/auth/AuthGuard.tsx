@@ -1,9 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 interface AuthGuardProps {
   children: React.ReactNode
@@ -11,53 +10,63 @@ interface AuthGuardProps {
   redirectTo?: string
 }
 
-export default function AuthGuard({ 
-  children, 
-  requireAuth = true, 
-  redirectTo = '/dashboard' 
-}: AuthGuardProps) {
-  const { isAuthenticated, isLoading } = useAuth()
+export default function AuthGuard({ children, requireAuth = true, redirectTo }: AuthGuardProps) {
+  const { user, isLoading } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     if (!isLoading) {
-      if (requireAuth && !isAuthenticated) {
+      if (requireAuth && !user) {
         // Jika memerlukan auth tapi tidak terautentikasi, redirect ke login
         router.push('/login')
-      } else if (!requireAuth && isAuthenticated) {
-        // Jika tidak memerlukan auth tapi sudah terautentikasi, redirect ke dashboard
-        router.push(redirectTo)
+      } else if (!requireAuth && user) {
+        // Jika tidak memerlukan auth tapi sudah terautentikasi, redirect ke halaman yang ditentukan atau dashboard
+        router.push(redirectTo || '/dashboard')
       }
     }
-  }, [isAuthenticated, isLoading, requireAuth, redirectTo, router])
+  }, [user, isLoading, requireAuth, redirectTo, router])
 
-  // Tampilkan loading spinner saat mengecek autentikasi
   if (isLoading) {
     return (
-      <LoadingSpinner 
-        size="lg" 
-        text="Loading..." 
-        className="min-h-screen" 
-      />
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-2 text-muted">Loading...</p>
+        </div>
+      </div>
     )
   }
 
-  // Jika sudah terautentikasi dan memerlukan auth, tampilkan children
-  if (requireAuth && isAuthenticated) {
-    return <>{children}</>
+  // Jika memerlukan auth dan tidak ada user, tampilkan loading (akan redirect)
+  if (requireAuth && !user) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Redirecting...</span>
+          </div>
+          <p className="mt-2 text-muted">Redirecting to login...</p>
+        </div>
+      </div>
+    )
   }
 
-  // Jika tidak memerlukan auth dan tidak terautentikasi, tampilkan children
-  if (!requireAuth && !isAuthenticated) {
-    return <>{children}</>
+  // Jika tidak memerlukan auth dan ada user, tampilkan loading (akan redirect)
+  if (!requireAuth && user) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Redirecting...</span>
+          </div>
+          <p className="mt-2 text-muted">Redirecting to dashboard...</p>
+        </div>
+      </div>
+    )
   }
 
-  // Jika kondisi tidak sesuai, tampilkan loading (akan redirect)
-  return (
-    <LoadingSpinner 
-      size="lg" 
-      text="Redirecting..." 
-      className="min-h-screen" 
-    />
-  )
+  return <>{children}</>
 } 

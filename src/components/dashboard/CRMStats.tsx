@@ -1,92 +1,59 @@
 'use client'
 
-import { 
-  DollarSign, 
-  Users, 
-  ShoppingCart, 
-  Activity, 
-  ArrowUpRight,
-  ArrowDownRight
-} from 'lucide-react'
-
-interface CRMStatsProps {
-  data: {
-    revenue: {
-      value: string
-      change: string
-      isPositive: boolean
-    }
-    leads: {
-      value: string
-      change: string
-      isPositive: boolean
-    }
-    orders: {
-      value: string
-      change: string
-      isPositive: boolean
-    }
-    conversion: {
-      value: string
-      change: string
-      isPositive: boolean
-    }
-  }
-}
-
-export default function CRMStats({ data }: CRMStatsProps) {
+export default function CRMStats() {
   const stats = [
     {
-      icon: DollarSign,
-      value: data.revenue.value,
-      label: 'Total Revenue',
-      change: data.revenue.change,
-      isPositive: data.revenue.isPositive,
-      color: 'from-brand-blue-3 to-brand-blue-4'
+      title: 'Total Revenue',
+      value: '$42.5k',
+      change: '+18.2%',
+      isPositive: true,
+      icon: 'ti ti-currency-dollar'
     },
     {
-      icon: Users,
-      value: data.leads.value,
-      label: 'Total Leads',
-      change: data.leads.change,
-      isPositive: data.leads.isPositive,
-      color: 'from-brand-blue-2 to-brand-blue-3'
+      title: 'Leads',
+      value: '1.2k',
+      change: '+12.5%',
+      isPositive: true,
+      icon: 'ti ti-users'
     },
     {
-      icon: ShoppingCart,
-      value: data.orders.value,
-      label: 'Total Orders',
-      change: data.orders.change,
-      isPositive: data.orders.isPositive,
-      color: 'from-brand-blue-1 to-brand-blue-2'
+      title: 'Orders',
+      value: '6,440',
+      change: '+8.7%',
+      isPositive: true,
+      icon: 'ti ti-shopping-cart'
     },
     {
-      icon: Activity,
-      value: data.conversion.value,
-      label: 'Conversion Rate',
-      change: data.conversion.change,
-      isPositive: data.conversion.isPositive,
-      color: 'from-brand-blue-4 to-brand-blue-5'
+      title: 'Conversion',
+      value: '28.5%',
+      change: '+2.1%',
+      isPositive: true,
+      icon: 'ti ti-chart-bar'
     }
   ]
 
   return (
-    <div className="row mb-4">
+    <div className="row">
       {stats.map((stat, index) => (
-        <div key={index} className="col-lg-3 col-md-6 mb-4">
-          <div className="stats-card">
-            <div className="stats-icon">
-              <stat.icon className="w-6 h-6 text-white" />
-            </div>
-            <div className="stats-value">{stat.value}</div>
-            <div className="stats-label">{stat.label}</div>
-            <div className={`stats-change ${stat.isPositive ? 'positive' : 'negative'}`}>
-              {stat.isPositive ? (
-                <ArrowUpRight className="w-4 h-4 me-1" />
-              ) : (
-                <ArrowDownRight className="w-4 h-4 me-1" />
-              )}
-              {stat.change}
+        <div key={index} className="col-lg-3 col-md-6 col-12 mb-4">
+          <div className="card">
+            <div className="card-body">
+              <div className="d-flex justify-content-between">
+                <div className="card-info">
+                  <p className="card-text">{stat.title}</p>
+                  <div className="d-flex align-items-end mt-2">
+                    <h4 className="card-title mb-0 me-2">{stat.value}</h4>
+                    <small className={`text-${stat.isPositive ? 'success' : 'danger'} fw-semibold`}>
+                      {stat.change}
+                    </small>
+                  </div>
+                </div>
+                <div className="avatar">
+                  <div className="avatar-initial rounded bg-label-primary">
+                    <i className={`${stat.icon} ti-sm`}></i>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -1,10 +1,7 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { LoginUser, LoginResponse } from '@/types/auth'
-import { authAPI } from '@/lib/api'
-import { config } from '@/config'
+import React, { createContext, useContext, useState, useEffect } from 'react'
+import { LoginUser } from '@/types/auth'
 
 interface AuthContextType {
   user: LoginUser | null
@@ -13,7 +10,6 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   checkAuth: () => Promise<void>
-  updateUser: (user: LoginUser) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -21,48 +17,22 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<LoginUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const router = useRouter()
 
   const checkAuth = async () => {
     try {
-      const token = localStorage.getItem(config.auth.tokenKey)
-      const userData = localStorage.getItem(config.auth.userKey)
+      const token = localStorage.getItem('token')
+      const userData = localStorage.getItem('user')
       
-      if (!token) {
-        setIsLoading(false)
-        return
-      }
-
-      // Jika ada user data di localStorage, gunakan itu
-      if (userData) {
-        try {
-          const user = JSON.parse(userData) as LoginUser
-          setUser(user)
-          setIsLoading(false)
-          return
-        } catch (parseError) {
-          console.error('Failed to parse user data:', parseError)
-        }
-      }
-
-      // Jika tidak ada user data, coba ambil dari API
-      try {
-        const response = await authAPI.me()
-        const userData = response.data as LoginResponse
-        setUser(userData.data.user)
-      } catch (apiError) {
-        console.error('Auth API check failed:', apiError)
-        // Jika API gagal, hapus token dan user data
-        localStorage.removeItem(config.auth.tokenKey)
-        localStorage.removeItem(config.auth.refreshTokenKey)
-        localStorage.removeItem(config.auth.userKey)
-        setUser(null)
+      if (token && userData) {
+        const parsedUser = JSON.parse(userData)
+        setUser(parsedUser)
       }
     } catch (error) {
-      console.error('Auth check failed:', error)
-      localStorage.removeItem(config.auth.tokenKey)
-      localStorage.removeItem(config.auth.refreshTokenKey)
-      localStorage.removeItem(config.auth.userKey)
+      console.error('Auth check error:', error)
+      // Clear invalid data
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
       setUser(null)
     } finally {
       setIsLoading(false)
@@ -71,72 +41,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await authAPI.login({ email, password })
+      setIsLoading(true)
       
-      // Handle response structure sesuai dengan Postman
-      // Response: { message: "User logged in successfully", data: { user: {...}, token: "..." } }
-      const loginData = response.data as LoginResponse
-      
-      if (!loginData.data || !loginData.data.token || !loginData.data.user) {
-        throw new Error('Response tidak valid dari server')
+      // Simulate API call
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Login failed')
       }
 
-      const { token, user } = loginData.data
-
-      localStorage.setItem(config.auth.tokenKey, token)
-      localStorage.setItem(config.auth.userKey, JSON.stringify(user))
-      setUser(user)
+      const data = await response.json()
       
-      // Redirect to dashboard
-      router.push('/dashboard')
-    } catch (error: unknown) {
+      // Store in localStorage (simulating cookies)
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('refreshToken', data.refreshToken)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      
+      setUser(data.user)
+    } catch (error) {
       console.error('Login error:', error)
-      
-      // Handle specific error messages from API
-      if (error && typeof error === 'object' && 'response' in error) {
-        const apiError = error as { response?: { data?: { message?: string } } }
-        if (apiError.response?.data?.message) {
-          throw new Error(apiError.response.data.message)
-        }
-      }
-      
-      if (error instanceof Error) {
-        throw new Error(error.message)
-      } else {
-        throw new Error('Terjadi kesalahan saat login')
-      }
+      throw error
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const logout = async () => {
     try {
-      // Call logout API terlebih dahulu
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
+      // Call logout API
+      const token = localStorage.getItem('token')
+      if (token) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        })
+      }
     } catch (error) {
       console.error('Logout API error:', error)
     } finally {
-      // Clear local storage dan state
-      localStorage.removeItem(config.auth.tokenKey)
-      localStorage.removeItem(config.auth.refreshTokenKey)
-      localStorage.removeItem(config.auth.userKey)
+      // Clear local storage
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
       setUser(null)
-      
-      // Redirect ke login
-      router.push('/login')
     }
-  }
-
-  const updateUser = (user: LoginUser) => {
-    // Update localStorage
-    localStorage.setItem(config.auth.userKey, JSON.stringify(user))
-    
-    // Update state
-    setUser(user)
   }
 
   useEffect(() => {
@@ -150,7 +107,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     logout,
     checkAuth,
-    updateUser,
   }
 
   return (

@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Lock, Eye, EyeOff, Loader2, Building, Shield, Users } from 'lucide-react';
+import { Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import AuthGuard from '@/components/auth/AuthGuard';
 
@@ -68,48 +68,34 @@ function ResetPasswordForm() {
 
       const result = await response.json();
 
-      if (!response.ok) {
+      if (response.ok) {
+        await Swal.fire({
+          title: 'Password Berhasil Diubah!',
+          text: 'Password Anda telah berhasil diubah. Silakan login dengan password baru.',
+          icon: 'success',
+          confirmButtonText: 'OK'
+        });
+
+        reset();
+        router.push('/login');
+      } else {
         throw new Error(result.message || 'Terjadi kesalahan saat reset password');
       }
-
-      // Tampilkan splash success
-      Swal.fire({
-        title: "Password Berhasil Diubah!",
-        text: "Password Anda telah berhasil diubah. Silakan login dengan password baru.",
-        icon: "success",
-        confirmButtonColor: "#28a745",
-        timer: 3000,
-        timerProgressBar: true,
-        showConfirmButton: false
-      });
-
-      // Reset form
-      reset();
-      
-      // Redirect ke login setelah 3 detik
-      setTimeout(() => {
-        router.push('/login');
-      }, 3000);
-
     } catch (error) {
       console.error('Error resetting password:', error);
       
       let errorMessage = 'Terjadi kesalahan saat reset password';
-      
       if (error instanceof Error) {
         errorMessage = error.message;
       }
       
       setError(errorMessage);
       
-      // Tampilkan splash error
-      Swal.fire({
-        title: "Error!",
+      await Swal.fire({
+        title: 'Gagal!',
         text: errorMessage,
-        icon: "error",
-        confirmButtonColor: "#dc3545",
-        timer: 5000,
-        timerProgressBar: true
+        icon: 'error',
+        confirmButtonText: 'OK'
       });
     } finally {
       setLoading(false);
@@ -117,71 +103,37 @@ function ResetPasswordForm() {
   };
 
   return (
-    <div className="login-wrapper">
-      <div className="login-container">
-        {/* Left Section - Illustration */}
-        <div className="auth-left">
-          <div className="auth-bg">
-            <div className="gradient-bg"></div>
-            <div className="bg-element bg-element-1"></div>
-            <div className="bg-element bg-element-2"></div>
-            <div className="bg-element bg-element-3"></div>
-            
-            <div className="auth-content">
-              <div className="auth-header">
-                <div className="auth-icon">
-                  <Building className="icon" />
-                </div>
-                <h1>Tenant System</h1>
-                <p>Platform Manajemen Tenant Terdepan</p>
-              </div>
-              
-              <div className="feature-grid">
-                <div className="feature-card">
-                  <div className="feature-icon">
-                    <Building className="icon" />
-                  </div>
-                  <h3>Multi-Tenant</h3>
-                  <p>Kelola multiple tenant</p>
-                </div>
-                
-                <div className="feature-card">
-                  <div className="feature-icon">
-                    <Shield className="icon" />
-                  </div>
-                  <h3>Secure</h3>
-                  <p>Keamanan data enterprise</p>
-                </div>
-                
-                <div className="feature-card">
-                  <div className="feature-icon">
-                    <Users className="icon" />
-                  </div>
-                  <h3>Scalable</h3>
-                  <p>Tumbuh bersama bisnis</p>
-                </div>
-              </div>
+    <>
+      {/* Loading Overlay */}
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loading-content">
+            <div className="loading-spinner">
+              <Loader2 className="spinner-icon" />
             </div>
+            <h4>Mengubah password...</h4>
+            <p>Mohon tunggu sebentar</p>
           </div>
         </div>
-
-        {/* Right Section - Reset Password Form */}
-        <div className="auth-right">
-          <div className="login-form-container">
+      )}
+      
+      <div className="reset-wrapper">
+        <div className="reset-container">
+          <div className="reset-form-wrapper">
             {/* Logo */}
             <div className="app-brand">
               <Link href="/" className="app-brand-link">
                 <div className="app-brand-logo">
                   <Image
                     src="/logo.jpeg"
-                    alt="Tenant System Logo"
+                    alt="Innovia Logo"
                     width={32}
                     height={32}
                     className="logo-image"
                     priority
                   />
                 </div>
-                <span className="app-brand-text">Tenant System</span>
+                <span className="app-brand-text">Innovia</span>
               </Link>
             </div>
 
@@ -192,7 +144,7 @@ function ResetPasswordForm() {
             </div>
 
             {/* Reset Password Form */}
-            <form className="login-form" onSubmit={handleSubmit(onSubmit)}>
+            <form className="reset-form" onSubmit={handleSubmit(onSubmit)}>
               {error && (
                 <div className="error-alert">
                   <svg className="error-icon" fill="currentColor" viewBox="0 0 20 20">
@@ -267,12 +219,12 @@ function ResetPasswordForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="login-button"
+                className="reset-button"
               >
                 {loading ? (
                   <div className="button-content">
                     <Loader2 className="spinner" />
-                    Mengubah Password...
+                    Mengubah password...
                   </div>
                 ) : (
                   'Reset Password'
@@ -281,7 +233,7 @@ function ResetPasswordForm() {
             </form>
                 
             {/* Login Link */}
-            <p className="register-link">
+            <p className="login-link">
               <span>Ingat password? </span>
               <Link href="/login">Masuk di sini</Link>
             </p>
@@ -290,207 +242,71 @@ function ResetPasswordForm() {
       </div>
 
       <style jsx>{`
-        .login-wrapper {
-          height: 100vh;
-          width: 100vw;
-          overflow: hidden;
+        .loading-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.8);
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          z-index: 9999;
         }
         
-        .login-container {
-          display: flex;
-          width: 100%;
-          height: 100%;
-          max-width: 1000px;
-          max-height: 700px;
-          background: white;
-          border-radius: 8px;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-          overflow: hidden;
-        }
-        
-        .auth-left {
-          flex: 1;
-          position: relative;
-          display: none;
-        }
-        
-        @media (min-width: 1024px) {
-          .auth-left {
-            display: block;
-          }
-        }
-        
-        .auth-bg {
-          position: relative;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-        }
-        
-        .gradient-bg {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .bg-element {
-          position: absolute;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.1);
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        
-        .bg-element-1 {
-          top: 8%;
-          left: 8%;
-          width: 60px;
-          height: 60px;
-        }
-        
-        .bg-element-2 {
-          top: 15%;
-          right: 15%;
-          width: 40px;
-          height: 40px;
-          animation-delay: 1s;
-        }
-        
-        .bg-element-3 {
-          bottom: 15%;
-          left: 15%;
-          width: 70px;
-          height: 70px;
-          animation-delay: 2s;
-        }
-        
-        .auth-content {
-          position: relative;
-          z-index: 10;
+        .loading-content {
           text-align: center;
           color: white;
-          padding: 2rem;
-          max-width: 400px;
         }
         
-        .auth-header {
-          margin-bottom: 2rem;
+        .loading-spinner {
+          margin-bottom: 1rem;
         }
         
-        .auth-icon {
-          width: 80px;
-          height: 80px;
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto 1.5rem;
-          backdrop-filter: blur(10px);
+        .spinner-icon {
+          width: 3rem;
+          height: 3rem;
+          animation: spin 1s linear infinite;
         }
         
-        .auth-header h1 {
-          font-size: 2.5rem;
-          font-weight: 700;
+        .loading-content h4 {
           margin-bottom: 0.5rem;
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .auth-header p {
-          font-size: 1.1rem;
-          opacity: 0.9;
-          margin-bottom: 2rem;
-        }
-        
-        .feature-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-          gap: 1rem;
-          margin-top: 2rem;
-        }
-        
-        .feature-card {
-          background: rgba(255, 255, 255, 0.1);
-          padding: 1rem;
-          border-radius: 12px;
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .feature-icon {
-          width: 40px;
-          height: 40px;
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto 0.5rem;
-        }
-        
-        .feature-icon .icon {
-          width: 1.25rem;
-          height: 1.25rem;
-          color: white;
-        }
-        
-        .feature-card h3 {
-          font-size: 0.875rem;
+          font-size: 1.25rem;
           font-weight: 600;
-          margin-bottom: 0.25rem;
-          color: white;
         }
         
-        .feature-card p {
-          font-size: 0.75rem;
+        .loading-content p {
+          margin: 0;
           opacity: 0.8;
-          color: white;
+          font-size: 0.875rem;
         }
-        
-        .auth-right {
-          flex: 1;
+
+        .reset-wrapper {
+          min-height: 100vh;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 2rem;
-          overflow-y: auto;
-          max-height: 100vh;
-          scroll-behavior: smooth;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          padding: 1rem;
         }
         
-        .auth-right::-webkit-scrollbar {
-          width: 6px;
-        }
-        
-        .auth-right::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 3px;
-        }
-        
-        .auth-right::-webkit-scrollbar-thumb {
-          background: #c1c1c1;
-          border-radius: 3px;
-        }
-        
-        .auth-right::-webkit-scrollbar-thumb:hover {
-          background: #a8a8a8;
-        }
-        
-        .login-form-container {
+        .reset-container {
           width: 100%;
           max-width: 400px;
-          min-height: fit-content;
-          padding: 1rem 0 2rem 0;
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+          overflow: hidden;
+        }
+        
+        .reset-form-wrapper {
+          padding: 2rem;
         }
         
         .app-brand {
           text-align: center;
-          margin-bottom: 2rem;
+          margin-bottom: 1.5rem;
         }
         
         .app-brand-link {
@@ -524,7 +340,7 @@ function ResetPasswordForm() {
         
         .welcome-text {
           text-align: center;
-          margin-bottom: 2rem;
+          margin-bottom: 1.5rem;
         }
         
         .welcome-text h3 {
@@ -537,12 +353,13 @@ function ResetPasswordForm() {
         .welcome-text p {
           color: #6b7280;
           font-size: 0.875rem;
+          margin: 0;
         }
         
-        .login-form {
+        .reset-form {
           display: flex;
           flex-direction: column;
-          gap: 1.5rem;
+          gap: 1rem;
         }
         
         .error-alert {
@@ -551,7 +368,6 @@ function ResetPasswordForm() {
           color: #ef4444;
           padding: 0.75rem;
           border-radius: 8px;
-          margin-bottom: 1rem;
           display: flex;
           align-items: center;
           gap: 0.5rem;
@@ -591,6 +407,11 @@ function ResetPasswordForm() {
           z-index: 10;
         }
         
+        .input-icon .icon {
+          width: 1rem;
+          height: 1rem;
+        }
+        
         .form-input {
           width: 100%;
           padding: 0.75rem 0.75rem 0.75rem 2.5rem;
@@ -622,6 +443,11 @@ function ResetPasswordForm() {
           z-index: 10;
         }
         
+        .password-toggle .icon {
+          width: 1rem;
+          height: 1rem;
+        }
+        
         .password-toggle:hover {
           color: #6b7280;
         }
@@ -629,34 +455,35 @@ function ResetPasswordForm() {
         .error-text {
           color: #ef4444;
           font-size: 0.75rem;
-          margin-top: 0.25rem;
         }
         
-        .login-button {
+        .reset-button {
           width: 100%;
-          padding: 0.75rem 1rem;
+          padding: 0.875rem 1rem;
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
           border: none;
           border-radius: 8px;
           font-size: 0.875rem;
-          font-weight: 500;
+          font-weight: 600;
           cursor: pointer;
           transition: all 0.2s;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 0.5rem;
+          margin-top: 0.5rem;
         }
         
-        .login-button:hover:not(:disabled) {
+        .reset-button:hover:not(:disabled) {
           transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+          box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
         }
         
-        .login-button:disabled {
-          opacity: 0.6;
+        .reset-button:disabled {
+          opacity: 0.7;
           cursor: not-allowed;
+          transform: none;
         }
         
         .button-content {
@@ -670,35 +497,26 @@ function ResetPasswordForm() {
           animation: spin 1s linear infinite;
         }
         
-        .register-link {
+        .login-link {
           text-align: center;
           font-size: 0.875rem;
           color: #6b7280;
           margin: 1rem 0 0 0;
         }
         
-        .register-link a {
+        .login-link a {
           color: #667eea;
           text-decoration: none;
           font-weight: 500;
         }
         
-        .register-link a:hover {
+        .login-link a:hover {
           color: #5a6fd8;
         }
         
         .icon {
           width: 1rem;
           height: 1rem;
-        }
-        
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.5;
-          }
         }
         
         @keyframes spin {
@@ -710,38 +528,28 @@ function ResetPasswordForm() {
           }
         }
         
-        @media (max-width: 1023px) {
-          .login-container {
-            max-height: none;
-            border-radius: 0;
-            box-shadow: none;
+        @media (max-width: 480px) {
+          .reset-wrapper {
+            padding: 0.5rem;
           }
           
-          .auth-right {
-            padding: 1rem;
-            overflow-y: auto;
-            max-height: 100vh;
+          .reset-form-wrapper {
+            padding: 1.5rem;
           }
           
-          .login-form-container {
-            max-width: 100%;
-            min-height: fit-content;
-            padding: 1rem 0 2rem 0;
+          .reset-container {
+            border-radius: 8px;
           }
           
-          .auth-content {
-            padding: 1rem;
+          .welcome-text h3 {
+            font-size: 1.25rem;
           }
           
-          .auth-header h1 {
-            font-size: 2rem;
-          }
-          
-          .auth-header p {
-            font-size: 1rem;
+          .app-brand-text {
+            font-size: 1.125rem;
           }
         }
       `}</style>
-    </div>
+    </>
   );
 } 

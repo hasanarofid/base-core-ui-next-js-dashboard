@@ -81,10 +81,15 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         </Link>
 
        
-        <a onClick={handleToggleClick} href="javascript:void(0);" className="layout-menu-toggle menu-link text-large ms-auto">
-              <i className="ti menu-toggle-icon d-none d-xl-block ti-sm align-middle"></i>
-              <i className="ti ti-x d-block d-xl-none ti-sm align-middle"></i>
-            </a>
+        <button 
+          type="button"
+          onClick={handleToggleClick} 
+          className="layout-menu-toggle menu-link text-large ms-auto"
+          style={{ border: 'none', background: 'none' }}
+        >
+          <i className="ti menu-toggle-icon d-none d-xl-block ti-sm align-middle"></i>
+          <i className="ti ti-x d-block d-xl-none ti-sm align-middle"></i>
+        </button>
       </div>
 
       <div className="menu-inner-shadow"></div>

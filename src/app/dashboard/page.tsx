@@ -2,13 +2,14 @@
 
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import UserInfo from '@/components/dashboard/UserInfo'
+import AuthGuard from '@/components/auth/AuthGuard'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function DashboardPage() {
   const { user } = useAuth()
 
   return (
-    <>
+    <AuthGuard requireAuth={true}>
       <style jsx>{`
         .hover-shadow-sm:hover {
           box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
@@ -239,6 +240,6 @@ export default function DashboardPage() {
 
         </div>
       </DashboardLayout>
-    </>
+    </AuthGuard>
   )
 } 

@@ -53,17 +53,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (!response.ok) {
-        throw new Error('Login failed')
+        const errorData = await response.json().catch(() => ({}))
+        const errorMessage = errorData.message || `Login failed with status: ${response.status}`
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
+      console.log('✅ Login API response:', data)
       
-      // Store in localStorage (simulating cookies)
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('refreshToken', data.refreshToken)
-      localStorage.setItem('user', JSON.stringify(data.user))
-      
-      setUser(data.user)
+      // API response structure: { message: string, data: { user: User, token: string } }
+      if (data.data && data.data.user && data.data.token) {
+        // Store in localStorage (simulating cookies)
+        localStorage.setItem('token', data.data.token)
+        localStorage.setItem('user', JSON.stringify(data.data.user))
+        
+        setUser(data.data.user)
+        console.log('🎯 User set successfully:', data.data.user)
+        
+        // Redirect to dashboard after successful login
+        window.location.href = '/dashboard'
+      } else {
+        throw new Error('Invalid response structure from login API')
+      }
     } catch (error) {
       console.error('Login error:', error)
       throw error
@@ -73,10 +84,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = async () => {
+    console.log('🔄 Starting logout process...')
     try {
       // Call logout API
       const token = localStorage.getItem('token')
       if (token) {
+        console.log('📡 Calling logout API...')
         await fetch('/api/auth/logout', {
           method: 'POST',
           headers: {
@@ -84,15 +97,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             'Content-Type': 'application/json',
           },
         })
+        console.log('✅ Logout API completed')
       }
     } catch (error) {
       console.error('Logout API error:', error)
     } finally {
+      console.log('🧹 Clearing local storage and redirecting...')
       // Clear local storage
       localStorage.removeItem('token')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('user')
       setUser(null)
+      
+      // Redirect to login page
+      console.log('🔄 Redirecting to /login...')
+      window.location.href = '/login'
     }
   }
 

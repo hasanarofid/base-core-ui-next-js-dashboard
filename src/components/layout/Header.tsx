@@ -81,16 +81,17 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
       setIsUserDropdownOpen(false)
       
       await logout()
+      // Logout success - redirect sudah ditangani di AuthContext
     } catch (error) {
       console.error('Logout error:', error)
       // Fallback: clear local storage dan redirect manual
       localStorage.removeItem('token')
       localStorage.removeItem('refreshToken')
       localStorage.removeItem('user')
-      router.push('/login')
-    } finally {
       setIsLoggingOut(false)
+      router.push('/login')
     }
+    // Tidak perlu finally karena redirect akan terjadi
   }
 
   // Get user initials for avatar
@@ -141,44 +142,47 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
         <ul className="navbar-nav flex-row align-items-center ms-auto">
           {/* Style Switcher */}
           <li className="nav-item me-2 me-xl-0">
-            <a 
+            <button 
+              type="button"
               className="nav-link style-switcher-toggle hide-arrow" 
-              href="javascript:void(0);"
               onClick={toggleDarkMode}
+              style={{ border: 'none', background: 'none' }}
             >
               {isDarkMode ? (
                 <i className="ti ti-sun ti-md"></i>
               ) : (
                 <i className="ti ti-moon ti-md"></i>
               )}
-            </a>
+            </button>
           </li>
 
           {/* Notifications */}
           <li className="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-1" ref={notificationsDropdownRef}>
-            <a
+            <button
+              type="button"
               className="nav-link dropdown-toggle hide-arrow"
-              href="javascript:void(0);"
               onClick={toggleNotificationsDropdown}
+              style={{ border: 'none', background: 'none' }}
             >
               <i className="ti ti-bell ti-md"></i>
               <span className="badge bg-danger rounded-pill badge-notifications">3</span>
-            </a>
+            </button>
 
             {isNotificationsDropdownOpen && (
               <ul className="dropdown-menu dropdown-menu-end py-0 show" style={{ display: 'block', position: 'absolute', zIndex: 1000 }}>
                 <li className="dropdown-menu-header border-bottom">
                   <div className="dropdown-header d-flex align-items-center py-3">
                     <h5 className="text-body mb-0 me-auto">Notifications</h5>
-                    <a
-                      href="javascript:void(0)"
+                    <button
+                      type="button"
                       className="dropdown-notifications-all text-body"
                       data-bs-toggle="tooltip"
                       data-bs-placement="top"
                       title="Mark all as read"
+                      style={{ border: 'none', background: 'none', padding: '4px' }}
                     >
                       <i className="ti ti-mail-opened fs-4"></i>
-                    </a>
+                    </button>
                   </div>
                 </li>
                 <li className="dropdown-notifications-list scrollable-container">
@@ -201,12 +205,12 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                             <small className="text-muted">{notification.time}</small>
                           </div>
                           <div className="flex-shrink-0 dropdown-notifications-actions">
-                            <a href="javascript:void(0)" className="dropdown-notifications-read">
+                            <button type="button" className="dropdown-notifications-read" style={{ border: 'none', background: 'none', padding: '4px' }}>
                               <span className="badge badge-dot"></span>
-                            </a>
-                            <a href="javascript:void(0)" className="dropdown-notifications-archive">
+                            </button>
+                            <button type="button" className="dropdown-notifications-archive" style={{ border: 'none', background: 'none', padding: '4px' }}>
                               <span className="ti ti-x"></span>
-                            </a>
+                            </button>
                           </div>
                         </div>
                       </li>
@@ -214,11 +218,13 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                   </ul>
                 </li>
                 <li className="dropdown-menu-footer border-top">
-                  <a
-                    href="javascript:void(0);"
-                    className="dropdown-item d-flex justify-content-center text-primary p-2 h-px-40 mb-1 align-items-center">
+                  <button
+                    type="button"
+                    className="dropdown-item d-flex justify-content-center text-primary p-2 h-px-40 mb-1 align-items-center"
+                    style={{ border: 'none', background: 'none', width: '100%' }}
+                  >
                     View all notifications
-                  </a>
+                  </button>
                 </li>
               </ul>
             )}
@@ -226,22 +232,23 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
 
           {/* User Dropdown */}
           <li className="nav-item navbar-dropdown dropdown-user dropdown" ref={userDropdownRef}>
-            <a 
+            <button
+              type="button"
               className="nav-link dropdown-toggle hide-arrow" 
-              href="javascript:void(0);"
               onClick={toggleUserDropdown}
+              style={{ border: 'none', background: 'none' }}
             >
               <div className="avatar avatar-online">
                 <div className="avatar-initial rounded-circle bg-label-primary">
                   <span className="text-white text-sm font-medium">{getUserInitials()}</span>
                 </div>
               </div>
-            </a>
+            </button>
 
             {isUserDropdownOpen && (
               <ul className="dropdown-menu dropdown-menu-end show" style={{ display: 'block', position: 'absolute', zIndex: 1000 }}>
                 <li>
-                  <a className="dropdown-item" href="javascript:void(0);">
+                  <div className="dropdown-item">
                     <div className="d-flex">
                       <div className="flex-shrink-0 me-3">
                         <div className="avatar avatar-online">
@@ -255,7 +262,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                         <small className="text-muted">{getUserRole()}</small>
                       </div>
                     </div>
-                  </a>
+                  </div>
                 </li>
                 <li>
                   <div className="dropdown-divider"></div>
@@ -276,14 +283,16 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
                   <div className="dropdown-divider"></div>
                 </li>
                 <li>
-                  <a 
+                  <button 
+                    type="button"
                     className="dropdown-item" 
-                    href="javascript:void(0);"
                     onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    style={{ border: 'none', background: 'none', width: '100%', textAlign: 'left' }}
                   >
                     <i className={cn("ti ti-logout me-2 ti-sm", isLoggingOut && "ti-spin")}></i>
                     <span className="align-middle">{isLoggingOut ? 'Logging out...' : 'Log Out'}</span>
-                  </a>
+                  </button>
                 </li>
               </ul>
             )}

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Lock, Mail, Eye, EyeOff, Loader2, Building, Shield, Users } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -12,8 +12,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/contexts/ToastContext'
 
 const loginSchema = z.object({
-  email: z.string().email('Email tidak valid'),
-  password: z.string().min(6, 'Password minimal 6 karakter'),
+  email: z.string().min(1, 'Email atau username harus diisi'),
+  password: z.string().min(1, 'Password harus diisi'),
 })
 
 type LoginFormData = z.infer<typeof loginSchema>
@@ -83,71 +83,37 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="login-wrapper">
-      <div className="login-container">
-        {/* Left Section - Illustration */}
-        <div className="auth-left">
-          <div className="auth-bg">
-            <div className="gradient-bg"></div>
-            <div className="bg-element bg-element-1"></div>
-            <div className="bg-element bg-element-2"></div>
-            <div className="bg-element bg-element-3"></div>
-            
-            <div className="auth-content">
-              <div className="auth-header">
-                <div className="auth-icon">
-                  <Building className="icon" />
-                </div>
-                <h1>Tenant System</h1>
-                <p>Platform Manajemen Tenant Terdepan</p>
-              </div>
-              
-              <div className="feature-grid">
-                <div className="feature-card">
-                  <div className="feature-icon">
-                    <Building className="icon" />
-                  </div>
-                  <h3>Multi-Tenant</h3>
-                  <p>Kelola multiple tenant</p>
-                </div>
-                
-                <div className="feature-card">
-                  <div className="feature-icon">
-                    <Shield className="icon" />
-                  </div>
-                  <h3>Secure</h3>
-                  <p>Keamanan data enterprise</p>
-                </div>
-                
-                <div className="feature-card">
-                  <div className="feature-icon">
-                    <Users className="icon" />
-                  </div>
-                  <h3>Scalable</h3>
-                  <p>Tumbuh bersama bisnis</p>
-                </div>
-              </div>
+    <>
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="loading-overlay">
+          <div className="loading-content">
+            <div className="loading-spinner">
+              <Loader2 className="spinner-icon" />
             </div>
+            <h4>Sedang masuk...</h4>
+            <p>Mohon tunggu sebentar</p>
           </div>
         </div>
-
-        {/* Right Section - Login Form */}
-        <div className="auth-right">
-          <div className="login-form-container">
+      )}
+      
+      <div className="login-wrapper">
+        <div className="login-container">
+          <div className="login-form-wrapper">
             {/* Logo */}
             <div className="app-brand">
               <Link href="/" className="app-brand-link">
                 <div className="app-brand-logo">
                   <Image
                     src="/logo.jpeg"
-                    alt="Tenant System Logo"
+                    alt="Innovia Logo"
                     width={32}
                     height={32}
                     className="logo-image"
                     priority
                   />
                 </div>
-                <span className="app-brand-text">Tenant System</span>
+                <span className="app-brand-text">Innovia</span>
               </Link>
             </div>
 
@@ -159,6 +125,7 @@ export default function LoginForm() {
 
             {/* Login Form */}
             <form className="login-form" onSubmit={handleSubmit(onSubmit)}>
+              {/* Error Alert */}
               {error && (
                 <div className="error-alert">
                   <svg className="error-icon" fill="currentColor" viewBox="0 0 20 20">
@@ -234,7 +201,7 @@ export default function LoginForm() {
                 </Link>
               </div>
 
-              {/* Sign In Button */}
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isLoading}
@@ -250,13 +217,8 @@ export default function LoginForm() {
                 )}
               </button>
             </form>
-                
-            {/* Divider */}
-            {/* <div className="divider">
-              <span>atau</span>
-            </div> */}
 
-            {/* Create Account Link */}
+            {/* Register Link */}
             <p className="register-link">
               <span>Belum punya akun? </span>
               <Link href="/register">Daftar sekarang</Link>
@@ -266,207 +228,71 @@ export default function LoginForm() {
       </div>
 
       <style jsx>{`
+        .loading-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+        }
+        
+        .loading-content {
+          text-align: center;
+          color: white;
+        }
+        
+        .loading-spinner {
+          margin-bottom: 1rem;
+        }
+        
+        .spinner-icon {
+          width: 3rem;
+          height: 3rem;
+          animation: spin 1s linear infinite;
+        }
+        
+        .loading-content h4 {
+          margin-bottom: 0.5rem;
+          font-size: 1.25rem;
+          font-weight: 600;
+        }
+        
+        .loading-content p {
+          margin: 0;
+          opacity: 0.8;
+          font-size: 0.875rem;
+        }
+
         .login-wrapper {
-          height: 100vh;
-          width: 100vw;
-          overflow: hidden;
+          min-height: 100vh;
           display: flex;
           align-items: center;
           justify-content: center;
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          padding: 1rem;
         }
         
         .login-container {
-          display: flex;
           width: 100%;
-          height: 100%;
-          max-width: 1000px;
-          max-height: 700px;
+          max-width: 400px;
           background: white;
-          border-radius: 8px;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-          overflow: hidden;
-        }
-        
-        .auth-left {
-          flex: 1;
-          position: relative;
-          display: none;
-        }
-        
-        @media (min-width: 1024px) {
-          .auth-left {
-            display: block;
-          }
-        }
-        
-        .auth-bg {
-          position: relative;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-        }
-        
-        .gradient-bg {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .bg-element {
-          position: absolute;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.1);
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        
-        .bg-element-1 {
-          top: 8%;
-          left: 8%;
-          width: 60px;
-          height: 60px;
-        }
-        
-        .bg-element-2 {
-          top: 15%;
-          right: 15%;
-          width: 40px;
-          height: 40px;
-          animation-delay: 1s;
-        }
-        
-        .bg-element-3 {
-          bottom: 15%;
-          left: 15%;
-          width: 70px;
-          height: 70px;
-          animation-delay: 2s;
-        }
-        
-        .auth-content {
-          position: relative;
-          z-index: 10;
-          text-align: center;
-          color: white;
-          padding: 2rem;
-          max-width: 400px;
-        }
-        
-        .auth-header {
-          margin-bottom: 2rem;
-        }
-        
-        .auth-icon {
-          width: 80px;
-          height: 80px;
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto 1.5rem;
-          backdrop-filter: blur(10px);
-        }
-        
-        .auth-header h1 {
-          font-size: 2.5rem;
-          font-weight: 700;
-          margin-bottom: 0.5rem;
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .auth-header p {
-          font-size: 1.1rem;
-          opacity: 0.9;
-          margin-bottom: 2rem;
-        }
-        
-        .feature-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-          gap: 1rem;
-          margin-top: 2rem;
-        }
-        
-        .feature-card {
-          background: rgba(255, 255, 255, 0.1);
-          padding: 1rem;
           border-radius: 12px;
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+          overflow: hidden;
         }
         
-        .feature-icon {
-          width: 40px;
-          height: 40px;
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto 0.5rem;
-        }
-        
-        .feature-icon .icon {
-          width: 1.25rem;
-          height: 1.25rem;
-          color: white;
-        }
-        
-        .feature-card h3 {
-          font-size: 0.875rem;
-          font-weight: 600;
-          margin-bottom: 0.25rem;
-          color: white;
-        }
-        
-        .feature-card p {
-          font-size: 0.75rem;
-          opacity: 0.8;
-          color: white;
-        }
-        
-        .auth-right {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+        .login-form-wrapper {
           padding: 2rem;
-          overflow-y: auto;
-          max-height: 100vh;
-          scroll-behavior: smooth;
-        }
-        
-        .auth-right::-webkit-scrollbar {
-          width: 6px;
-        }
-        
-        .auth-right::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 3px;
-        }
-        
-        .auth-right::-webkit-scrollbar-thumb {
-          background: #c1c1c1;
-          border-radius: 3px;
-        }
-        
-        .auth-right::-webkit-scrollbar-thumb:hover {
-          background: #a8a8a8;
-        }
-        
-        .login-form-container {
-          width: 100%;
-          max-width: 400px;
-          min-height: fit-content;
-          padding: 1rem 0 2rem 0;
         }
         
         .app-brand {
           text-align: center;
-          margin-bottom: 2rem;
+          margin-bottom: 1.5rem;
         }
         
         .app-brand-link {
@@ -500,7 +326,7 @@ export default function LoginForm() {
         
         .welcome-text {
           text-align: center;
-          margin-bottom: 2rem;
+          margin-bottom: 1.5rem;
         }
         
         .welcome-text h3 {
@@ -513,12 +339,13 @@ export default function LoginForm() {
         .welcome-text p {
           color: #6b7280;
           font-size: 0.875rem;
+          margin: 0;
         }
         
         .login-form {
           display: flex;
           flex-direction: column;
-          gap: 1.5rem;
+          gap: 1rem;
         }
         
         .error-alert {
@@ -527,7 +354,6 @@ export default function LoginForm() {
           color: #ef4444;
           padding: 0.75rem;
           border-radius: 8px;
-          margin-bottom: 1rem;
           display: flex;
           align-items: center;
           gap: 0.5rem;
@@ -567,6 +393,11 @@ export default function LoginForm() {
           z-index: 10;
         }
         
+        .input-icon .icon {
+          width: 1rem;
+          height: 1rem;
+        }
+        
         .form-input {
           width: 100%;
           padding: 0.75rem 0.75rem 0.75rem 2.5rem;
@@ -598,6 +429,11 @@ export default function LoginForm() {
           z-index: 10;
         }
         
+        .password-toggle .icon {
+          width: 1rem;
+          height: 1rem;
+        }
+        
         .password-toggle:hover {
           color: #6b7280;
         }
@@ -605,20 +441,18 @@ export default function LoginForm() {
         .error-text {
           color: #ef4444;
           font-size: 0.75rem;
-          margin-top: 0.25rem;
         }
         
         .form-options {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 1rem;
         }
         
         .checkbox-group {
           display: flex;
           align-items: center;
-          gap: 0.25rem;
+          gap: 0.5rem;
         }
         
         .checkbox {
@@ -647,29 +481,31 @@ export default function LoginForm() {
         
         .login-button {
           width: 100%;
-          padding: 0.75rem 1rem;
+          padding: 0.875rem 1rem;
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
           border: none;
           border-radius: 8px;
           font-size: 0.875rem;
-          font-weight: 500;
+          font-weight: 600;
           cursor: pointer;
           transition: all 0.2s;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 0.5rem;
+          margin-top: 0.5rem;
         }
         
         .login-button:hover:not(:disabled) {
           transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+          box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
         }
         
         .login-button:disabled {
-          opacity: 0.6;
+          opacity: 0.7;
           cursor: not-allowed;
+          transform: none;
         }
         
         .button-content {
@@ -681,29 +517,6 @@ export default function LoginForm() {
         
         .spinner {
           animation: spin 1s linear infinite;
-        }
-        
-        .divider {
-          text-align: center;
-          margin: 1rem 0;
-          position: relative;
-        }
-        
-        .divider::before {
-          content: '';
-          position: absolute;
-          top: 50%;
-          left: 0;
-          right: 0;
-          height: 1px;
-          background: #e5e7eb;
-        }
-        
-        .divider span {
-          background: white;
-          padding: 0 1rem;
-          color: #6b7280;
-          font-size: 0.875rem;
         }
         
         .register-link {
@@ -728,15 +541,6 @@ export default function LoginForm() {
           height: 1rem;
         }
         
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.5;
-          }
-        }
-        
         @keyframes spin {
           from {
             transform: rotate(0deg);
@@ -746,38 +550,28 @@ export default function LoginForm() {
           }
         }
         
-        @media (max-width: 1023px) {
+        @media (max-width: 480px) {
+          .login-wrapper {
+            padding: 0.5rem;
+          }
+          
+          .login-form-wrapper {
+            padding: 1.5rem;
+          }
+          
           .login-container {
-            max-height: none;
-            border-radius: 0;
-            box-shadow: none;
+            border-radius: 8px;
           }
           
-          .auth-right {
-            padding: 1rem;
-            overflow-y: auto;
-            max-height: 100vh;
+          .welcome-text h3 {
+            font-size: 1.25rem;
           }
           
-          .login-form-container {
-            max-width: 100%;
-            min-height: fit-content;
-            padding: 1rem 0 2rem 0;
-          }
-          
-          .auth-content {
-            padding: 1rem;
-          }
-          
-          .auth-header h1 {
-            font-size: 2rem;
-          }
-          
-          .auth-header p {
-            font-size: 1rem;
+          .app-brand-text {
+            font-size: 1.125rem;
           }
         }
       `}</style>
-    </div>
+    </>
   )
 } 

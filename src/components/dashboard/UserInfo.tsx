@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '@/types/tenant';
 import { getUser } from '@/lib/api';
-import { User as UserIcon, Mail, Shield, Building } from 'lucide-react';
-import Badge from '@/components/ui/Badge';
 
 interface UserInfoProps {
   className?: string;
@@ -51,7 +49,7 @@ export default function UserInfo({ className = '' }: UserInfoProps) {
       <div className={`card ${className}`}>
         <div className="card-body">
           <div className="alert alert-warning mb-0" role="alert">
-            <i className="fas fa-exclamation-triangle me-2"></i>
+            <i className="ti ti-alert-triangle me-2"></i>
             {error || 'Data user tidak tersedia'}
           </div>
         </div>
@@ -59,12 +57,12 @@ export default function UserInfo({ className = '' }: UserInfoProps) {
     );
   }
 
-  const getRoleBadgeVariant = (role: string) => {
+  const getRoleBadgeClass = (role: string) => {
     switch (role.toLowerCase()) {
-      case 'superadmin': return 'danger';
-      case 'admin': return 'primary';
-      case 'user': return 'info';
-      default: return 'default';
+      case 'superadmin': return 'badge bg-label-danger rounded-pill';
+      case 'admin': return 'badge bg-label-primary rounded-pill';
+      case 'user': return 'badge bg-label-info rounded-pill';
+      default: return 'badge bg-label-secondary rounded-pill';
     }
   };
 
@@ -80,8 +78,8 @@ export default function UserInfo({ className = '' }: UserInfoProps) {
   return (
     <div className={`card ${className}`}>
       <div className="card-header">
-        <h5 className="card-title mb-0">
-          <UserIcon className="w-5 h-5 me-2" />
+        <h5 className="card-title mb-0 text-primary">
+          <i className="ti ti-user me-2"></i>
           Informasi User
         </h5>
       </div>
@@ -89,31 +87,33 @@ export default function UserInfo({ className = '' }: UserInfoProps) {
         <div className="row">
           <div className="col-md-6">
             <div className="d-flex align-items-center mb-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-brand-blue-3 to-brand-blue-4 rounded-full flex items-center justify-center text-white font-semibold text-lg me-3">
-                {user.fullName.split(' ').map(n => n[0]).join('').toUpperCase()}
+              <div className="avatar avatar-lg me-3">
+                <span className="avatar-initial rounded-circle bg-label-primary">
+                  {user.fullName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                </span>
               </div>
               <div>
                 <h6 className="mb-1">{user.fullName}</h6>
-                <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs">
+                <span className={getRoleBadgeClass(user.role)}>
                   {getRoleText(user.role)}
-                </Badge>
+                </span>
               </div>
             </div>
           </div>
           <div className="col-md-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-gray-500" />
+            <div className="mb-3">
+              <div className="d-flex align-items-center mb-2">
+                <i className="ti ti-mail me-2 text-muted"></i>
                 <span className="text-sm">{user.email}</span>
               </div>
               {user.tenant && (
-                <div className="flex items-center gap-2">
-                  <Building className="w-4 h-4 text-gray-500" />
+                <div className="d-flex align-items-center mb-2">
+                  <i className="ti ti-building me-2 text-muted"></i>
                   <span className="text-sm">{user.tenant.name}</span>
                 </div>
               )}
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-gray-500" />
+              <div className="d-flex align-items-center">
+                <i className="ti ti-shield me-2 text-muted"></i>
                 <span className="text-sm">ID: {user.id}</span>
               </div>
             </div>

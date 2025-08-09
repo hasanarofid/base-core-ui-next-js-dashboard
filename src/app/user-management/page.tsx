@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Head from 'next/head';
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import AuthGuard from '@/components/auth/AuthGuard'
-import { Users, Plus, Filter, Download } from 'lucide-react'
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { User } from '@/types/user';
-import Badge from '@/components/ui/Badge';
 import { getUsersWithCookies } from '@/lib/api';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import Swal from 'sweetalert2';
 
 /**
@@ -41,6 +41,14 @@ export default function UserManagementPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 10;
+
+  // Dynamic title management using custom hook
+  const { fullTitle, pageTitle, pageSubtitle } = usePageTitle({
+    title: 'Manajemen User',
+    subtitle: `Kelola ${users.length} user dalam sistem`,
+    description: `Kelola ${users.length} user dalam sistem. Platform manajemen user dengan role dan status yang komprehensif.`,
+    keywords: 'user management, role management, user verification, admin panel'
+  });
 
   // Fetch users data
   useEffect(() => {
@@ -101,28 +109,20 @@ export default function UserManagementPage() {
 
   const totalPages = Math.ceil((filteredUsers?.length || 0) / itemsPerPage);
 
-
-
   const handleView = (user: User) => {
     router.push(`/user-management/${user.id}`);
   };
 
-
-
-
-
-
-
-  const getVerificationBadgeVariant = (isVerified: boolean) => {
-    return isVerified ? 'success' : 'warning';
+  const getVerificationBadgeClass = (isVerified: boolean) => {
+    return isVerified ? 'badge bg-label-success rounded-pill' : 'badge bg-label-warning rounded-pill';
   };
 
   const getVerificationText = (isVerified: boolean) => {
     return isVerified ? 'Terverifikasi' : 'Belum Terverifikasi';
   };
 
-  const getPasswordChangeBadgeVariant = (forcePasswordChange: boolean) => {
-    return forcePasswordChange ? 'danger' : 'success';
+  const getPasswordChangeBadgeClass = (forcePasswordChange: boolean) => {
+    return forcePasswordChange ? 'badge bg-label-danger rounded-pill' : 'badge bg-label-success rounded-pill';
   };
 
   const getPasswordChangeText = (forcePasswordChange: boolean) => {
@@ -166,11 +166,11 @@ export default function UserManagementPage() {
       header: 'INFORMASI USER',
       sortable: true,
       render: (value, row) => (
-        <div className="space-y-1">
-          <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
+        <div>
+          <div className="fw-semibold text-body">
             {row?.full_name || row?.FullName || 'Nama tidak tersedia'}
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="text-muted small">
             Role: {getRoleDisplayName(row?.role) || 'Role tidak tersedia'}
           </div>
         </div>
@@ -181,15 +181,15 @@ export default function UserManagementPage() {
       header: 'INFORMASI KONTAK',
       sortable: true,
       render: (value, row) => (
-        <div className="space-y-2">
-          <div>
-            <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">{row?.email || 'Email tidak tersedia'}</span>
-            <div className="text-xs text-gray-400">Email Utama</div>
+        <div>
+          <div className="mb-1">
+            <span className="text-body fw-medium">{row?.email || 'Email tidak tersedia'}</span>
+            <div className="text-muted small">Email Utama</div>
           </div>
           {row?.tenant && (
             <div>
-              <span className="text-sm text-gray-700 dark:text-gray-300">{row.tenant.name}</span>
-              <div className="text-xs text-gray-400">Tenant</div>
+              <span className="text-body">{row.tenant.name}</span>
+              <div className="text-muted small">Tenant</div>
             </div>
           )}
         </div>
@@ -200,13 +200,10 @@ export default function UserManagementPage() {
       header: 'STATUS VERIFIKASI',
       sortable: true,
       render: (value) => (
-        <div className="flex flex-col items-start gap-2">
-          <Badge 
-            variant={getVerificationBadgeVariant(value as boolean)}
-            className="text-xs px-4 py-2 font-semibold rounded-full shadow-sm border-0"
-          >
+        <div>
+          <span className={getVerificationBadgeClass(value as boolean)}>
             {getVerificationText(value as boolean)}
-          </Badge>
+          </span>
         </div>
       )
     },
@@ -215,13 +212,10 @@ export default function UserManagementPage() {
       header: 'STATUS PASSWORD',
       sortable: true,
       render: (value) => (
-        <div className="flex flex-col items-start gap-2">
-          <Badge 
-            variant={getPasswordChangeBadgeVariant(value as boolean)}
-            className="text-xs px-4 py-2 font-semibold rounded-full shadow-sm border-0"
-          >
+        <div>
+          <span className={getPasswordChangeBadgeClass(value as boolean)}>
             {getPasswordChangeText(value as boolean)}
-          </Badge>
+          </span>
         </div>
       )
     },
@@ -230,20 +224,20 @@ export default function UserManagementPage() {
       header: 'TANGGAL PENDAFTARAN',
       sortable: true,
       render: (value) => (
-        <div className="flex flex-col">
-          <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+        <div>
+          <span className="text-body fw-medium">
             {new Date(String(value)).toLocaleDateString('id-ID', {
               day: 'numeric',
               month: 'long',
               year: 'numeric'
             })}
           </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="text-muted small">
             {new Date(String(value)).toLocaleTimeString('id-ID', {
               hour: '2-digit',
               minute: '2-digit'
             })}
-          </span>
+          </div>
         </div>
       )
     }
@@ -271,86 +265,93 @@ export default function UserManagementPage() {
   }
 
   return (
-    <AuthGuard requireAuth={true}>
-      <DashboardLayout>
-        <div className="container-xxl flex-grow-1 container-p-y">
-          {/* Page Header - Matching Dashboard Style */}
-          <div className="row">
-            <div className="col-12">
-              <div className="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                  <h4 className="fw-bold mb-1 flex items-center gap-2">
-                    <Users className="w-6 h-6 text-brand-blue-3" />
-                    Manajemen User
-                  </h4>
-                  <p className="text-muted mb-0">Kelola dan monitor semua user dalam sistem Anda</p>
-                </div>
-                <div className="d-flex gap-2">
-                  <button className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-brand-blue-3">
-                    <Download className="w-4 h-4" />
-                    <span>Ekspor Data</span>
-                  </button>
-                  <button 
-                    className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-brand-blue-3"
-                    onClick={() => router.push('/user-management/create')}
-                    disabled
-                    title="Fitur tidak tersedia"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Tambah User Baru</span>
-                  </button>
-                </div>
+    <>
+      <Head>
+        <title>{fullTitle}</title>
+        <meta name="description" content={`${pageSubtitle}. Platform manajemen user dengan role dan status yang komprehensif.`} />
+        <meta property="og:title" content={fullTitle} />
+        <meta property="og:description" content={`${pageSubtitle}. Kelola user, role, dan verifikasi dalam sistem tenant.`} />
+        <meta name="keywords" content="user management, role management, user verification, admin panel" />
+      </Head>
+      
+      <AuthGuard requireAuth={true}>
+        <DashboardLayout>
+          <div className="container-xxl flex-grow-1 container-p-y">
+            {/* Page Header - Matching Dashboard Style */}
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <div>
+                <h4 className="fw-bold mb-1 text-primary">
+                  <i className="ti ti-users me-2"></i>
+                  {pageTitle}
+                </h4>
+                <p className="text-muted mb-0">{pageSubtitle}</p>
+              </div>
+              <div className="d-flex gap-2">
+                <button className="btn btn-label-primary">
+                  <i className="ti ti-download me-1"></i>
+                  <span>Ekspor Data</span>
+                </button>
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => router.push('/user-management/create')}
+                >
+                  <i className="ti ti-plus me-1"></i>
+                  <span>Tambah User Baru</span>
+                </button>
               </div>
             </div>
-          </div>
 
-          {/* DataTable Card */}
-          <div className="row">
-            <div className="col-12">
-              <div className="card">
-                <div className="card-header">
-                  <div className="d-flex justify-content-between align-items-center">
-                    <div>
-                      <h5 className="card-title mb-1">Daftar Semua User</h5>
-                                             <p className="text-muted mb-0">
-                         {loading ? 'Memuat data...' : `${users?.length || 0} user ditemukan`}
-                       </p>
+            {/* DataTable Card */}
+            <div className="card">
+              <div className="card-header">
+                <div className="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h5 className="card-title mb-1 text-primary">Daftar Semua User</h5>
+                    <p className="text-muted mb-0">
+                      {loading ? 'Memuat data...' : `${users?.length || 0} user ditemukan`}
+                    </p>
+                  </div>
+                  <div className="d-flex align-items-center gap-6">
+                    <div className="flex-1" style={{ minWidth: '300px' }}>
+                      <input
+                        type="text"
+                        placeholder="Cari berdasarkan nama, email, atau role..."
+                        className="form-control"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
                     </div>
-                    <div className="d-flex align-items-center gap-6">
-                      <div className="flex-1" style={{ minWidth: '300px' }}>
-                <input
-                  type="text"
-                          placeholder="Cari berdasarkan nama, email, atau role..."
-                          className="form-control"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-                      <div className="flex-shrink-0">
-                        <button className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-brand-blue-3">
-                <Filter className="w-4 h-4" />
-                          <span>Filter Lanjutan</span>
-              </button>
-            </div>
-          </div>
+                    <div className="flex-shrink-0">
+                      <button className="btn btn-label-primary">
+                        <i className="ti ti-filter me-1"></i>
+                        <span>Filter Lanjutan</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div className="card-body p-0">
-                  <DataTable
-                    data={paginatedUsers}
-                    columns={columns}
-                    loading={loading}
-                    searchable={false}
-                    filterable={false}
-                    onView={handleView}
-                    className="border-0 shadow-none"
-                  />
-                </div>
+              </div>
+              <div className="card-body p-0">
+                <DataTable
+                  data={paginatedUsers}
+                  columns={columns}
+                  loading={loading}
+                  searchable={false}
+                  filterable={false}
+                  onView={handleView}
+                  pagination={{
+                    currentPage,
+                    totalPages,
+                    totalItems: filteredUsers.length,
+                    itemsPerPage,
+                    onPageChange: setCurrentPage
+                  }}
+                  className="border-0 shadow-none"
+                />
               </div>
             </div>
           </div>
-        </div>
-      </DashboardLayout>
-    </AuthGuard>
+        </DashboardLayout>
+      </AuthGuard>
+    </>
   )
 } 

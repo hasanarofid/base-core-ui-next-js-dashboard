@@ -86,28 +86,36 @@ TemplateCustomizer.LANGUAGES.fr = { ... };
  * defaultShowDropdownOnHover : true, false (for horizontal layout only)
  */
 
-if (typeof TemplateCustomizer !== 'undefined') {
-  window.templateCustomizer = new TemplateCustomizer({
-    cssPath: assetsPath + 'vendor/css' + (rtlSupport ? '/rtl' : '') + '/',
-    themesPath: assetsPath + 'vendor/css' + (rtlSupport ? '/rtl' : '') + '/',
-    displayCustomizer: true,
-    // lang: 'fr',
-    // defaultTheme: 2,
-    // defaultStyle: 'light',
-    // defaultTextDir: 'ltr',
-    // defaultLayoutType: 'fixed',
-    // defaultMenuCollapsed: true,
-    // defaultNavbarFixed: true,
-    // defaultFooterFixed: false
-    defaultShowDropdownOnHover: true
-    // controls: [
-    //   'rtl',
-    //   'style',
-    //   'layoutType',
-    //   'showDropdownOnHover',
-    //   'layoutNavbarFixed',
-    //   'layoutFooterFixed',
-    //   'themes'
-    // ],
-  });
+// Safety check untuk Next.js environment
+if (typeof window !== 'undefined' && typeof TemplateCustomizer !== 'undefined') {
+  try {
+    window.templateCustomizer = new TemplateCustomizer({
+      cssPath: assetsPath + 'vendor/css' + (rtlSupport ? '/rtl' : '') + '/',
+      themesPath: assetsPath + 'vendor/css' + (rtlSupport ? '/rtl' : '') + '/',
+      displayCustomizer: false, // Hide customizer untuk production
+      // lang: 'fr',
+      // defaultTheme: 2,
+      // defaultStyle: 'light',
+      // defaultTextDir: 'ltr',
+      // defaultLayoutType: 'fixed',
+      // defaultMenuCollapsed: true,
+      // defaultNavbarFixed: true,
+      // defaultFooterFixed: false
+      defaultShowDropdownOnHover: true,
+      controls: [] // Disable controls untuk menghindari error
+      // controls: [
+      //   'rtl',
+      //   'style',
+      //   'layoutType',
+      //   'showDropdownOnHover',
+      //   'layoutNavbarFixed',
+      //   'layoutFooterFixed',
+      //   'themes'
+      // ],
+    });
+  } catch (error) {
+    console.warn('TemplateCustomizer initialization failed:', error.message || error);
+  }
+} else {
+  console.warn('TemplateCustomizer not available or not in browser environment');
 }

@@ -1,9 +1,6 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Search, Filter, Edit, Trash2, Eye, CheckCircle, Settings, Mail, Key } from 'lucide-react';
-import { Button } from './Button';
-import Input from './Input';
 
 export interface Column<T> {
   key: string;
@@ -120,44 +117,48 @@ export function DataTable<T extends { id: string | number }>({
       return column.render(value, row);
     }
 
-    return <span className="text-sm text-gray-700 dark:text-gray-300">{String(value)}</span>;
+    return <span className="text-body">{String(value)}</span>;
   };
 
   const renderSortIcon = (key: string) => {
     if (!columns.find(col => col.key === key)?.sortable) return null;
     
     if (sortConfig?.key === key) {
-      return sortConfig.direction === 'asc' ? '↑' : '↓';
+      return (
+        <i className={`ti ${sortConfig.direction === 'asc' ? 'ti-chevron-up' : 'ti-chevron-down'} ti-xs`}></i>
+      );
     }
-    return '↕';
+    return <i className="ti ti-selector ti-xs text-muted"></i>;
   };
 
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 ${className}`}>
+    <div className={`${className}`}>
       {/* Header with Search and Filters */}
       {(searchable || filterable) && (
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <div className="card-header border-bottom">
+          <div className="row">
             {searchable && (
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
+              <div className="col-md-8">
+                <div className="input-group">
+                  <span className="input-group-text">
+                    <i className="ti ti-search ti-sm"></i>
+                  </span>
+                  <input
                     type="text"
+                    className="form-control"
                     placeholder="Cari..."
                     value={searchTerm}
                     onChange={handleInputChange}
-                    className="pl-10"
                   />
                 </div>
               </div>
             )}
             {filterable && (
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
-                  <Filter className="w-4 h-4" />
+              <div className="col-md-4">
+                <button className="btn btn-label-primary">
+                  <i className="ti ti-filter ti-sm me-1"></i>
                   Filter
-                </Button>
+                </button>
               </div>
             )}
           </div>
@@ -165,144 +166,137 @@ export function DataTable<T extends { id: string | number }>({
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
+      <div className="table-responsive">
+        <table className="table table-hover table-striped">
+          <thead className="table-light">
             <tr>
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className={`px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider border-b border-gray-200 dark:border-gray-600 ${
-                    column.sortable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors' : ''
-                  }`}
+                  className={`text-nowrap ${column.sortable ? 'cursor-pointer' : ''}`}
                   style={{ width: column.width }}
                   onClick={() => column.sortable && handleSort(column.key)}
                 >
-                  <div className="flex items-center gap-1">
-                    {column.header}
+                  <div className="d-flex align-items-center">
+                    <span className="text-uppercase fw-medium">{column.header}</span>
                     {column.sortable && (
-                      <span className="text-gray-400 text-xs">{renderSortIcon(column.key)}</span>
+                      <span className="ms-1">{renderSortIcon(column.key)}</span>
                     )}
                   </div>
                 </th>
               ))}
               {actions && (
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider w-48 border-b border-gray-200 dark:border-gray-600">
-                  AKSI
+                <th className="text-nowrap text-center">
+                  <span className="text-uppercase fw-medium">AKSI</span>
                 </th>
               )}
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-800">
+          <tbody>
             {loading ? (
               <tr>
-                <td colSpan={columns.length + (actions ? 1 : 0)} className="px-6 py-12 text-center">
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-blue-3"></div>
-                    <span className="ml-3 text-gray-500 dark:text-gray-400 font-medium">Memuat data...</span>
+                <td colSpan={columns.length + (actions ? 1 : 0)} className="text-center py-5">
+                  <div className="d-flex align-items-center justify-content-center">
+                    <div className="spinner-border spinner-border-sm text-primary me-2" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <span className="text-muted">Memuat data...</span>
                   </div>
                 </td>
               </tr>
             ) : sortedData.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + (actions ? 1 : 0)} className="px-6 py-12 text-center">
-                  <div className="text-gray-500 dark:text-gray-400">
-                    <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                      <Search className="w-10 h-10 text-gray-400" />
+                <td colSpan={columns.length + (actions ? 1 : 0)} className="text-center py-5">
+                  <div className="text-muted">
+                    <div className="mb-3">
+                      <i className="ti ti-search ti-lg text-muted"></i>
                     </div>
-                    <p className="text-lg font-semibold mb-2">Tidak ada data yang ditemukan</p>
-                    <p className="text-sm">Coba ubah filter atau kata kunci pencarian Anda</p>
+                    <h6 className="text-muted mb-2">Tidak ada data yang ditemukan</h6>
+                    <p className="text-muted mb-0">Coba ubah filter atau kata kunci pencarian Anda</p>
                   </div>
                 </td>
               </tr>
             ) : (
               sortedData.map((row, index) => (
-                <tr
-                  key={row.id}
-                  className={`transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                    index % 2 === 0 
-                      ? 'bg-white dark:bg-gray-800' 
-                      : 'bg-gray-50/50 dark:bg-gray-700/50'
-                  } border-b border-gray-100 dark:border-gray-700 last:border-b-0`}
-                >
+                <tr key={row.id}>
                   {columns.map((column) => (
-                    <td key={column.key} className="px-6 py-4">
+                    <td key={column.key} className="align-middle">
                       {renderCell(column, row)}
                     </td>
                   ))}
                   {actions && (
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
+                    <td className="align-middle text-center">
+                      <div className="d-flex justify-content-center gap-1">
                         {onView && (
                           <button
                             onClick={() => onView(row)}
-                            className="btn btn-outline-success d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-green-500 bg-white hover:bg-green-50"
+                            className="btn btn-sm btn-label-success"
                             title="Lihat Detail"
                           >
-                            <Eye className="w-4 h-4 text-green-600" />
+                            <i className="ti ti-eye"></i>
                           </button>
                         )}
                         {onEdit && (
                           <button
                             onClick={() => onEdit(row)}
-                            className="btn btn-outline-warning d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-yellow-500 bg-white hover:bg-yellow-50"
+                            className="btn btn-sm btn-label-warning"
                             title="Edit Data"
                           >
-                            <Edit className="w-4 h-4 text-yellow-600" />
+                            <i className="ti ti-edit"></i>
                           </button>
                         )}
                         {onApprove && (!showApproveButton || showApproveButton(row)) && (
                           <button
                             onClick={() => onApprove(row)}
-                            className="btn btn-outline-primary d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-blue-500 bg-white hover:bg-blue-50"
+                            className="btn btn-sm btn-label-primary"
                             title="Approve Tenant"
                           >
-                            <CheckCircle className="w-4 h-4 text-blue-600" />
+                            <i className="ti ti-check"></i>
                           </button>
                         )}
                         {onStatusChange && (!showStatusButton || showStatusButton(row)) && (
                           <button
                             onClick={() => onStatusChange(row)}
-                            className="btn btn-outline-purple d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5"
+                            className="btn btn-sm btn-label-info"
                             title="Ubah Status"
                           >
-                            <Settings className="w-4 h-4" />
+                            <i className="ti ti-settings"></i>
                           </button>
                         )}
                         {onDelete && (!showDeleteButton || showDeleteButton(row)) && (
                           <button
                             onClick={() => onDelete(row)}
-                            className="btn btn-outline-danger d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-red-500 bg-white hover:bg-red-50"
+                            className="btn btn-sm btn-label-danger"
                             title="Hapus Data"
                           >
-                            <Trash2 className="w-4 h-4 text-red-600" />
+                            <i className="ti ti-trash"></i>
                           </button>
                         )}
                         {onVerifyEmail && (!showVerifyEmailButton || showVerifyEmailButton(row)) && (
                           <button
                             onClick={() => onVerifyEmail(row)}
-                            className="btn btn-outline-info d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-blue-500 bg-white hover:bg-blue-50"
+                            className="btn btn-sm btn-label-info"
                             title="Verifikasi Email"
                           >
-                            <Mail className="w-4 h-4 text-blue-600" />
+                            <i className="ti ti-mail"></i>
                           </button>
                         )}
                         {onVerifyUser && (!showVerifyUserButton || showVerifyUserButton(row)) && (
                           <button
                             onClick={() => onVerifyUser(row)}
-                            className="btn btn-outline-success d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-green-500 bg-white hover:bg-green-50"
+                            className="btn btn-sm btn-label-success"
                             title="Verifikasi User"
                           >
-                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            <i className="ti ti-user-check"></i>
                           </button>
                         )}
                         {onResetPassword && (!showResetPasswordButton || showResetPasswordButton(row)) && (
                           <button
                             onClick={() => onResetPassword(row)}
-                            className="btn btn-outline-warning d-flex align-items-center justify-content-center w-10 h-10 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-yellow-500 bg-white hover:bg-yellow-50"
+                            className="btn btn-sm btn-label-warning"
                             title="Reset Password"
                           >
-                            <Key className="w-4 h-4 text-yellow-600" />
+                            <i className="ti ti-key"></i>
                           </button>
                         )}
                       </div>
@@ -317,40 +311,107 @@ export function DataTable<T extends { id: string | number }>({
 
       {/* Pagination */}
       {pagination && (
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700 dark:text-gray-300 font-medium">
-              Menampilkan <span className="font-bold text-brand-blue-3">{((pagination.currentPage - 1) * pagination.itemsPerPage) + 1}</span> - <span className="font-bold text-brand-blue-3">{Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)}</span> dari <span className="font-bold text-brand-blue-3">{pagination.totalItems}</span> data
+        <div className="card-footer border-top">
+          <div className="d-flex align-items-center justify-content-between">
+            <div className="text-muted">
+              Menampilkan <span className="fw-semibold text-primary">{((pagination.currentPage - 1) * pagination.itemsPerPage) + 1}</span> - <span className="fw-semibold text-primary">{Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)}</span> dari <span className="fw-semibold text-primary">{pagination.totalItems}</span> data
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
-                disabled={pagination.currentPage === 1}
-                className="flex items-center gap-1 bg-white border-brand-blue-3 text-brand-blue-3 hover:bg-brand-blue-3 hover:text-white transition-all duration-200"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Sebelumnya
-              </Button>
-              
-              <div className="flex items-center gap-1">
-                <span className="text-sm text-gray-600 dark:text-gray-400 px-3">
-                  Halaman {pagination.currentPage} dari {pagination.totalPages}
-                </span>
-              </div>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
-                disabled={pagination.currentPage === pagination.totalPages}
-                className="flex items-center gap-1 bg-white border-brand-blue-3 text-brand-blue-3 hover:bg-brand-blue-3 hover:text-white transition-all duration-200"
-              >
-                Selanjutnya
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
+            <nav aria-label="Page navigation">
+              <ul className="pagination pagination-sm m-0">
+                {/* First Page */}
+                <li className={`page-item first ${pagination.currentPage === 1 ? 'disabled' : ''}`}>
+                  <button
+                    className="page-link"
+                    onClick={() => pagination.onPageChange(1)}
+                    disabled={pagination.currentPage === 1}
+                    title="Halaman Pertama"
+                  >
+                    <i className="ti ti-chevrons-left ti-xs"></i>
+                  </button>
+                </li>
+                
+                {/* Previous Page */}
+                <li className={`page-item prev ${pagination.currentPage === 1 ? 'disabled' : ''}`}>
+                  <button
+                    className="page-link"
+                    onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
+                    disabled={pagination.currentPage === 1}
+                    title="Halaman Sebelumnya"
+                  >
+                    <i className="ti ti-chevron-left ti-xs"></i>
+                  </button>
+                </li>
+
+                {/* Page Numbers */}
+                {(() => {
+                  const pageNumbers = [];
+                  const maxPages = 5;
+                  let startPage = Math.max(1, pagination.currentPage - Math.floor(maxPages / 2));
+                  const endPage = Math.min(pagination.totalPages, startPage + maxPages - 1);
+
+                  // Adjust startPage if we're near the end
+                  if (endPage - startPage < maxPages - 1) {
+                    startPage = Math.max(1, endPage - maxPages + 1);
+                  }
+
+                  for (let i = startPage; i <= endPage; i++) {
+                    pageNumbers.push(
+                      <li key={i} className={`page-item ${i === pagination.currentPage ? 'active' : ''}`}>
+                        <button
+                          className="page-link"
+                          onClick={() => pagination.onPageChange(i)}
+                        >
+                          {i}
+                        </button>
+                      </li>
+                    );
+                  }
+
+                  // Add ellipsis if needed
+                  if (startPage > 1) {
+                    pageNumbers.unshift(
+                      <li key="start-ellipsis" className="page-item disabled">
+                        <span className="page-link">...</span>
+                      </li>
+                    );
+                  }
+
+                  if (endPage < pagination.totalPages) {
+                    pageNumbers.push(
+                      <li key="end-ellipsis" className="page-item disabled">
+                        <span className="page-link">...</span>
+                      </li>
+                    );
+                  }
+
+                  return pageNumbers;
+                })()}
+                
+                {/* Next Page */}
+                <li className={`page-item next ${pagination.currentPage === pagination.totalPages ? 'disabled' : ''}`}>
+                  <button
+                    className="page-link"
+                    onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
+                    disabled={pagination.currentPage === pagination.totalPages}
+                    title="Halaman Selanjutnya"
+                  >
+                    <i className="ti ti-chevron-right ti-xs"></i>
+                  </button>
+                </li>
+
+                {/* Last Page */}
+                <li className={`page-item last ${pagination.currentPage === pagination.totalPages ? 'disabled' : ''}`}>
+                  <button
+                    className="page-link"
+                    onClick={() => pagination.onPageChange(pagination.totalPages)}
+                    disabled={pagination.currentPage === pagination.totalPages}
+                    title="Halaman Terakhir"
+                  >
+                    <i className="ti ti-chevrons-right ti-xs"></i>
+                  </button>
+                </li>
+              </ul>
+            </nav>
           </div>
         </div>
       )}

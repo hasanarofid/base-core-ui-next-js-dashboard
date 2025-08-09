@@ -4,6 +4,7 @@ import Script from "next/script";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+
 import "@/styles/template/core.css"
 import "@/styles/template/theme-default.css"
 import "@/styles/template/demo.css"
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
   keywords: ["tenant", "management", "dashboard", "admin", "system"],
   authors: [{ name: "Tenant System Team" }],
   icons: {
-    icon: "/theme/assets/img/favicon/favicon.ico",
+    icon: "/theme/assets/img/favicon/logo-svg.svg",
   },
 };
 
@@ -67,7 +68,17 @@ export default function RootLayout({
         <link rel="stylesheet" href="/theme/assets/vendor/fonts/tabler-icons.css" />
         <link rel="stylesheet" href="/theme/assets/vendor/fonts/flag-icons.css" />
         
-        {/* Core CSS */}
+        {/* Core CSS - Template Customizer expects these with specific classes */}
+        <link 
+          rel="stylesheet" 
+          href="/theme/assets/vendor/css/core.css" 
+          className="template-customizer-core-css" 
+        />
+        <link 
+          rel="stylesheet" 
+          href="/theme/assets/vendor/css/theme-default.css" 
+          className="template-customizer-theme-css" 
+        />
         <link rel="stylesheet" href="/theme/assets/css/demo.css" />
         
         {/* Vendors CSS */}
@@ -96,8 +107,10 @@ export default function RootLayout({
         <Script src="/theme/assets/vendor/js/helpers.js" strategy="beforeInteractive" />
         
         {/* Template customizer & Theme config files MUST be included after core stylesheets and helpers.js */}
-        <Script src="/theme/assets/vendor/js/template-customizer.js" strategy="afterInteractive" />
-        <Script src="/theme/assets/js/config.js" strategy="afterInteractive" />
+        <Script 
+          src="/theme/assets/js/config.js" 
+          strategy="afterInteractive"
+        />
         
         {/* Core JS */}
         <Script src="/theme/assets/vendor/libs/jquery/jquery.js" strategy="afterInteractive" />

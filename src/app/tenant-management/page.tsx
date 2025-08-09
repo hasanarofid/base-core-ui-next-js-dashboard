@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Head from 'next/head';
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import AuthGuard from '@/components/auth/AuthGuard'
-import { Building, Plus, Filter, Download } from 'lucide-react'
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { Tenant } from '@/types/tenant';
 import Badge from '@/components/ui/Badge';
-import { getTenants, approveTenantWithCookies, updateTenantStatusWithCookies } from '@/lib/api';
+import { getTenantsWithCookies, updateTenantStatusWithCookies, approveTenantWithCookies } from '@/lib/api';
+import { usePageTitle } from '@/hooks/usePageTitle';
 import Swal from 'sweetalert2';
 
 /**
@@ -41,17 +42,88 @@ export default function TenantManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 10;
 
+  // Dynamic title management using custom hook
+  const { fullTitle, pageTitle, pageSubtitle } = usePageTitle({
+    title: 'Manajemen Tenant',
+    subtitle: `Kelola ${tenants.length} tenant dalam sistem`,
+    description: `Kelola ${tenants.length} tenant dalam sistem. Fitur lengkap untuk mengelola tenant, status, dan konfigurasi sistem.`,
+    keywords: 'tenant management, admin panel, status management, tenant configuration'
+  });
+
   // Fetch tenants data
   useEffect(() => {
     const fetchTenants = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await getTenants();
-        setTenants(response.data);
+        
+        const response = await getTenantsWithCookies();
+        console.log('🔍 Full API Response:', JSON.stringify(response, null, 2));
+        
+        // Handle multiple possible response formats
+        let tenantsData: Tenant[] = [];
+        
+        if (response) {
+          // Format 1: { message: "success", data: [...] } - Standard TenantListResponse
+          if (response.data && Array.isArray(response.data)) {
+            tenantsData = response.data;
+            console.log('✅ Found tenants in response.data:', tenantsData.length);
+          }
+          // Format 2: Direct array [...] - Fallback
+          else if (Array.isArray(response)) {
+            tenantsData = response as unknown as Tenant[];
+            console.log('✅ Found tenants as direct array:', tenantsData.length);
+          }
+          else {
+            console.warn('❌ Could not find tenant array in expected format');
+            console.warn('Response structure:', Object.keys(response));
+            console.warn('response.data exists:', !!response.data);
+            console.warn('response.data type:', typeof response.data);
+            console.warn('response.data is array:', Array.isArray(response.data));
+            
+            // Last resort: check if response.data exists but is not an array
+            if (response.data) {
+              console.log('🔍 response.data content:', response.data);
+            }
+          }
+        }
+        
+        console.log('🔍 Setting tenants count:', tenantsData.length);
+        setTenants(tenantsData);
+        
+        // 🧪 TEST: Add dummy data if no tenants found (for debugging)
+        if (tenantsData.length === 0) {
+          console.log('🧪 No tenants found, adding test data...');
+          const testTenants: Tenant[] = [
+            {
+              id: 'test-1',
+              name: 'Test Tenant 1',
+              email: 'test1@example.com',
+              status: 'active',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              domain: 'test1.example.com',
+              contact_person: 'John Doe'
+            },
+            {
+              id: 'test-2', 
+              name: 'Test Tenant 2',
+              email: 'test2@example.com',
+              status: 'pending',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              domain: 'test2.example.com',
+              contact_person: 'Jane Smith'
+            }
+          ];
+          console.log('🧪 Setting test tenants:', testTenants);
+          setTenants(testTenants);
+        }
+        
       } catch (err) {
-        console.error('Error fetching tenants:', err);
-        setError('Gagal mengambil data tenants. Silakan coba lagi.');
+        console.error('❌ Error fetching tenants:', err);
+        setError('Gagal mengambil data tenant. Silakan coba lagi.');
+        setTenants([]);
       } finally {
         setLoading(false);
       }
@@ -59,6 +131,11 @@ export default function TenantManagementPage() {
 
     fetchTenants();
   }, []);
+
+  // Watch tenants state changes
+  useEffect(() => {
+    console.log('🔍 Tenants state updated:', tenants.length, 'items');
+  }, [tenants]);
 
   const filteredTenants = tenants.filter(tenant =>
     tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -384,11 +461,11 @@ export default function TenantManagementPage() {
       header: 'INFORMASI TENANT',
       sortable: true,
       render: (value, row) => (
-        <div className="space-y-1">
-          <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
+        <div>
+          <div className="fw-semibold text-body">
             {row.name}
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="text-muted small">
             {row.domain || 'Domain tidak tersedia'}
           </div>
         </div>
@@ -399,15 +476,15 @@ export default function TenantManagementPage() {
       header: 'INFORMASI KONTAK',
       sortable: true,
       render: (value, row) => (
-        <div className="space-y-2">
-          <div>
-            <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">{row.email}</span>
-            <div className="text-xs text-gray-400">Email Utama</div>
+        <div>
+          <div className="mb-1">
+            <span className="text-body fw-medium">{row.email}</span>
+            <div className="text-muted small">Email Utama</div>
           </div>
           {row.contact_person && (
             <div>
-              <span className="text-sm text-gray-700 dark:text-gray-300">{row.contact_person}</span>
-              <div className="text-xs text-gray-400">Kontak Person</div>
+              <span className="text-body">{row.contact_person}</span>
+              <div className="text-muted small">Kontak Person</div>
             </div>
           )}
         </div>
@@ -418,10 +495,10 @@ export default function TenantManagementPage() {
       header: 'STATUS AKUN',
       sortable: true,
       render: (value) => (
-        <div className="flex flex-col items-start">
+        <div>
           <Badge 
             variant={getStatusBadgeVariant(value)}
-            className="text-xs px-4 py-2 font-semibold rounded-full shadow-sm border-0"
+            className="badge"
           >
             {getStatusText(value)}
           </Badge>
@@ -433,12 +510,12 @@ export default function TenantManagementPage() {
       header: 'INFORMASI CLIENT',
       sortable: true,
       render: (value, row) => (
-        <div className="flex flex-col items-start gap-2">
-          <div className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+        <div>
+          <div className="text-body fw-medium">
             Client ID: {row.client_id || 'Tidak tersedia'}
           </div>
           {row.client_key && (
-            <div className="text-xs text-gray-500 dark:text-gray-400">
+            <div className="text-muted small">
               Key: {row.client_key.substring(0, 8)}...
             </div>
           )}
@@ -450,20 +527,20 @@ export default function TenantManagementPage() {
       header: 'AKTIVITAS TERAKHIR',
       sortable: true,
       render: (value) => (
-        <div className="flex flex-col">
-          <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+        <div>
+          <span className="text-body fw-medium">
             {value ? new Date(String(value)).toLocaleDateString('id-ID', {
               day: 'numeric',
               month: 'short',
               year: 'numeric'
             }) : 'Belum pernah login'}
           </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="text-muted small">
             {value ? new Date(String(value)).toLocaleTimeString('id-ID', {
               hour: '2-digit',
               minute: '2-digit'
             }) : 'Akun baru'}
-          </span>
+          </div>
         </div>
       )
     },
@@ -472,20 +549,20 @@ export default function TenantManagementPage() {
       header: 'TANGGAL PENDAFTARAN',
       sortable: true,
       render: (value) => (
-        <div className="flex flex-col">
-          <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+        <div>
+          <span className="text-body fw-medium">
             {new Date(String(value)).toLocaleDateString('id-ID', {
               day: 'numeric',
               month: 'long',
               year: 'numeric'
             })}
           </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="text-muted small">
             {new Date(String(value)).toLocaleTimeString('id-ID', {
               hour: '2-digit',
               minute: '2-digit'
             })}
-          </span>
+          </div>
         </div>
       )
     }
@@ -513,98 +590,100 @@ export default function TenantManagementPage() {
   }
 
   return (
-    <AuthGuard requireAuth={true}>
-      <DashboardLayout>
-        <div className="container-xxl flex-grow-1 container-p-y">
-          {/* Page Header - Matching Dashboard Style */}
-          <div className="row">
-            <div className="col-12">
-              <div className="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                  <h4 className="fw-bold mb-1 flex items-center gap-2">
-                    <Building className="w-6 h-6 text-brand-blue-3" />
-                    Manajemen Tenant
-                  </h4>
-                  <p className="text-muted mb-0">Kelola dan monitor semua tenant dalam sistem Anda</p>
-                </div>
-                <div className="d-flex gap-2">
-                  <button className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-brand-blue-3">
-                    <Download className="w-4 h-4" />
-                    <span>Ekspor Data</span>
-                  </button>
-                  <button 
-                    className="btn btn-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 bg-gradient-to-r from-brand-blue-3 to-brand-blue-4 hover:from-brand-blue-4 hover:to-brand-blue-5"
-                    onClick={() => router.push('/tenant-management/create')}
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Tambah Tenant Baru</span>
-                  </button>
-                </div>
+    <>
+      <Head>
+        <title>{fullTitle}</title>
+        <meta name="description" content={`${pageSubtitle}. Fitur lengkap untuk mengelola tenant, status, dan konfigurasi sistem.`} />
+        <meta property="og:title" content={fullTitle} />
+        <meta property="og:description" content={`${pageSubtitle}. Platform manajemen tenant dengan fitur lengkap.`} />
+        <meta name="keywords" content="tenant management, admin panel, status management, tenant configuration" />
+      </Head>
+      
+      <AuthGuard requireAuth={true}>
+        <DashboardLayout>
+          <div className="container-xxl flex-grow-1 container-p-y">
+            {/* Page Header - Matching Dashboard Style */}
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <div>
+                <h4 className="fw-bold mb-1 text-primary">
+                  <i className="ti ti-building me-2"></i>
+                  {pageTitle}
+                </h4>
+                <p className="text-muted mb-0">{pageSubtitle}</p>
+              </div>
+              <div className="d-flex gap-2">
+                <button className="btn btn-label-primary">
+                  <i className="ti ti-download me-1"></i>
+                  <span>Ekspor Data</span>
+                </button>
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => router.push('/tenant-management/create')}
+                >
+                  <i className="ti ti-plus me-1"></i>
+                  <span>Tambah Tenant Baru</span>
+                </button>
               </div>
             </div>
-          </div>
 
-          {/* DataTable Card */}
-          <div className="row">
-            <div className="col-12">
-              <div className="card">
-                <div className="card-header">
-                  <div className="d-flex justify-content-between align-items-center">
-                    <div>
-                      <h5 className="card-title mb-1">Daftar Semua Tenant</h5>
-                      <p className="text-muted mb-0">
-                        {loading ? 'Memuat data...' : `${tenants.length} tenant ditemukan`}
-                      </p>
+            {/* DataTable Card */}
+            <div className="card">
+              <div className="card-header">
+                <div className="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h5 className="card-title mb-1 text-primary">Daftar Semua Tenant</h5>
+                    <p className="text-muted mb-0">
+                      {loading ? 'Memuat data...' : `${tenants.length} tenant ditemukan`}
+                    </p>
+                  </div>
+                  <div className="d-flex align-items-center gap-6">
+                    <div className="flex-1" style={{ minWidth: '300px' }}>
+                      <input
+                        type="text"
+                        placeholder="Cari berdasarkan nama, email, atau domain..."
+                        className="form-control"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
                     </div>
-                    <div className="d-flex align-items-center gap-6">
-                      <div className="flex-1" style={{ minWidth: '300px' }}>
-                        <input
-                          type="text"
-                          placeholder="Cari berdasarkan nama, email, atau domain..."
-                          className="form-control"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                      </div>
-                      <div className="flex-shrink-0">
-                        <button className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-brand-blue-3">
-                          <Filter className="w-4 h-4" />
-                          <span>Filter Lanjutan</span>
-                        </button>
-                      </div>
+                    <div className="flex-shrink-0">
+                      <button className="btn btn-label-primary">
+                        <i className="ti ti-filter me-1"></i>
+                        <span>Filter Lanjutan</span>
+                      </button>
                     </div>
                   </div>
                 </div>
-                <div className="card-body p-0">
-                  <DataTable
-                    data={paginatedTenants}
-                    columns={columns}
-                    loading={loading}
-                    searchable={false}
-                    filterable={false}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onView={handleView}
-                    onApprove={handleApprove}
-                    onStatusChange={handleStatusChange}
-                    showApproveButton={showApproveButton}
-                    showStatusButton={showStatusButton}
-                    showDeleteButton={showDeleteButton}
-                    pagination={{
-                      currentPage,
-                      totalPages,
-                      totalItems: filteredTenants.length,
-                      itemsPerPage,
-                      onPageChange: setCurrentPage
-                    }}
-                    className="border-0 shadow-none"
-                  />
-                </div>
+              </div>
+              <div className="card-body p-0">
+                <DataTable
+                  data={paginatedTenants}
+                  columns={columns}
+                  loading={loading}
+                  searchable={false}
+                  filterable={false}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onView={handleView}
+                  onApprove={handleApprove}
+                  onStatusChange={handleStatusChange}
+                  showApproveButton={showApproveButton}
+                  showStatusButton={showStatusButton}
+                  showDeleteButton={showDeleteButton}
+                  pagination={{
+                    currentPage,
+                    totalPages,
+                    totalItems: filteredTenants.length,
+                    itemsPerPage,
+                    onPageChange: setCurrentPage
+                  }}
+                  className="border-0 shadow-none"
+                />
               </div>
             </div>
           </div>
-        </div>
-      </DashboardLayout>
-    </AuthGuard>
+        </DashboardLayout>
+      </AuthGuard>
+    </>
   )
 } 

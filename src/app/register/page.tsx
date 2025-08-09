@@ -6,19 +6,17 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Eye, EyeOff, Mail, Lock, User, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Loader2, Building, Globe, Phone, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import Swal from 'sweetalert2';
 import AuthGuard from '@/components/auth/AuthGuard';
 
 const registerSchema = z.object({
-  fullName: z.string().min(1, 'Nama lengkap harus diisi'),
+  name: z.string().min(1, 'Nama tenant harus diisi'),
+  logo_url: z.string().url('URL logo harus valid'),
+  domain: z.string().url('Domain harus valid'),
   email: z.string().email('Email harus valid'),
-  password: z.string().min(6, 'Password minimal 6 karakter'),
-  confirmPassword: z.string().min(1, 'Konfirmasi password harus diisi')
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Password tidak cocok",
-  path: ["confirmPassword"],
+  contact_person: z.string().min(1, 'Kontak person harus diisi')
 });
 
 type RegisterForm = z.infer<typeof registerSchema>;
@@ -33,9 +31,8 @@ export default function RegisterPage() {
 
 function RegisterForm() {
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const {
     register,
@@ -45,18 +42,20 @@ function RegisterForm() {
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      fullName: '',
+      name: '',
+      logo_url: '',
+      domain: '',
       email: '',
-      password: '',
-      confirmPassword: ''
+      contact_person: ''
     }
   });
 
   const onSubmit = async (data: RegisterForm) => {
     setLoading(true);
+    setErrorMessage(''); // Clear previous error
     
     try {
-      const response = await fetch('/api/register', {
+      const response = await fetch('/api/tenants/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -69,30 +68,28 @@ function RegisterForm() {
       if (response.ok) {
         await Swal.fire({
           title: 'Berhasil!',
-          text: 'Registrasi berhasil! Silakan login dengan akun Anda.',
+          text: 'Tenant berhasil dibuat! Email konfirmasi telah dikirim untuk aktivasi akun.',
           icon: 'success',
           confirmButtonText: 'OK'
         });
         
         reset();
+        setErrorMessage('');
         router.push('/login');
       } else {
-        throw new Error(result.message || 'Registrasi gagal');
+        // Tampilkan error di atas form, bukan popup
+        setErrorMessage(result.message || 'Gagal mendaftarkan tenant baru');
       }
     } catch (error) {
       console.error('Registration error:', error);
       
-      let errorMessage = 'Terjadi kesalahan saat registrasi';
+      let errorMsg = 'Terjadi kesalahan saat mendaftar tenant';
       if (error instanceof Error) {
-        errorMessage = error.message;
+        errorMsg = error.message;
       }
       
-      await Swal.fire({
-        title: 'Gagal!',
-        text: errorMessage,
-        icon: 'error',
-        confirmButtonText: 'OK'
-      });
+      // Tampilkan error di atas form
+      setErrorMessage(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -107,7 +104,7 @@ function RegisterForm() {
             <div className="loading-spinner">
               <Loader2 className="spinner-icon" />
             </div>
-            <h4>Sedang mendaftar...</h4>
+            <h4>Sedang membuat tenant...</h4>
             <p>Mohon tunggu sebentar</p>
           </div>
         </div>
@@ -135,30 +132,77 @@ function RegisterForm() {
 
             {/* Welcome Text */}
             <div className="welcome-text">
-              <h3>Selamat Datang di Innovia! 👋</h3>
-              <p>Silakan daftar untuk membuat akun baru</p>
+              <h3>Daftar Tenant Baru 🏢</h3>
+              <p>Silakan isi informasi tenant Anda untuk memulai</p>
             </div>
+
+            {/* Error Message */}
+            {errorMessage && (
+              <div className="error-message">
+                {errorMessage}
+              </div>
+            )}
 
             {/* Register Form */}
             <form className="register-form" onSubmit={handleSubmit(onSubmit)}>
-              {/* Full Name Field */}
+              {/* Tenant Name Field */}
               <div className="form-group">
-                <label htmlFor="fullName">Nama Lengkap</label>
+                <label htmlFor="name">Nama Tenant</label>
                 <div className="input-group">
                   <span className="input-icon">
-                    <User className="icon" />
+                    <Building className="icon" />
                   </span>
                   <input
                     type="text"
-                    className={`form-input ${errors.fullName ? 'error' : ''}`}
-                    id="fullName"
-                    {...register('fullName')}
-                    placeholder="Masukkan nama lengkap"
+                    className={`form-input ${errors.name ? 'error' : ''}`}
+                    id="name"
+                    {...register('name')}
+                    placeholder="Masukkan nama tenant"
                     autoFocus
                   />
                 </div>
-                {errors.fullName && (
-                  <div className="error-text">{errors.fullName.message}</div>
+                {errors.name && (
+                  <div className="error-text">{errors.name.message}</div>
+                )}
+              </div>
+
+              {/* Logo URL Field */}
+              <div className="form-group">
+                <label htmlFor="logo_url">URL Logo</label>
+                <div className="input-group">
+                  <span className="input-icon">
+                    <ImageIcon className="icon" />
+                  </span>
+                  <input
+                    type="url"
+                    className={`form-input ${errors.logo_url ? 'error' : ''}`}
+                    id="logo_url"
+                    {...register('logo_url')}
+                    placeholder="https://example.com/logo.png"
+                  />
+                </div>
+                {errors.logo_url && (
+                  <div className="error-text">{errors.logo_url.message}</div>
+                )}
+              </div>
+
+              {/* Domain Field */}
+              <div className="form-group">
+                <label htmlFor="domain">Domain</label>
+                <div className="input-group">
+                  <span className="input-icon">
+                    <Globe className="icon" />
+                  </span>
+                  <input
+                    type="url"
+                    className={`form-input ${errors.domain ? 'error' : ''}`}
+                    id="domain"
+                    {...register('domain')}
+                    placeholder="https://yourdomain.com"
+                  />
+                </div>
+                {errors.domain && (
+                  <div className="error-text">{errors.domain.message}</div>
                 )}
               </div>
 
@@ -174,7 +218,7 @@ function RegisterForm() {
                     className={`form-input ${errors.email ? 'error' : ''}`}
                     id="email"
                     {...register('email')}
-                    placeholder="Masukkan email"
+                    placeholder="admin@yourdomain.com"
                   />
                 </div>
                 {errors.email && (
@@ -182,63 +226,23 @@ function RegisterForm() {
                 )}
               </div>
 
-              {/* Password Field */}
+              {/* Contact Person Field */}
               <div className="form-group">
-                <label htmlFor="password">Password</label>
+                <label htmlFor="contact_person">Kontak Person</label>
                 <div className="input-group">
                   <span className="input-icon">
-                    <Lock className="icon" />
+                    <Phone className="icon" />
                   </span>
                   <input
-                    type={showPassword ? 'text' : 'password'}
-                    className={`form-input ${errors.password ? 'error' : ''}`}
-                    id="password"
-                    {...register('password')}
-                    placeholder="Masukkan password"
+                    type="text"
+                    className={`form-input ${errors.contact_person ? 'error' : ''}`}
+                    id="contact_person"
+                    {...register('contact_person')}
+                    placeholder="082391782895"
                   />
-                  <span 
-                    className="password-toggle"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="icon" />
-                    ) : (
-                      <Eye className="icon" />
-                    )}
-                  </span>
                 </div>
-                {errors.password && (
-                  <div className="error-text">{errors.password.message}</div>
-                )}
-              </div>
-
-              {/* Confirm Password Field */}
-              <div className="form-group">
-                <label htmlFor="confirmPassword">Konfirmasi Password</label>
-                <div className="input-group">
-                  <span className="input-icon">
-                    <Lock className="icon" />
-                  </span>
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    className={`form-input ${errors.confirmPassword ? 'error' : ''}`}
-                    id="confirmPassword"
-                    {...register('confirmPassword')}
-                    placeholder="Konfirmasi password"
-                  />
-                  <span 
-                    className="password-toggle"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="icon" />
-                    ) : (
-                      <Eye className="icon" />
-                    )}
-                  </span>
-                </div>
-                {errors.confirmPassword && (
-                  <div className="error-text">{errors.confirmPassword.message}</div>
+                {errors.contact_person && (
+                  <div className="error-text">{errors.contact_person.message}</div>
                 )}
               </div>
 
@@ -251,10 +255,10 @@ function RegisterForm() {
                 {loading ? (
                   <div className="button-content">
                     <Loader2 className="spinner" />
-                    Sedang mendaftar...
+                    Sedang membuat tenant...
                   </div>
                 ) : (
-                  'Daftar Sekarang'
+                  'Daftar Tenant'
                 )}
               </button>
             </form>
@@ -464,6 +468,17 @@ function RegisterForm() {
         .error-text {
           color: #ef4444;
           font-size: 0.75rem;
+        }
+        
+        .error-message {
+          color: #ef4444;
+          font-size: 0.875rem;
+          margin-bottom: 1rem;
+          text-align: center;
+          padding: 0.75rem;
+          background-color: #fef3f2;
+          border: 1px solid #fcd3c7;
+          border-radius: 8px;
         }
         
         .register-button {

@@ -151,10 +151,15 @@ export async function getTenants(): Promise<TenantListResponse> {
 
 // Fungsi utility untuk API calls dengan cookies
 export async function apiWithCookies(endpoint: string, options: RequestInit = {}) {
+  const defaultHeaders = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  }
+
   const defaultOptions: RequestInit = {
     headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      ...defaultHeaders,
+      ...(options.headers || {}),
     },
     credentials: 'include', // Penting: untuk mengirim cookies
     ...options,
@@ -228,7 +233,7 @@ export async function updateTenantStatusWithCookies(id: string, status: string):
 
 // Fungsi untuk mengambil data users dengan cookies
 export async function getUsersWithCookies(): Promise<UserListResponse> {
-  return apiWithCookies('/user')
+  return apiWithCookies('/user-list')
 }
 
 // Fungsi untuk membuat user baru dengan cookies

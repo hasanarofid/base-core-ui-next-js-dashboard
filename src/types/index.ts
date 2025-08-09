@@ -5,6 +5,11 @@ export interface User {
   email: string
   role: string
   tenantId?: string | null
+  phone?: string
+  avatar?: string
+  isActive?: boolean
+  createdAt?: string
+  lastLogin?: string
 }
 
 // Auth types

@@ -77,7 +77,7 @@ export default function CreateUserPage() {
     setLoading(true);
     try {
       const payload = {
-        full_name: data.full_name,
+        fullName: data.full_name,
         email: data.email,
         password: data.password,
         role: data.role,

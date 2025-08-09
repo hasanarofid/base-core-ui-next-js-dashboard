@@ -2,14 +2,33 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
-    // Ambil cookies dari request
+    // Debug request info
+    console.log('🔍 GET /api/user called')
+    console.log('🔍 Request method:', request.method)
+    console.log('🔍 Request URL:', request.url)
+    
+    // Ambil token dari header Authorization atau cookies
+    const authHeader = request.headers.get('authorization')
     const cookies = request.cookies
     console.log('All cookies received:', Array.from(cookies.getAll()))
+    console.log('Authorization header:', authHeader ? 'Found' : 'Not found')
     
-    const sessionCookie = cookies.get('session') || cookies.get('token') || cookies.get('auth')
+    let token = null
     
-    if (!sessionCookie) {
-      console.error('No session cookie found')
+    // Prioritas: Authorization header dulu, kemudian cookies
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7) // Remove 'Bearer ' prefix
+      console.log('Token found in Authorization header')
+    } else {
+      const sessionCookie = cookies.get('session') || cookies.get('token') || cookies.get('auth')
+      if (sessionCookie) {
+        token = sessionCookie.value
+        console.log('Token found in cookies:', sessionCookie.name)
+      }
+    }
+    
+    if (!token) {
+      console.error('No authentication token found in headers or cookies')
       return NextResponse.json(
         { message: 'Session tidak ditemukan' },
         { status: 401 }
@@ -18,16 +37,15 @@ export async function GET(request: NextRequest) {
 
     const externalApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3030/api/v1'
     
-    console.log('Fetching users data from:', `${externalApiUrl}/user`)
-    console.log('Using session cookie:', sessionCookie.name)
+    console.log('Fetching users data from:', `${externalApiUrl}/admin/user`)
+    console.log('Using token:', token.substring(0, 10) + '...')
 
-    const response = await fetch(`${externalApiUrl}/user`, {
+    const response = await fetch(`${externalApiUrl}/admin/user`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Cookie': `${sessionCookie.name}=${sessionCookie.value}`,
-        'Authorization': `Bearer ${sessionCookie.value}`,
+        'Authorization': `Bearer ${token}`,
       },
     })
 
@@ -74,14 +92,28 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    // Ambil cookies dari request
+    // Ambil token dari header Authorization atau cookies
+    const authHeader = request.headers.get('authorization')
     const cookies = request.cookies
     console.log('All cookies received:', Array.from(cookies.getAll()))
+    console.log('Authorization header:', authHeader ? 'Found' : 'Not found')
     
-    const sessionCookie = cookies.get('session') || cookies.get('token') || cookies.get('auth')
+    let token = null
     
-    if (!sessionCookie) {
-      console.error('No session cookie found')
+    // Prioritas: Authorization header dulu, kemudian cookies
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7) // Remove 'Bearer ' prefix
+      console.log('Token found in Authorization header')
+    } else {
+      const sessionCookie = cookies.get('session') || cookies.get('token') || cookies.get('auth')
+      if (sessionCookie) {
+        token = sessionCookie.value
+        console.log('Token found in cookies:', sessionCookie.name)
+      }
+    }
+    
+    if (!token) {
+      console.error('No authentication token found in headers or cookies')
       return NextResponse.json(
         { message: 'Session tidak ditemukan' },
         { status: 401 }
@@ -89,7 +121,21 @@ export async function PATCH(request: NextRequest) {
     }
 
     const externalApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3030/api/v1'
-    const body = await request.json()
+    
+    // Hanya baca body jika method adalah PATCH dan content-length > 0
+    let body = null
+    const contentLength = request.headers.get('content-length')
+    if (contentLength && parseInt(contentLength) > 0) {
+      try {
+        body = await request.json()
+      } catch (error) {
+        console.error('Error parsing request body:', error)
+        return NextResponse.json(
+          { message: 'Invalid request body format' },
+          { status: 400 }
+        )
+      }
+    }
     
     console.log('Environment variables:')
     console.log('NEXT_PUBLIC_API_BASE_URL:', process.env.NEXT_PUBLIC_API_BASE_URL)
@@ -105,13 +151,12 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const response = await fetch(`${externalApiUrl}/user`, {
+    const response = await fetch(`${externalApiUrl}/admin/user`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Cookie': `${sessionCookie.name}=${sessionCookie.value}`,
-        'Authorization': `Bearer ${sessionCookie.value}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(body),
     })

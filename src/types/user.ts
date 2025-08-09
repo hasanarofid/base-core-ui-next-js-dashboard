@@ -1,7 +1,6 @@
 export interface User {
   id: string;
-  full_name?: string; // Optional untuk kompatibilitas dengan API yang berbeda
-  FullName?: string; // Field dari API yang menggunakan FullName
+  fullName?: string; // Optional untuk kompatibilitas dengan API yang berbeda
   email: string;
   password?: string; // Optional karena tidak akan ditampilkan di response
   role: string;
@@ -19,7 +18,7 @@ export interface User {
 }
 
 export interface CreateUserData {
-  full_name: string;
+  fullName: string;
   email: string;
   password: string;
   role: string;

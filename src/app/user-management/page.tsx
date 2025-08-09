@@ -59,28 +59,88 @@ export default function UserManagementPage() {
         const response = await getUsersWithCookies();
         
         // Validasi response - handle different response formats
-        console.log('API Response:', response);
+        console.log('🔍 Raw API Response:', response);
+        console.log('🔍 Response type:', typeof response);
+        console.log('🔍 Response structure:', Object.keys(response || {}));
         
         if (response) {
-          // Coba berbagai format response
+          // Coba berbagai format response dengan prioritas
           let usersData: User[] = [];
           
-          if (response.data && Array.isArray(response.data)) {
-            usersData = response.data;
-          } else if (Array.isArray(response)) {
-            usersData = response;
-          } else {
-            // Handle single user response
-            const responseObj = response as unknown as Record<string, unknown>;
-            if (responseObj.user) {
-              usersData = [responseObj.user as User];
+          // Cast response untuk fleksibilitas parsing
+          const responseAny = response as unknown as Record<string, unknown>;
+          
+          // 1. Cek jika response memiliki property data yang berupa array
+          if (responseAny.data && Array.isArray(responseAny.data)) {
+            console.log('✅ Found response.data array with', responseAny.data.length, 'items');
+            usersData = responseAny.data;
+          } 
+          // 2. Cek jika response itu sendiri adalah array
+          else if (Array.isArray(responseAny)) {
+            console.log('✅ Response is direct array with', responseAny.length, 'items');
+            usersData = responseAny;
+          } 
+          // 3. Cek jika response memiliki property users
+          else if (responseAny.users && Array.isArray(responseAny.users)) {
+            console.log('✅ Found response.users array with', responseAny.users.length, 'items');
+            usersData = responseAny.users;
+          }
+          // 4. Cek jika response memiliki property result atau results
+          else if (responseAny.result && Array.isArray(responseAny.result)) {
+            console.log('✅ Found response.result array with', responseAny.result.length, 'items');
+            usersData = responseAny.result;
+          }
+          else if (responseAny.results && Array.isArray(responseAny.results)) {
+            console.log('✅ Found response.results array with', responseAny.results.length, 'items');
+            usersData = responseAny.results;
+          }
+          // 5. Cek semua properties untuk menemukan array yang mengandung user data
+          else {
+            console.log('🔍 Searching for user array in response properties...');
+            const responseObj = responseAny as Record<string, unknown>;
+            
+            // Cari property yang berupa array dan mengandung data user-like
+            for (const [key, value] of Object.entries(responseObj)) {
+              if (Array.isArray(value) && value.length > 0) {
+                // Cek apakah item pertama memiliki properties user-like
+                const firstItem = value[0];
+                if (firstItem && typeof firstItem === 'object' && 
+                    ('email' in firstItem || 'id' in firstItem || 'full_name' in firstItem || 'FullName' in firstItem)) {
+                  console.log(`✅ Found user array in property '${key}' with`, value.length, 'items');
+                  usersData = value as User[];
+                  break;
+                }
+              }
+            }
+            
+            // Jika masih tidak ditemukan, coba sebagai single user
+            if (usersData.length === 0) {
+              if (responseObj.user) {
+                console.log('✅ Found single user in response.user');
+                usersData = [responseObj.user as User];
+              } else if (responseObj.email || responseObj.id) {
+                console.log('✅ Response appears to be single user object');
+                usersData = [responseObj as unknown as User];
+              }
             }
           }
           
+          console.log('📊 Final processed users data:', usersData);
+          console.log('📊 Users count:', usersData.length);
+          
+          // Tambahan debugging untuk setiap user
+          usersData.forEach((user, index) => {
+            console.log(`👤 User ${index + 1}:`, {
+              id: user.id,
+              name: user.fullName,
+              email: user.email,
+              role: user.role
+            });
+          });
+          
           setUsers(usersData);
-          console.log('Processed users data:', usersData);
         } else {
-          console.warn('Empty response:', response);
+          console.warn('⚠️ Empty or null response:', response);
           setUsers([]);
         }
       } catch (err) {
@@ -96,7 +156,7 @@ export default function UserManagementPage() {
   }, []);
 
   const filteredUsers = users?.filter(user =>
-    (user.full_name || user.FullName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.fullName  || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     getRoleDisplayName(user.role).toLowerCase().includes(searchTerm.toLowerCase()) ||
     (user.tenant?.name && user.tenant.name.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -162,13 +222,13 @@ export default function UserManagementPage() {
 
   const columns: Column<User>[] = [
     {
-      key: 'full_name',
+      key: 'fullName',
       header: 'INFORMASI USER',
       sortable: true,
       render: (value, row) => (
         <div>
           <div className="fw-semibold text-body">
-            {row?.full_name || row?.FullName || 'Nama tidak tersedia'}
+            {row?.fullName || 'Nama tidak tersedia'}
           </div>
           <div className="text-muted small">
             Role: {getRoleDisplayName(row?.role) || 'Role tidak tersedia'}
@@ -240,7 +300,42 @@ export default function UserManagementPage() {
           </div>
         </div>
       )
-    }
+    },
+    // {
+    //   key: 'actions',
+    //   header: 'AKSI',
+    //   sortable: false,
+    //   render: (value, row) => (
+    //     <div className="d-flex gap-1">
+    //       <button
+    //         className="btn btn-sm btn-label-primary"
+    //         onClick={() => handleView(row)}
+    //         title="Lihat Detail"
+    //       >
+    //         <i className="ti ti-eye"></i>
+    //       </button>
+    //       <button
+    //         className="btn btn-sm btn-label-warning"
+    //         onClick={() => router.push(`/user-management/${row.id}/edit`)}
+    //         title="Edit User"
+    //       >
+    //         <i className="ti ti-edit"></i>
+    //       </button>
+    //       <button
+    //         className="btn btn-sm btn-label-danger"
+    //         onClick={() => {
+    //           // TODO: Implementasi delete user dengan konfirmasi
+    //           if (confirm(`Apakah Anda yakin ingin menghapus user ${row.fullName}?`)) {
+    //             alert('Fitur hapus user akan diimplementasikan')
+    //           }
+    //         }}
+    //         title="Hapus User"
+    //       >
+    //         <i className="ti ti-trash"></i>
+    //       </button>
+    //     </div>
+    //   )
+    // }
   ];
 
   if (error) {

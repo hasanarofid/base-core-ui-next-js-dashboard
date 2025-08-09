@@ -32,21 +32,17 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       href: '/payment-methods',
       icon: 'ti ti-credit-card'
     },
-    {
-      title: 'Products',
-      href: '/products',
-      icon: 'ti ti-package'
-    },
-    {
-      title: 'Client Credentials',
-      href: '/client-credentials',
-      icon: 'ti ti-key'
-    },
-    {
-      title: 'Reports',
-      href: '/reports',
-      icon: 'ti ti-chart-bar'
-    },
+    // {
+    //   title: 'Products',
+    //   href: '/products',
+    //   icon: 'ti ti-package'
+    // },
+    // {
+    //   title: 'Client Credentials',
+    //   href: '/client-credentials',
+    //   icon: 'ti ti-key'
+    // },
+
     {
       title: 'Transaction Monitoring',
       href: '/transaction-monitoring',
@@ -56,6 +52,11 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       title: 'Logs & Notifications',
       href: '/logs-notifications',
       icon: 'ti ti-bell'
+    },
+    {
+      title: 'Reports',
+      href: '/reports',
+      icon: 'ti ti-chart-bar'
     },
     {
       title: 'System Settings',

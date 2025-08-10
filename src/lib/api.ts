@@ -276,6 +276,13 @@ export async function resetPasswordWithCookies(id: string, newPassword?: string)
   })
 }
 
+// Fungsi untuk menghapus user dengan cookies
+export async function deleteUserWithCookies(id: string): Promise<{ message: string }> {
+  return apiWithCookies(`/admin/users/${id}`, {
+    method: 'DELETE',
+  })
+}
+
 // ===== PAYMENT METHOD API FUNCTIONS =====
 
 // Fungsi untuk mengambil data payment method (tanpa cookies)

@@ -7,9 +7,9 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import AuthGuard from '@/components/auth/AuthGuard'
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { User } from '@/types/user';
-import { getUsersWithCookies } from '@/lib/api';
+import { getUsersWithCookies, deleteUserWithCookies } from '@/lib/api';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import Swal from 'sweetalert2';
+import { showAlert, confirmDelete, closeLoading } from '@/lib/sweetalert-config';
 
 /**
  * User Management Page
@@ -50,54 +50,53 @@ export default function UserManagementPage() {
     keywords: 'user management, role management, user verification, admin panel'
   });
 
-  // Fetch users data
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await getUsersWithCookies();
+  // Fetch users data function
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await getUsersWithCookies();
+      
+      // Validasi response - handle different response formats
+      console.log('🔍 Raw API Response:', response);
+      console.log('🔍 Response type:', typeof response);
+      console.log('🔍 Response structure:', Object.keys(response || {}));
+      
+      if (response) {
+        // Coba berbagai format response dengan prioritas
+        let usersData: User[] = [];
         
-        // Validasi response - handle different response formats
-        console.log('🔍 Raw API Response:', response);
-        console.log('🔍 Response type:', typeof response);
-        console.log('🔍 Response structure:', Object.keys(response || {}));
+        // Cast response untuk fleksibilitas parsing
+        const responseAny = response as unknown as Record<string, unknown>;
         
-        if (response) {
-          // Coba berbagai format response dengan prioritas
-          let usersData: User[] = [];
-          
-          // Cast response untuk fleksibilitas parsing
-          const responseAny = response as unknown as Record<string, unknown>;
-          
-          // 1. Cek jika response memiliki property data yang berupa array
-          if (responseAny.data && Array.isArray(responseAny.data)) {
-            console.log('✅ Found response.data array with', responseAny.data.length, 'items');
-            usersData = responseAny.data;
-          } 
-          // 2. Cek jika response itu sendiri adalah array
-          else if (Array.isArray(responseAny)) {
-            console.log('✅ Response is direct array with', responseAny.length, 'items');
-            usersData = responseAny;
-          } 
-          // 3. Cek jika response memiliki property users
-          else if (responseAny.users && Array.isArray(responseAny.users)) {
-            console.log('✅ Found response.users array with', responseAny.users.length, 'items');
-            usersData = responseAny.users;
-          }
-          // 4. Cek jika response memiliki property result atau results
-          else if (responseAny.result && Array.isArray(responseAny.result)) {
-            console.log('✅ Found response.result array with', responseAny.result.length, 'items');
-            usersData = responseAny.result;
-          }
-          else if (responseAny.results && Array.isArray(responseAny.results)) {
-            console.log('✅ Found response.results array with', responseAny.results.length, 'items');
-            usersData = responseAny.results;
-          }
-          // 5. Cek semua properties untuk menemukan array yang mengandung user data
-          else {
-            console.log('🔍 Searching for user array in response properties...');
-            const responseObj = responseAny as Record<string, unknown>;
+        // 1. Cek jika response memiliki property data yang berupa array
+        if (responseAny.data && Array.isArray(responseAny.data)) {
+          console.log('✅ Found response.data array with', responseAny.data.length, 'items');
+          usersData = responseAny.data;
+        } 
+        // 2. Cek jika response itu sendiri adalah array
+        else if (Array.isArray(responseAny)) {
+          console.log('✅ Response is direct array with', responseAny.length, 'items');
+          usersData = responseAny;
+        } 
+        // 3. Cek jika response memiliki property users
+        else if (responseAny.users && Array.isArray(responseAny.users)) {
+          console.log('✅ Found response.users array with', responseAny.users.length, 'items');
+          usersData = responseAny.users;
+        }
+        // 4. Cek jika response memiliki property result atau results
+        else if (responseAny.result && Array.isArray(responseAny.result)) {
+          console.log('✅ Found response.result array with', responseAny.result.length, 'items');
+          usersData = responseAny.result;
+        }
+        else if (responseAny.results && Array.isArray(responseAny.results)) {
+          console.log('✅ Found response.results array with', responseAny.results.length, 'items');
+          usersData = responseAny.results;
+        }
+        // 5. Cek semua properties untuk menemukan array yang mengandung user data
+        else {
+          console.log('🔍 Searching for user array in response properties...');
+          const responseObj = responseAny as Record<string, unknown>;
             
             // Cari property yang berupa array dan mengandung data user-like
             for (const [key, value] of Object.entries(responseObj)) {
@@ -152,8 +151,10 @@ export default function UserManagementPage() {
       }
     };
 
-    fetchUsers();
-  }, []);
+    // Fetch users data on component mount
+    useEffect(() => {
+      fetchUsers();
+    }, []);
 
   const filteredUsers = users?.filter(user =>
     (user.fullName  || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -171,6 +172,34 @@ export default function UserManagementPage() {
 
   const handleView = (user: User) => {
     router.push(`/user-management/${user.id}`);
+  };
+
+  const handleDelete = async (user: User) => {
+    try {
+      const result = await confirmDelete(user.fullName || 'User');
+      
+      if (result.isConfirmed) {
+        showAlert.loading('Menghapus user...');
+        
+        await deleteUserWithCookies(user.id);
+        
+        closeLoading();
+        showAlert.success('Berhasil', 'User berhasil dihapus');
+        
+        // Reload data setelah delete berhasil
+        await fetchUsers();
+      }
+    } catch (error) {
+      closeLoading();
+      console.error('Error deleting user:', error);
+      
+      let errorMessage = 'Gagal menghapus user';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      showAlert.error('Error', errorMessage);
+    }
   };
 
   const getVerificationBadgeClass = (isVerified: boolean) => {
@@ -301,41 +330,36 @@ export default function UserManagementPage() {
         </div>
       )
     },
-    // {
-    //   key: 'actions',
-    //   header: 'AKSI',
-    //   sortable: false,
-    //   render: (value, row) => (
-    //     <div className="d-flex gap-1">
-    //       <button
-    //         className="btn btn-sm btn-label-primary"
-    //         onClick={() => handleView(row)}
-    //         title="Lihat Detail"
-    //       >
-    //         <i className="ti ti-eye"></i>
-    //       </button>
-    //       <button
-    //         className="btn btn-sm btn-label-warning"
-    //         onClick={() => router.push(`/user-management/${row.id}/edit`)}
-    //         title="Edit User"
-    //       >
-    //         <i className="ti ti-edit"></i>
-    //       </button>
-    //       <button
-    //         className="btn btn-sm btn-label-danger"
-    //         onClick={() => {
-    //           // TODO: Implementasi delete user dengan konfirmasi
-    //           if (confirm(`Apakah Anda yakin ingin menghapus user ${row.fullName}?`)) {
-    //             alert('Fitur hapus user akan diimplementasikan')
-    //           }
-    //         }}
-    //         title="Hapus User"
-    //       >
-    //         <i className="ti ti-trash"></i>
-    //       </button>
-    //     </div>
-    //   )
-    // }
+    {
+      key: 'actions',
+      header: 'AKSI',
+      sortable: false,
+      render: (value, row) => (
+        <div className="d-flex gap-1">
+          <button
+            className="btn btn-sm btn-label-primary"
+            onClick={() => handleView(row)}
+            title="Lihat Detail"
+          >
+            <i className="ti ti-eye"></i>
+          </button>
+          {/* <button
+            className="btn btn-sm btn-label-warning"
+            onClick={() => router.push(`/user-management/${row.id}/edit`)}
+            title="Edit User"
+          >
+            <i className="ti ti-edit"></i>
+          </button> */}
+          <button
+            className="btn btn-sm btn-label-danger"
+            onClick={() => handleDelete(row)}
+            title="Hapus User"
+          >
+            <i className="ti ti-trash"></i>
+          </button>
+        </div>
+      )
+    }
   ];
 
   if (error) {
@@ -432,7 +456,7 @@ export default function UserManagementPage() {
                   loading={loading}
                   searchable={false}
                   filterable={false}
-                  onView={handleView}
+                  actions={false}
                   pagination={{
                     currentPage,
                     totalPages,

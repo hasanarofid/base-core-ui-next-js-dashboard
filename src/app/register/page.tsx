@@ -97,18 +97,7 @@ function RegisterForm() {
 
   return (
     <>
-      {/* Loading Overlay */}
-      {loading && (
-        <div className="loading-overlay">
-          <div className="loading-content">
-            <div className="loading-spinner">
-              <Loader2 className="spinner-icon" />
-            </div>
-            <h4>Sedang membuat tenant...</h4>
-            <p>Mohon tunggu sebentar</p>
-          </div>
-        </div>
-      )}
+
       
       <div className="register-wrapper">
         <div className="register-container">
@@ -273,44 +262,9 @@ function RegisterForm() {
       </div>
 
       <style jsx>{`
-        .loading-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.8);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 9999;
-        }
-        
-        .loading-content {
-          text-align: center;
-          color: white;
-        }
-        
-        .loading-spinner {
-          margin-bottom: 1rem;
-        }
-        
-        .spinner-icon {
-          width: 3rem;
-          height: 3rem;
-          animation: spin 1s linear infinite;
-        }
-        
-        .loading-content h4 {
-          margin-bottom: 0.5rem;
-          font-size: 1.25rem;
-          font-weight: 600;
-        }
-        
-        .loading-content p {
-          margin: 0;
-          opacity: 0.8;
-          font-size: 0.875rem;
+        /* Pastikan SweetAlert memiliki z-index yang lebih tinggi */
+        .swal2-container {
+          z-index: 10000 !important;
         }
 
         .register-wrapper {

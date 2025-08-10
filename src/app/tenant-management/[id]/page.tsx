@@ -3,10 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import Badge from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { ArrowLeft, Edit, Calendar, Mail, Phone, Globe, User, Building } from 'lucide-react';
+
 import { useToast } from '@/contexts/ToastContext';
 import Image from 'next/image';
 
@@ -72,7 +69,7 @@ export default function TenantViewPage() {
       case 'suspended':
         return 'danger';
       default:
-        return 'default';
+        return 'secondary';
     }
   };
 
@@ -110,13 +107,12 @@ export default function TenantViewPage() {
           <div className="alert alert-danger" role="alert">
             <h4 className="alert-heading">Error!</h4>
             <p>{error || 'Tenant tidak ditemukan'}</p>
-            <Button 
-              variant="outline" 
+            <button 
+              className="btn btn-outline-primary mt-3"
               onClick={() => router.push('/tenant-management')}
-              className="mt-3"
             >
               Kembali ke Daftar Tenant
-            </Button>
+            </button>
           </div>
         </div>
       </DashboardLayout>
@@ -127,31 +123,37 @@ export default function TenantViewPage() {
     <DashboardLayout>
       <div className="container-xxl flex-grow-1 container-p-y">
         {/* Header */}
-        <div className="page-header d-print-none">
-          <div className="container-xl">
-            <div className="row g-2 align-items-center">
-              <div className="col">
-                <div className="page-pretitle">
-                  Tenant Management
-                </div>
-                <h2 className="page-title d-flex align-items-center gap-2">
-                  <Building className="w-5 h-5" />
-                  Detail Tenant
-                </h2>
-              </div>
-              <div className="col-auto ms-auto d-print-none">
-                <div className="d-flex gap-2">
-                  <button className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-brand-blue-3">
-                    <ArrowLeft className="w-4 h-4" />
-                    <span>Kembali</span>
-                  </button>
-                  <button 
-                    className="btn btn-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 bg-gradient-to-r from-brand-blue-3 to-brand-blue-4 hover:from-brand-blue-4 hover:to-brand-blue-5"
-                    onClick={() => router.push(`/tenant-management/${tenantId}/edit`)}
-                  >
-                    <Edit className="w-4 h-4" />
-                    <span>Edit Tenant</span>
-                  </button>
+        <div className="row">
+          <div className="col-12">
+            <div className="page-header d-print-none">
+              <div className="container-xl">
+                <div className="row g-2 align-items-center">
+                  <div className="col">
+                    <div className="page-pretitle">
+                      Tenant Management
+                    </div>
+                    <h2 className="page-title">
+                      Detail Tenant
+                    </h2>
+                  </div>
+                  <div className="col-auto ms-auto d-print-none">
+                    <div className="d-flex gap-2">
+                      <button 
+                        className="btn btn-outline-primary"
+                        onClick={() => router.push('/tenant-management')}
+                      >
+                        <i className="ti ti-arrow-left me-1"></i>
+                        Kembali
+                      </button>
+                      <button 
+                        className="btn btn-primary"
+                        onClick={() => router.push(`/tenant-management/${tenantId}/edit`)}
+                      >
+                        <i className="ti ti-edit me-1"></i>
+                        Edit Tenant
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -159,113 +161,120 @@ export default function TenantViewPage() {
         </div>
 
         {/* Tenant Information */}
-        <div className="row g-5">
+        <div className="row g-4">
           <div className="col-lg-7">
-            <Card className="mb-4">
+            <div className="card mb-4">
               <div className="card-header d-flex align-items-center justify-content-between">
                 <div>
-                  <h4 className="card-title mb-1">Informasi Tenant</h4>
+                  <h5 className="card-title mb-1">Informasi Tenant</h5>
                   <p className="card-subtitle text-muted mb-0">Data lengkap tenant dalam sistem</p>
                 </div>
-                <Badge 
-                  variant={getStatusBadgeVariant(tenant.status)}
-                  className="text-sm px-4 py-2 font-semibold rounded-full shadow-sm border-0"
-                >
+                <span className={`badge bg-label-${getStatusBadgeVariant(tenant.status)} rounded-pill`}>
                   {getStatusText(tenant.status)}
-                </Badge>
+                </span>
               </div>
               <div className="card-body">
-                <div className="row g-4">
+                <div className="row g-3">
                   <div className="col-md-6">
-                    <div className="d-flex align-items-center gap-5 p-4 bg-light rounded-lg">
-                      <div className="w-14 h-14 rounded-lg bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0">
-                        <User className="w-7 h-7 text-primary" />
+                    <div className="d-flex align-items-center gap-3 p-3 bg-light rounded">
+                      <div className="flex-shrink-0">
+                        <div className="avatar avatar-md bg-label-primary rounded">
+                          <i className="ti ti-user"></i>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-muted mb-2 fw-medium">Nama Tenant</p>
-                        <h6 className="mb-0 text-truncate fw-bold">{tenant.name}</h6>
+                      <div className="flex-grow-1 min-w-0">
+                        <p className="text-muted mb-1 small fw-medium">Nama Tenant</p>
+                        <h6 className="mb-0 text-truncate fw-semibold">{tenant.name}</h6>
                       </div>
                     </div>
                   </div>
                   <div className="col-md-6">
-                    <div className="d-flex align-items-center gap-5 p-4 bg-light rounded-lg">
-                      <div className="w-14 h-14 rounded-lg bg-success bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0">
-                        <Globe className="w-7 h-7 text-success" />
+                    <div className="d-flex align-items-center gap-3 p-3 bg-light rounded">
+                      <div className="flex-shrink-0">
+                        <div className="avatar avatar-md bg-label-success rounded">
+                          <i className="ti ti-world"></i>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-muted mb-2 fw-medium">Domain</p>
-                        <h6 className="mb-0 text-truncate fw-bold">{tenant.domain}</h6>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-md-6">
-                    <div className="d-flex align-items-center gap-5 p-4 bg-light rounded-lg">
-                      <div className="w-14 h-14 rounded-lg bg-info bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0">
-                        <Mail className="w-7 h-7 text-info" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-muted mb-2 fw-medium">Email</p>
-                        <h6 className="mb-0 text-truncate fw-bold">{tenant.email}</h6>
+                      <div className="flex-grow-1 min-w-0">
+                        <p className="text-muted mb-1 small fw-medium">Domain</p>
+                        <h6 className="mb-0 text-truncate fw-semibold">{tenant.domain}</h6>
                       </div>
                     </div>
                   </div>
                   <div className="col-md-6">
-                    <div className="d-flex align-items-center gap-5 p-4 bg-light rounded-lg">
-                      <div className="w-14 h-14 rounded-lg bg-warning bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0">
-                        <Phone className="w-7 h-7 text-warning" />
+                    <div className="d-flex align-items-center gap-3 p-3 bg-light rounded">
+                      <div className="flex-shrink-0">
+                        <div className="avatar avatar-md bg-label-info rounded">
+                          <i className="ti ti-mail"></i>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-muted mb-2 fw-medium">Kontak Person</p>
-                        <h6 className="mb-0 text-truncate fw-bold">{tenant.contact_person}</h6>
+                      <div className="flex-grow-1 min-w-0">
+                        <p className="text-muted mb-1 small fw-medium">Email</p>
+                        <h6 className="mb-0 text-truncate fw-semibold">{tenant.email}</h6>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="d-flex align-items-center gap-3 p-3 bg-light rounded">
+                      <div className="flex-shrink-0">
+                        <div className="avatar avatar-md bg-label-warning rounded">
+                          <i className="ti ti-phone"></i>
+                        </div>
+                      </div>
+                      <div className="flex-grow-1 min-w-0">
+                        <p className="text-muted mb-1 small fw-medium">Kontak Person</p>
+                        <h6 className="mb-0 text-truncate fw-semibold">{tenant.contact_person}</h6>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </Card>
+            </div>
 
             {/* Client Information */}
-            <Card>
+            <div className="card">
               <div className="card-header">
-                <h4 className="card-title mb-1">Informasi Client</h4>
+                <h5 className="card-title mb-1">Informasi Client</h5>
                 <p className="card-subtitle text-muted mb-0">Kredensial untuk integrasi API</p>
               </div>
               <div className="card-body">
-                <div className="row g-4">
+                <div className="row g-3">
                   <div className="col-md-6">
-                    <div className="p-4 bg-light rounded-lg">
-                      <p className="text-muted mb-3 fw-medium">Client ID</p>
-                      <code className="bg-white p-3 rounded d-block text-break fw-bold fs-6 border">{tenant.client_id || 'Tidak tersedia'}</code>
+                    <div className="p-3 bg-light rounded">
+                      <p className="text-muted mb-2 small fw-medium">Client ID</p>
+                      <code className="bg-white p-2 rounded d-block text-break fw-semibold small border">{tenant.client_id || 'Tidak tersedia'}</code>
                     </div>
                   </div>
                   <div className="col-md-6">
-                    <div className="p-4 bg-light rounded-lg">
-                      <p className="text-muted mb-3 fw-medium">Client Key</p>
-                      <code className="bg-white p-3 rounded d-block text-break fw-bold fs-6 border">
+                    <div className="p-3 bg-light rounded">
+                      <p className="text-muted mb-2 small fw-medium">Client Key</p>
+                      <code className="bg-white p-2 rounded d-block text-break fw-semibold small border">
                         {tenant.client_key ? `${tenant.client_key.substring(0, 8)}...` : 'Tidak tersedia'}
                       </code>
                     </div>
                   </div>
                 </div>
               </div>
-            </Card>
+            </div>
           </div>
 
           <div className="col-lg-5">
             {/* Activity Information */}
-            <Card className="mb-4">
+            <div className="card mb-4">
               <div className="card-header">
-                <h4 className="card-title mb-1">Aktivitas</h4>
+                <h5 className="card-title mb-1">Aktivitas</h5>
                 <p className="card-subtitle text-muted mb-0">Riwayat aktivitas tenant</p>
               </div>
               <div className="card-body">
-                <div className="d-flex align-items-center gap-5 p-4 bg-light rounded-lg mb-4">
-                  <div className="w-14 h-14 rounded-lg bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0">
-                    <Calendar className="w-7 h-7 text-secondary" />
+                <div className="d-flex align-items-center gap-3 p-3 bg-light rounded mb-3">
+                  <div className="flex-shrink-0">
+                    <div className="avatar avatar-md bg-label-secondary rounded">
+                      <i className="ti ti-calendar"></i>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-muted mb-2 fw-medium">Login Terakhir</p>
-                    <h6 className="mb-0 fw-bold">
+                  <div className="flex-grow-1 min-w-0">
+                    <p className="text-muted mb-1 small">Login Terakhir</p>
+                    <h6 className="mb-0 fw-semibold">
                       {tenant.lastLogin 
                         ? new Date(tenant.lastLogin).toLocaleDateString('id-ID', {
                             day: 'numeric',
@@ -279,13 +288,15 @@ export default function TenantViewPage() {
                     </h6>
                   </div>
                 </div>
-                <div className="d-flex align-items-center gap-5 p-4 bg-light rounded-lg">
-                  <div className="w-14 h-14 rounded-lg bg-primary bg-opacity-10 d-flex align-items-center justify-content-center flex-shrink-0">
-                    <Calendar className="w-7 h-7 text-primary" />
+                <div className="d-flex align-items-center gap-3 p-3 bg-light rounded">
+                  <div className="flex-shrink-0">
+                    <div className="avatar avatar-md bg-label-primary rounded">
+                      <i className="ti ti-calendar"></i>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-muted mb-2 fw-medium">Tanggal Pendaftaran</p>
-                    <h6 className="mb-0 fw-bold">
+                  <div className="flex-grow-1 min-w-0">
+                    <p className="text-muted mb-1 small">Tanggal Pendaftaran</p>
+                    <h6 className="mb-0 fw-semibold">
                       {new Date(tenant.createdAt).toLocaleDateString('id-ID', {
                         day: 'numeric',
                         month: 'long',
@@ -297,13 +308,13 @@ export default function TenantViewPage() {
                   </div>
                 </div>
               </div>
-            </Card>
+            </div>
 
             {/* Logo Preview */}
             {tenant.logo_url && (
-              <Card>
+              <div className="card">
                 <div className="card-header">
-                  <h4 className="card-title mb-1">Logo Tenant</h4>
+                  <h5 className="card-title mb-1">Logo Tenant</h5>
                   <p className="card-subtitle text-muted mb-0">Preview logo tenant</p>
                 </div>
                 <div className="card-body text-center p-4">
@@ -317,9 +328,10 @@ export default function TenantViewPage() {
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                     }}
+                    unoptimized={true}
                   />
                 </div>
-              </Card>
+              </div>
             )}
           </div>
         </div>

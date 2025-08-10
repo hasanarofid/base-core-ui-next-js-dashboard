@@ -1,35 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { User } from '@/types/tenant';
-import { getUser } from '@/lib/api';
+import React from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UserInfoProps {
   className?: string;
 }
 
 export default function UserInfo({ className = '' }: UserInfoProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user, isLoading } = useAuth();
+  const error = !user && !isLoading ? 'Data user tidak tersedia' : null;
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await getUser();
-        setUser(response.user);
-      } catch (err) {
-        console.error('Error fetching user:', err);
-        setError('Gagal mengambil data user');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className={`card ${className}`}>
         <div className="card-body">
@@ -106,10 +86,10 @@ export default function UserInfo({ className = '' }: UserInfoProps) {
                 <i className="ti ti-mail me-2 text-muted"></i>
                 <span className="text-sm">{user.email}</span>
               </div>
-              {user.tenant && (
+              {user.tenantId && (
                 <div className="d-flex align-items-center mb-2">
                   <i className="ti ti-building me-2 text-muted"></i>
-                  <span className="text-sm">{user.tenant.name}</span>
+                  <span className="text-sm">Tenant ID: {user.tenantId}</span>
                 </div>
               )}
               <div className="d-flex align-items-center">

@@ -19,7 +19,7 @@ export async function GET(
     const externalApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3030/api/v1'
     const { id: paymentId } = await params
     
-    console.log('Fetching tenant data from:', `${externalApiUrl}/payment-method/${paymentId}`)
+    console.log('Fetching payment method data from:', `${externalApiUrl}/payment-method/${paymentId}`)
     console.log('Using session cookie:', sessionCookie.name)
 
     const response = await fetch(`${externalApiUrl}/payment-method/${paymentId}`, {
@@ -33,19 +33,19 @@ export async function GET(
 
     const data = await response.json()
     
-    console.log('Tenant API response status:', response.status)
-    console.log('Tenant API response data:', data)
+    console.log('Payment method API response status:', response.status)
+    console.log('Payment method API response data:', data)
 
     if (!response.ok) {
       return NextResponse.json(
-        { message: data.message || 'Gagal mengambil data tenant' },
+        { message: data.message || 'Gagal mengambil data payment method' },
         { status: response.status }
       )
     }
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error('Tenant API error:', error)
+    console.error('Payment method API error:', error)
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }
@@ -73,7 +73,7 @@ export async function PUT(
     const { id: paymentId } = await params
     const body = await request.json()
     
-    console.log('Updating tenant data from:', `${externalApiUrl}/payment-method/${paymentId}`)
+    console.log('Updating payment method data from:', `${externalApiUrl}/payment-method/${paymentId}`)
     console.log('Using session cookie:', sessionCookie.name)
     console.log('Update data:', body)
 
@@ -89,19 +89,19 @@ export async function PUT(
 
     const data = await response.json()
     
-    console.log('Tenant update API response status:', response.status)
-    console.log('Tenant update API response data:', data)
+    console.log('Payment method update API response status:', response.status)
+    console.log('Payment method update API response data:', data)
 
     if (!response.ok) {
       return NextResponse.json(
-        { message: data.message || 'Gagal memperbarui data tenant' },
+        { message: data.message || 'Gagal memperbarui data payment method' },
         { status: response.status }
       )
     }
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error('Tenant update API error:', error)
+    console.error('Payment method update API error:', error)
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }
@@ -128,7 +128,7 @@ export async function DELETE(
     const externalApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3030/api/v1'
     const { id: paymentId } = await params
     
-    console.log('Deleting tenant from:', `${externalApiUrl}/payment-method/${paymentId}`)
+    console.log('Deleting payment method from:', `${externalApiUrl}/payment-method/${paymentId}`)
     console.log('Using session cookie:', sessionCookie.name)
 
     const response = await fetch(`${externalApiUrl}/payment-method/${paymentId}`, {
@@ -142,19 +142,19 @@ export async function DELETE(
 
     const data = await response.json()
     
-    console.log('Tenant delete API response status:', response.status)
-    console.log('Tenant delete API response data:', data)
+    console.log('Payment method delete API response status:', response.status)
+    console.log('Payment method delete API response data:', data)
 
     if (!response.ok) {
       return NextResponse.json(
-        { message: data.message || 'Gagal menghapus tenant' },
+        { message: data.message || 'Gagal menghapus payment method' },
         { status: response.status }
       )
     }
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error('Tenant delete API error:', error)
+    console.error('Payment method delete API error:', error)
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

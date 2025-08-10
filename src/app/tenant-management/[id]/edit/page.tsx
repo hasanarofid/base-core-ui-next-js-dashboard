@@ -5,10 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, Save, Building } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-
-import { Card } from '@/components/ui/Card';
 import { useToast } from '@/contexts/ToastContext';
 
 const editTenantSchema = z.object({
@@ -138,10 +135,11 @@ export default function EditTenantPage() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-blue-3 mx-auto mb-4"></div>
-            <p className="text-gray-600">Memuat data tenant...</p>
+        <div className="container-xxl flex-grow-1 container-p-y">
+          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
           </div>
         </div>
       </DashboardLayout>
@@ -151,9 +149,10 @@ export default function EditTenantPage() {
   if (!tenant) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <p className="text-gray-600">Tenant tidak ditemukan</p>
+        <div className="container-xxl flex-grow-1 container-p-y">
+          <div className="alert alert-warning" role="alert">
+            <h4 className="alert-heading">Warning!</h4>
+            <p>Tenant tidak ditemukan</p>
           </div>
         </div>
       </DashboardLayout>
@@ -162,36 +161,45 @@ export default function EditTenantPage() {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto px-4 py-6">
+      <div className="container-xxl flex-grow-1 container-p-y">
         {/* Page Header */}
-        <div className="page-header d-flex align-items-center justify-content-between mb-6">
-          <div className="page-title">
-            <div className="page-pretitle">
-              Tenant Management
+        <div className="row">
+          <div className="col-12">
+            <div className="page-header d-print-none">
+              <div className="container-xl">
+                <div className="row g-2 align-items-center">
+                  <div className="col">
+                    <div className="page-pretitle">
+                      Tenant Management
+                    </div>
+                    <h2 className="page-title">
+                      Edit Tenant
+                    </h2>
+                  </div>
+                  <div className="col-auto ms-auto d-print-none">
+                    <button 
+                      className="btn btn-outline-primary"
+                      onClick={() => router.push(`/tenant-management/${tenantId}`)}
+                    >
+                      <i className="ti ti-arrow-left me-1"></i>
+                      Kembali
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-            <h2 className="page-title d-flex align-items-center gap-2">
-              <Building className="w-6 h-6 text-brand-blue-3" />
-              Edit Tenant
-            </h2>
-          </div>
-          <div className="page-actions">
-            <button 
-              className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-brand-blue-3"
-              onClick={() => router.push(`/tenant-management/${tenantId}`)}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Kembali</span>
-            </button>
           </div>
         </div>
 
         {/* Form Card */}
-        <Card className="max-w-4xl mx-auto">
-          <div className="card-header">
-            <h4 className="card-title mb-1">Form Edit Tenant</h4>
-            <p className="card-subtitle text-muted mb-0">Perbarui data tenant yang ada</p>
-          </div>
-          <div className="card-body">
+        <div className="row">
+          <div className="col-12">
+            <div className="card">
+              <div className="card-header">
+                <h5 className="card-title mb-1">Form Edit Tenant</h5>
+                <p className="card-subtitle text-muted mb-0">Perbarui data tenant yang ada</p>
+              </div>
+              <div className="card-body">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="row g-4">
                 <div className="col-md-6">
@@ -280,25 +288,27 @@ export default function EditTenantPage() {
               <div className="d-flex justify-content-end gap-3 pt-4 border-top">
                 <button 
                   type="button"
-                  className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-brand-blue-3"
+                  className="btn btn-outline-primary"
                   onClick={() => router.push(`/tenant-management/${tenantId}`)}
                   disabled={updating}
                 >
-                  <span>Batal</span>
+                  Batal
                 </button>
                 <button
                   type="submit"
-                  className="btn btn-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 bg-gradient-to-r from-brand-blue-3 to-brand-blue-4 hover:from-brand-blue-4 hover:to-brand-blue-5"
+                  className="btn btn-primary d-grid w-100"
                   disabled={updating}
                 >
-                  <Save className="w-4 h-4" />
-                  <span>{updating ? 'Memperbarui...' : 'Update Tenant'}</span>
+                  <i className="ti ti-device-floppy me-1"></i>
+                  {updating ? 'Memperbarui...' : 'Update Tenant'}
                 </button>
               </div>
             </form>
           </div>
-        </Card>
+        </div>
       </div>
+    </div>
+  </div>
     </DashboardLayout>
   );
 } 

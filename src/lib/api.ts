@@ -110,11 +110,12 @@ export const dashboardAPI = {
 // Fungsi untuk mengambil data user
 export async function getUser(): Promise<UserResponse> {
   try {
-    const response = await fetch('/api/user', {
+    const response = await fetch('/api/auth/me', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include', // Penting: untuk mengirim cookies
     })
 
     if (!response.ok) {

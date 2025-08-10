@@ -20,19 +20,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const token = localStorage.getItem('token')
-      const userData = localStorage.getItem('user')
-      
-      if (token && userData) {
-        const parsedUser = JSON.parse(userData)
-        setUser(parsedUser)
+      // Coba ambil data user dari API menggunakan cookies
+      const response = await fetch('/api/auth/me', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Penting: untuk mengirim cookies
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.user) {
+          setUser(data.user)
+        }
+      } else {
+        // Jika tidak ada session yang valid, clear data
+        setUser(null)
       }
     } catch (error) {
       console.error('Auth check error:', error)
-      // Clear invalid data
-      localStorage.removeItem('token')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('user')
       setUser(null)
     } finally {
       setIsLoading(false)
@@ -62,11 +69,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('✅ Login API response:', data)
       
       // API response structure: { message: string, data: { user: User, token: string } }
-      if (data.data && data.data.user && data.data.token) {
-        // Store in localStorage (simulating cookies)
-        localStorage.setItem('token', data.data.token)
-        localStorage.setItem('user', JSON.stringify(data.data.user))
-        
+      if (data.data && data.data.user) {
+        // Set user data (token disimpan dalam cookies oleh API)
         setUser(data.data.user)
         console.log('🎯 User set successfully:', data.data.user)
         
@@ -87,26 +91,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('🔄 Starting logout process...')
     try {
       // Call logout API
-      const token = localStorage.getItem('token')
-      if (token) {
-        console.log('📡 Calling logout API...')
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        })
-        console.log('✅ Logout API completed')
-      }
+      console.log('📡 Calling logout API...')
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Penting: untuk mengirim cookies
+      })
+      console.log('✅ Logout API completed')
     } catch (error) {
       console.error('Logout API error:', error)
     } finally {
-      console.log('🧹 Clearing local storage and redirecting...')
-      // Clear local storage
-      localStorage.removeItem('token')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('user')
+      console.log('🧹 Clearing user data and redirecting...')
+      // Clear user data
       setUser(null)
       
       // Redirect to login page

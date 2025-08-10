@@ -4,7 +4,7 @@ export interface PaymentMethod {
     code?: string;
     logo_url?: string;
     type?: string;
-    status: 'suspended' | 'pending' | 'active';
+    status: 'active' | 'inactive';
     createdAt: string;
     updatedAt: string;
   }
@@ -14,7 +14,7 @@ export interface PaymentMethod {
     code?: string;
     logo_url?: string;
     type?: string;
-    status?: 'pending' | 'active' | 'suspended';
+    status?: 'active' | 'inactive';
   }
   
   export interface UpdatePaymentMethodData extends Partial<CreatePaymentMethodData> {
@@ -23,7 +23,7 @@ export interface PaymentMethod {
   
   export interface PaymentMethodFilters {
     search?: string;
-    status?: 'pending' | 'active' | 'suspended';
+    status?: 'active' | 'inactive';
     type?: string;
   }
   

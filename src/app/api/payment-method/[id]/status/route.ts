@@ -20,7 +20,7 @@ export async function PUT(
     const { id: paymentId } = await params
     const body = await request.json()
     
-    console.log('Updating tenant status at:', `${externalApiUrl}/payment-method/${paymentId}/status`)
+    console.log('Updating payment method status at:', `${externalApiUrl}/payment-method/${paymentId}/status`)
     console.log('Using session cookie:', sessionCookie.name)
     console.log('Status data:', body)
 
@@ -36,19 +36,19 @@ export async function PUT(
 
     const data = await response.json()
     
-    console.log('Tenant status update API response status:', response.status)
-    console.log('Tenant status update API response data:', data)
+    console.log('Payment method status update API response status:', response.status)
+    console.log('Payment method status update API response data:', data)
 
     if (!response.ok) {
       return NextResponse.json(
-        { message: data.message || 'Gagal mengubah status tenant' },
+        { message: data.message || 'Gagal mengubah status payment method' },
         { status: response.status }
       )
     }
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error('Tenant status update API error:', error)
+    console.error('Payment method status update API error:', error)
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

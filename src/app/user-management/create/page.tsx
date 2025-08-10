@@ -2,16 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Users } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-
-import { Card } from '@/components/ui/Card';
+import { useToast } from '@/contexts/ToastContext';
 import { createUserWithCookies } from '@/lib/api';
 import { Tenant } from '@/types/tenant';
-import Swal from 'sweetalert2';
 
 const createUserSchema = z.object({
   full_name: z.string().min(1, 'Nama lengkap harus diisi'),
@@ -27,6 +24,7 @@ type CreateUserForm = z.infer<typeof createUserSchema>;
 
 export default function CreateUserPage() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loadingTenants, setLoadingTenants] = useState(true);
@@ -59,11 +57,11 @@ export default function CreateUserPage() {
         setTenants(response.data || []);
       } catch (error) {
         console.error('Error fetching tenants:', error);
-        Swal.fire({
-          title: "Error!",
-          text: "Gagal mengambil data tenants",
-          icon: "error",
-          confirmButtonColor: "#dc3545",
+        showToast({
+          type: 'error',
+          title: 'Error!',
+          message: 'Gagal mengambil data tenants',
+          duration: 5000
         });
       } finally {
         setLoadingTenants(false);
@@ -71,7 +69,7 @@ export default function CreateUserPage() {
     };
 
     fetchTenants();
-  }, []);
+  }, [showToast]);
 
   const onSubmit = async (data: CreateUserForm) => {
     setLoading(true);
@@ -91,15 +89,11 @@ export default function CreateUserPage() {
       await createUserWithCookies(payload);
       console.log('User created successfully');
       
-      // Tampilkan splash success
-      Swal.fire({
-        title: "Berhasil!",
-        text: "User berhasil dibuat",
-        icon: "success",
-        confirmButtonColor: "#28a745",
-        timer: 3000,
-        timerProgressBar: true,
-        showConfirmButton: false
+      showToast({
+        type: 'success',
+        title: 'Berhasil!',
+        message: 'User berhasil dibuat',
+        duration: 3000
       });
       
       // Redirect ke halaman list
@@ -107,24 +101,19 @@ export default function CreateUserPage() {
     } catch (error: unknown) {
       console.error('Error creating user:', error);
       
-      // Tampilkan splash error
       if (error instanceof Error) {
-        Swal.fire({
-          title: "Error!",
-          text: error.message,
-          icon: "error",
-          confirmButtonColor: "#dc3545",
-          timer: 5000,
-          timerProgressBar: true
+        showToast({
+          type: 'error',
+          title: 'Error!',
+          message: error.message,
+          duration: 5000
         });
       } else {
-        Swal.fire({
-          title: "Error!",
-          text: "Terjadi kesalahan yang tidak diketahui.",
-          icon: "error",
-          confirmButtonColor: "#dc3545",
-          timer: 5000,
-          timerProgressBar: true
+        showToast({
+          type: 'error',
+          title: 'Error!',
+          message: 'Terjadi kesalahan yang tidak diketahui.',
+          duration: 5000
         });
       }
     } finally {
@@ -134,186 +123,198 @@ export default function CreateUserPage() {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto px-4 py-6">
+      <div className="container-xxl flex-grow-1 container-p-y">
         {/* Page Header */}
-        <div className="mb-6">
-          <div className="d-flex align-items-center gap-3 mb-4">
-            <button
-              onClick={() => router.back()}
-              className="btn btn-outline-secondary d-flex align-items-center gap-2 px-3 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Kembali</span>
-            </button>
-            <div className="d-flex align-items-center gap-2">
-              <Users className="w-6 h-6 text-brand-blue-3" />
-              <h1 className="text-2xl font-bold text-gray-900 mb-0">Tambah User Baru</h1>
+        <div className="row">
+          <div className="col-12">
+            <div className="page-header d-print-none">
+              <div className="container-xl">
+                <div className="row g-2 align-items-center">
+                  <div className="col">
+                    <div className="page-pretitle">
+                      User Management
+                    </div>
+                    <h2 className="page-title">
+                      Tambah User Baru
+                    </h2>
+                  </div>
+                  <div className="col-auto ms-auto d-print-none">
+                    <button 
+                      className="btn btn-outline-primary"
+                      onClick={() => router.back()}
+                    >
+                      <i className="ti ti-arrow-left me-1"></i>
+                      Kembali
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <p className="text-gray-600 mb-0">Buat user baru untuk sistem Anda</p>
         </div>
 
         {/* Form Card */}
-        <Card className="shadow-lg border-0">
-          <div className="card-header bg-gradient-to-r from-brand-blue-3 to-brand-blue-4 text-white">
-            <h5 className="card-title mb-0 d-flex align-items-center gap-2">
-              <Users className="w-5 h-5" />
-              <span>Informasi User</span>
-            </h5>
-          </div>
-          <div className="card-body p-4">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Basic Information */}
-              <div className="row">
-                <div className="col-md-6">
-                  <div className="form-group">
-                    <label className="form-label">
-                      Nama Lengkap <span className="text-danger">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      className={`form-control ${errors.full_name ? 'is-invalid' : ''}`}
-                      placeholder="Masukkan nama lengkap"
-                      {...register('full_name')}
-                    />
-                    {errors.full_name && (
-                      <div className="invalid-feedback">{errors.full_name.message}</div>
-                    )}
-                  </div>
-                </div>
+        <div className="row">
+          <div className="col-12">
+            <div className="card">
+              <div className="card-header">
+                <h5 className="card-title mb-1">Form Tambah User</h5>
+                <p className="card-subtitle text-muted mb-0">Isi data user yang akan ditambahkan</p>
+              </div>
+              <div className="card-body">
+                <form onSubmit={handleSubmit(onSubmit)}>
+                  <div className="row g-4">
+                    <div className="col-md-6">
+                      <div className="form-group">
+                        <label className="form-label">
+                          Nama Lengkap <span className="text-danger">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          className={`form-control ${errors.full_name ? 'is-invalid' : ''}`}
+                          placeholder="Masukkan nama lengkap"
+                          {...register('full_name')}
+                        />
+                        {errors.full_name && (
+                          <div className="invalid-feedback">{errors.full_name.message}</div>
+                        )}
+                      </div>
+                    </div>
 
-                <div className="col-md-6">
-                  <div className="form-group">
-                    <label className="form-label">
-                      Email <span className="text-danger">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      className={`form-control ${errors.email ? 'is-invalid' : ''}`}
-                      placeholder="email@example.com"
-                      {...register('email')}
-                    />
-                    {errors.email && (
-                      <div className="invalid-feedback">{errors.email.message}</div>
-                    )}
-                  </div>
-                </div>
+                    <div className="col-md-6">
+                      <div className="form-group">
+                        <label className="form-label">
+                          Email <span className="text-danger">*</span>
+                        </label>
+                        <input
+                          type="email"
+                          className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                          placeholder="email@example.com"
+                          {...register('email')}
+                        />
+                        {errors.email && (
+                          <div className="invalid-feedback">{errors.email.message}</div>
+                        )}
+                      </div>
+                    </div>
 
-                <div className="col-md-6">
-                  <div className="form-group">
-                    <label className="form-label">
-                      Password <span className="text-danger">*</span>
-                    </label>
-                    <input
-                      type="password"
-                      className={`form-control ${errors.password ? 'is-invalid' : ''}`}
-                      placeholder="Masukkan password"
-                      {...register('password')}
-                    />
-                    {errors.password && (
-                      <div className="invalid-feedback">{errors.password.message}</div>
-                    )}
-                  </div>
-                </div>
+                    <div className="col-md-6">
+                      <div className="form-group">
+                        <label className="form-label">
+                          Password <span className="text-danger">*</span>
+                        </label>
+                        <input
+                          type="password"
+                          className={`form-control ${errors.password ? 'is-invalid' : ''}`}
+                          placeholder="Masukkan password"
+                          {...register('password')}
+                        />
+                        {errors.password && (
+                          <div className="invalid-feedback">{errors.password.message}</div>
+                        )}
+                      </div>
+                    </div>
 
-                <div className="col-md-6">
-                  <div className="form-group">
-                    <label className="form-label">
-                      Role <span className="text-danger">*</span>
-                    </label>
-                    <select
-                      className={`form-control ${errors.role ? 'is-invalid' : ''}`}
-                      {...register('role')}
-                    >
-                      <option value="">Pilih Role</option>
-                      <option value="superadmin">Super Admin</option>
-                      <option value="admin_tenant">Admin Tenant</option>
-                      <option value="end_user">End User</option>
-                    </select>
-                    {errors.role && (
-                      <div className="invalid-feedback">{errors.role.message}</div>
-                    )}
-                  </div>
-                </div>
+                    <div className="col-md-6">
+                      <div className="form-group">
+                        <label className="form-label">
+                          Role <span className="text-danger">*</span>
+                        </label>
+                        <select
+                          className={`form-control ${errors.role ? 'is-invalid' : ''}`}
+                          {...register('role')}
+                        >
+                          <option value="">Pilih Role</option>
+                          <option value="superadmin">Super Admin</option>
+                          <option value="admin_tenant">Admin Tenant</option>
+                          <option value="end_user">End User</option>
+                        </select>
+                        {errors.role && (
+                          <div className="invalid-feedback">{errors.role.message}</div>
+                        )}
+                      </div>
+                    </div>
 
-                <div className="col-md-6">
-                  <div className="form-group">
-                    <label className="form-label">Tenant (Opsional)</label>
-                    <select
-                      className="form-control"
-                      {...register('tenant_id')}
-                      disabled={loadingTenants}
-                    >
-                      <option value="">Pilih Tenant</option>
-                      {tenants.map((tenant) => (
-                        <option key={tenant.id} value={tenant.id}>
-                          {tenant.name} ({tenant.domain || 'No Domain'})
-                        </option>
-                      ))}
-                    </select>
-                    {loadingTenants && (
-                      <div className="form-text">Memuat data tenants...</div>
-                    )}
-                  </div>
-                </div>
+                    <div className="col-md-6">
+                      <div className="form-group">
+                        <label className="form-label">Tenant (Opsional)</label>
+                        <select
+                          className="form-control"
+                          {...register('tenant_id')}
+                          disabled={loadingTenants}
+                        >
+                          <option value="">Pilih Tenant</option>
+                          {tenants.map((tenant) => (
+                            <option key={tenant.id} value={tenant.id}>
+                              {tenant.name} ({tenant.domain || 'No Domain'})
+                            </option>
+                          ))}
+                        </select>
+                        {loadingTenants && (
+                          <div className="form-text">Memuat data tenants...</div>
+                        )}
+                      </div>
+                    </div>
 
-                <div className="col-md-6">
-                  <div className="form-group">
-                    <label className="form-label">Status Verifikasi</label>
-                    <div className="form-check">
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        id="isVerified"
-                        {...register('isVerified')}
-                      />
-                      <label className="form-check-label" htmlFor="isVerified">
-                        User sudah terverifikasi
-                      </label>
+                    <div className="col-md-6">
+                      <div className="form-group">
+                        <label className="form-label">Status Verifikasi</label>
+                        <div className="form-check">
+                          <input
+                            type="checkbox"
+                            className="form-check-input"
+                            id="isVerified"
+                            {...register('isVerified')}
+                          />
+                          <label className="form-check-label" htmlFor="isVerified">
+                            User sudah terverifikasi
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="col-md-6">
+                      <div className="form-group">
+                        <label className="form-label">Force Password Change</label>
+                        <div className="form-check">
+                          <input
+                            type="checkbox"
+                            className="form-check-input"
+                            id="force_password_change"
+                            {...register('force_password_change')}
+                          />
+                          <label className="form-check-label" htmlFor="force_password_change">
+                            User harus ganti password saat login pertama
+                          </label>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="col-md-6">
-                  <div className="form-group">
-                    <label className="form-label">Force Password Change</label>
-                    <div className="form-check">
-                      <input
-                        type="checkbox"
-                        className="form-check-input"
-                        id="force_password_change"
-                        {...register('force_password_change')}
-                      />
-                      <label className="form-check-label" htmlFor="force_password_change">
-                        User harus ganti password saat login pertama
-                      </label>
-                    </div>
+                  {/* Action Buttons */}
+                  <div className="d-flex justify-content-end gap-3 pt-4 border-top">
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary"
+                      onClick={() => router.back()}
+                      disabled={loading}
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn btn-primary d-grid w-100"
+                      disabled={loading}
+                    >
+                      <i className="ti ti-device-floppy me-1"></i>
+                      {loading ? 'Menyimpan...' : 'Simpan User'}
+                    </button>
                   </div>
-                </div>
+                </form>
               </div>
-
-              {/* Action Buttons */}
-              <div className="d-flex justify-content-end gap-3 pt-4 border-top">
-                <button
-                  type="button"
-                  className="btn btn-outline-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-0.5 border-2 hover:border-brand-blue-3"
-                  onClick={() => router.back()}
-                  disabled={loading}
-                >
-                  <span>Batal</span>
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary d-flex align-items-center gap-2 px-4 py-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 bg-gradient-to-r from-brand-blue-3 to-brand-blue-4 hover:from-brand-blue-4 hover:to-brand-blue-5"
-                  disabled={loading}
-                >
-                  <Save className="w-4 h-4" />
-                  <span>{loading ? 'Menyimpan...' : 'Simpan User'}</span>
-                </button>
-              </div>
-            </form>
+            </div>
           </div>
-        </Card>
+        </div>
       </div>
     </DashboardLayout>
   );

@@ -4,16 +4,16 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import AuthGuard from '@/components/auth/AuthGuard';
-import { Building, Plus, Filter, Download } from 'lucide-react';
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { PaymentMethod } from '@/types/paymentMethod';
-import Badge from '@/components/ui/Badge';
 import Image from 'next/image';
-import { getPaymentMethod, deletePaymentMethodWithCookies  } from '@/lib/api';
-import Swal from 'sweetalert2';
+import { getPaymentMethod, deletePaymentMethodWithCookies } from '@/lib/api';
+import { useToast } from '@/contexts/ToastContext';
+import { confirmDelete } from '@/lib/sweetalert-config';
 
 export default function PaymentMethodPage() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [paymentmethods, setPaymentMethod] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,34 +54,26 @@ export default function PaymentMethodPage() {
   const totalPages = Math.ceil(filteredPaymentMethod.length / itemsPerPage);
 
   const handleDelete = async (paymentmethod: PaymentMethod) => {
-    // if (paymentmethod.status === 'active') {
-    //   Swal.fire({
-    //     title: 'Tidak dapat menghapus!',
-    //     text: 'Metode pembayaran dengan status aktif tidak dapat dihapus.',
-    //     icon: 'warning',
-    //     confirmButtonColor: '#3085d6',
-    //   });
-    //   return;
-    // }
-  
-    const result = await Swal.fire({
-      title: `Hapus metode "${paymentmethod.name}"?`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#dc3545',
-      cancelButtonColor: '#6c757d',
-      confirmButtonText: 'Ya, hapus!',
-      cancelButtonText: 'Batal',
-    });
+    const result = await confirmDelete(paymentmethod.name);
   
     if (result.isConfirmed) {
       try {
-        await deletePaymentMethodWithCookies(paymentmethod.id); // gunakan fungsi API
+        await deletePaymentMethodWithCookies(paymentmethod.id);
         setPaymentMethod((prev) => prev.filter(p => p.id !== paymentmethod.id));
-        Swal.fire('Berhasil!', 'Metode pembayaran dihapus.', 'success');
+        showToast({
+          type: 'success',
+          title: 'Berhasil!',
+          message: 'Metode pembayaran dihapus.',
+          duration: 3000
+        });
       } catch (error) {
         console.error('Delete error:', error);
-        Swal.fire('Error!', 'Gagal menghapus metode pembayaran.', 'error');
+        showToast({
+          type: 'error',
+          title: 'Error!',
+          message: 'Gagal menghapus metode pembayaran.',
+          duration: 5000
+        });
       }
     }
   };
@@ -97,17 +89,15 @@ export default function PaymentMethodPage() {
   const getStatusBadgeVariant = (status: PaymentMethod['status']) => {
     switch (status) {
       case 'active': return 'success';
-      case 'pending': return 'warning';
-      case 'suspended': return 'danger';
-      default: return 'default';
+      case 'inactive': return 'danger';
+      default: return 'warning';
     }
   };
 
   const getStatusText = (status: PaymentMethod['status']) => {
     switch (status) {
       case 'active': return 'Aktif';
-      case 'pending': return 'Menunggu';
-      case 'suspended': return 'Ditangguhkan';
+      case 'inactive': return 'Tidak Aktif';
       default: return status;
     }
   };
@@ -117,9 +107,18 @@ export default function PaymentMethodPage() {
       key: 'name',
       header: 'LOGO',
       render: (_, row) => (
-        <div className="flex items-center gap-3">
-          {row.logo_url && <Image src={row.logo_url} alt={row.name} width={12} height={12} />}
-          <span className="font-semibold">{row.name || '-'}</span>
+        <div className="d-flex align-items-center gap-3">
+          {row.logo_url && (
+            <Image 
+              src={row.logo_url} 
+              alt={row.name} 
+              width={32} 
+              height={32} 
+              className="rounded"
+              unoptimized={true}
+            />
+          )}
+          <span className="fw-semibold">{row.name || '-'}</span>
         </div>
       )
     },
@@ -145,9 +144,9 @@ export default function PaymentMethodPage() {
       render: (value) => {
         const status = value as PaymentMethod['status'];
         return (
-          <Badge variant={getStatusBadgeVariant(status)}>
+          <span className={`badge bg-label-${getStatusBadgeVariant(status)}`}>
             {getStatusText(status)}
-          </Badge>
+          </span>
         );
       }
     },
@@ -183,33 +182,40 @@ export default function PaymentMethodPage() {
     <AuthGuard requireAuth={true}>
       <DashboardLayout>
         <div className="container-xxl flex-grow-1 container-p-y">
+          {/* Page Header */}
           <div className="row">
             <div className="col-12">
-              <div className="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                  <h4 className="fw-bold mb-1 flex items-center gap-2">
-                    <Building className="w-6 h-6 text-brand-blue-3" />
-                    Payment Method Master
-                  </h4>
-                  <p className="text-muted mb-0">Kelola dan monitor semua metode pembayaran dalam sistem Anda</p>
-                </div>
-                <div className="d-flex gap-2">
-                  <button className="btn btn-outline-primary d-flex align-items-center gap-2">
-                    <Download className="w-4 h-4" />
-                    Ekspor Data
-                  </button>
-                  <button
-                    className="btn btn-primary d-flex align-items-center gap-2"
-                    onClick={() => router.push('/payment-methods/create')}
-                  >
-                    <Plus className="w-4 h-4" />
-                    Tambah Metode Pembayaran
-                  </button>
+              <div className="page-header d-print-none">
+                <div className="container-xl">
+                  <div className="row g-2 align-items-center">
+                    <div className="col">
+                      <div className="page-pretitle">
+                        Payment Methods
+                      </div>
+                      <h2 className="page-title">
+                        Payment Method Master
+                      </h2>
+                    </div>
+                    <div className="col-auto ms-auto d-print-none">
+                      <button className="btn btn-outline-primary me-2">
+                        <i className="ti ti-download me-1"></i>
+                        Ekspor Data
+                      </button>
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => router.push('/payment-methods/create')}
+                      >
+                        <i className="ti ti-plus me-1"></i>
+                        Tambah Metode Pembayaran
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Data Table */}
           <div className="row">
             <div className="col-12">
               <div className="card">
@@ -228,8 +234,8 @@ export default function PaymentMethodPage() {
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
-                    <button className="btn btn-outline-primary d-flex align-items-center gap-2">
-                      <Filter className="w-4 h-4" />
+                    <button className="btn btn-outline-primary">
+                      <i className="ti ti-filter me-1"></i>
                       Filter
                     </button>
                   </div>

@@ -2,10 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Edit, Building } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
 import Image from 'next/image';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { PaymentMethod } from '@/types/paymentMethod';
 import { getPaymentMethodByIdWithCookies } from '@/lib/api';
 
@@ -37,102 +35,186 @@ export default function PaymentMethodDetailPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="ml-2 text-gray-500">Memuat data metode...</span>
+      <DashboardLayout>
+        <div className="container-xxl flex-grow-1 container-p-y">
+          <div className="d-flex justify-content-center align-items-center" style={{ height: '400px' }}>
+            <div className="text-center">
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <p className="mt-2 text-muted">Memuat data metode...</p>
+            </div>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (!method) {
     return (
-      <div className="container mx-auto px-4 py-6 text-center">
-        <Building className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-900">Metode Tidak Ditemukan</h2>
-        <p className="text-gray-500 mb-4">Data metode pembayaran tidak tersedia atau telah dihapus.</p>
-        <Button onClick={() => router.push('/payment-methods')}>Kembali ke Daftar</Button>
-      </div>
+      <DashboardLayout>
+        <div className="container-xxl flex-grow-1 container-p-y">
+          <div className="card">
+            <div className="card-body text-center py-5">
+              <i className="ti ti-building text-muted mb-3" style={{ fontSize: '3rem' }}></i>
+              <h4 className="mb-2">Metode Tidak Ditemukan</h4>
+              <p className="mb-4">Data metode pembayaran tidak tersedia atau telah dihapus.</p>
+              <button 
+                className="btn btn-primary"
+                onClick={() => router.push('/payment-methods')}
+              >
+                Kembali ke Daftar
+              </button>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
     );
   }
 
-  return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => router.back()} className="flex items-center gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Kembali
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Building className="w-6 h-6 text-primary" />
-              Detail Metode Pembayaran
-            </h1>
-            <p className="text-gray-600 mt-1">Informasi lengkap metode pembayaran</p>
-          </div>
-        </div>
-        <Button onClick={() => router.push(`/payment-methods/${method.id}/edit`)} className="flex items-center gap-2">
-          <Edit className="w-4 h-4" />
-          Edit
-        </Button>
-      </div>
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'success';
+      case 'suspended':
+        return 'danger';
+      default:
+        return 'warning';
+    }
+  };
 
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            {method.logo_url && <Image src={method.logo_url} alt={method.name} width={24} height={24} className="rounded" />}
-            <div>
-              <h2 className="text-xl font-semibold">{method.name}</h2>
-              <p className="text-sm text-gray-600">{method.code}</p>
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'Aktif';
+      case 'suspended':
+        return 'Ditangguhkan';
+      default:
+        return 'Menunggu';
+    }
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="container-xxl flex-grow-1 container-p-y">
+        {/* Page Header */}
+        <div className="row">
+          <div className="col-12">
+            <div className="page-header d-print-none">
+              <div className="container-xl">
+                <div className="row g-2 align-items-center">
+                  <div className="col">
+                    <div className="page-pretitle">
+                      Payment Methods
+                    </div>
+                    <h2 className="page-title">
+                      Detail Metode Pembayaran
+                    </h2>
+                  </div>
+                  <div className="col-auto ms-auto d-print-none">
+                    <button 
+                      className="btn btn-outline-primary me-2"
+                      onClick={() => router.back()}
+                    >
+                      <i className="ti ti-arrow-left me-1"></i>
+                      Kembali
+                    </button>
+                    <button 
+                      className="btn btn-primary"
+                      onClick={() => router.push(`/payment-methods/${method.id}/edit`)}
+                    >
+                      <i className="ti ti-edit me-1"></i>
+                      Edit
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <Badge variant={
-            method.status === 'active'
-              ? 'success'
-              : method.status === 'suspended'
-              ? 'danger'
-              : 'warning'
-          }>
-            {method.status === 'active'
-              ? 'Aktif'
-              : method.status === 'suspended'
-              ? 'Ditangguhkan'
-              : 'Menunggu'}
-          </Badge>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <p className="text-sm text-gray-500">Tipe</p>
-            <p className="font-medium text-gray-900">{method.type || '-'}</p>
-          </div>
+        {/* Detail Card */}
+        <div className="row">
+          <div className="col-12">
+            <div className="card">
+              <div className="card-header">
+                <div className="d-flex align-items-center justify-content-between">
+                  <div className="d-flex align-items-center gap-3">
+                    {method.logo_url && (
+                      <Image 
+                        src={method.logo_url} 
+                        alt={method.name} 
+                        width={32} 
+                        height={32} 
+                        className="rounded"
+                        unoptimized={true}
+                      />
+                    )}
+                    <div>
+                      <h5 className="card-title mb-1">{method.name}</h5>
+                      <p className="card-subtitle text-muted mb-0">{method.code}</p>
+                    </div>
+                  </div>
+                  <span className={`badge bg-label-${getStatusBadgeVariant(method.status)}`}>
+                    {getStatusText(method.status)}
+                  </span>
+                </div>
+              </div>
+              <div className="card-body">
+                <div className="row g-4">
+                  <div className="col-md-6">
+                    <div className="d-flex align-items-center mb-3">
+                      <i className="ti ti-tag text-primary me-2"></i>
+                      <span className="fw-bold me-2">Tipe:</span>
+                      <span>{method.type || '-'}</span>
+                    </div>
+                  </div>
 
-          <div>
-            <p className="text-sm text-gray-500">Tanggal Dibuat</p>
-            <p className="font-medium text-gray-900">
-              {new Date(method.createdAt).toLocaleDateString('id-ID', {
-                year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-              })}
-            </p>
-          </div>
+                  <div className="col-md-6">
+                    <div className="d-flex align-items-center mb-3">
+                      <i className="ti ti-calendar text-primary me-2"></i>
+                      <span className="fw-bold me-2">Tanggal Dibuat:</span>
+                      <span>
+                        {new Date(method.createdAt).toLocaleDateString('id-ID', {
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric', 
+                          hour: '2-digit', 
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                  </div>
 
-          <div>
-            <p className="text-sm text-gray-500">Terakhir Diupdate</p>
-            <p className="font-medium text-gray-900">
-              {new Date(method.updatedAt).toLocaleDateString('id-ID', {
-                year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-              })}
-            </p>
-          </div>
+                  <div className="col-md-6">
+                    <div className="d-flex align-items-center mb-3">
+                      <i className="ti ti-clock text-primary me-2"></i>
+                      <span className="fw-bold me-2">Terakhir Diupdate:</span>
+                      <span>
+                        {new Date(method.updatedAt).toLocaleDateString('id-ID', {
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric', 
+                          hour: '2-digit', 
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                  </div>
 
-          <div>
-            <p className="text-sm text-gray-500">ID Metode</p>
-            <p className="font-mono text-sm bg-gray-100 px-2 py-1 rounded mt-1">{method.id}</p>
+                  <div className="col-md-6">
+                    <div className="d-flex align-items-center mb-3">
+                      <i className="ti ti-id text-primary me-2"></i>
+                      <span className="fw-bold me-2">ID Metode:</span>
+                      <span className="font-monospace bg-light px-2 py-1 rounded">{method.id}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

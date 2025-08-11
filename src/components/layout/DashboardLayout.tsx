@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Sidebar from './Sidebar'
 import Header from './Header'
 
@@ -14,6 +14,21 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed)
   }
+
+  // Apply class to html element when sidebar is collapsed
+  useEffect(() => {
+    const htmlElement = document.documentElement
+    if (isSidebarCollapsed) {
+      htmlElement.classList.add('layout-menu-collapsed')
+    } else {
+      htmlElement.classList.remove('layout-menu-collapsed')
+    }
+
+    // Cleanup on unmount
+    return () => {
+      htmlElement.classList.remove('layout-menu-collapsed')
+    }
+  }, [isSidebarCollapsed])
 
   return (
     <div className="layout-wrapper layout-content-navbar">

@@ -2,6 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useRef } from 'react'
+
+// Type declaration for window.Menu
+declare global {
+  interface Window {
+    Menu: any
+  }
+}
 
 interface SidebarProps {
   isCollapsed: boolean
@@ -10,6 +18,72 @@ interface SidebarProps {
 
 export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const pathname = usePathname()
+  const sidebarRef = useRef<HTMLElement>(null)
+
+  // Initialize menu after component mounts
+  useEffect(() => {
+    // Wait for menu.js to be loaded and window.Menu to be available
+    const initMenu = () => {
+      if (typeof window !== 'undefined' && window.Menu) {
+        const menuElement = document.getElementById('layout-menu')
+        if (menuElement && !(menuElement as any).menuInstance) {
+          new window.Menu(menuElement)
+        }
+      }
+    }
+
+    // Try to initialize immediately
+    initMenu()
+
+    // If not available, wait a bit and try again
+    if (typeof window !== 'undefined' && !window.Menu) {
+      const timer = setTimeout(initMenu, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [])
+
+  // Add hover event listeners for collapsed sidebar
+  useEffect(() => {
+    const sidebar = sidebarRef.current
+    if (!sidebar) return
+
+    const handleMouseEnter = () => {
+      if (isCollapsed && window.innerWidth >= 1200) {
+        document.documentElement.classList.add('layout-menu-hover')
+      }
+    }
+
+    const handleMouseLeave = () => {
+      document.documentElement.classList.remove('layout-menu-hover')
+    }
+
+    const handleTouchStart = () => {
+      if (isCollapsed && window.innerWidth >= 1200) {
+        document.documentElement.classList.add('layout-menu-hover')
+      }
+    }
+
+    const handleWindowTouchStart = (e: TouchEvent) => {
+      if (!e.target || !(e.target as Element).closest('.layout-menu')) {
+        document.documentElement.classList.remove('layout-menu-hover')
+      }
+    }
+
+    // Add event listeners
+    sidebar.addEventListener('mouseenter', handleMouseEnter)
+    sidebar.addEventListener('mouseleave', handleMouseLeave)
+    sidebar.addEventListener('touchstart', handleTouchStart)
+    window.addEventListener('touchstart', handleWindowTouchStart, true)
+
+    // Cleanup
+    return () => {
+      sidebar.removeEventListener('mouseenter', handleMouseEnter)
+      sidebar.removeEventListener('mouseleave', handleMouseLeave)
+      sidebar.removeEventListener('touchstart', handleTouchStart)
+      window.removeEventListener('touchstart', handleWindowTouchStart, true)
+      document.documentElement.classList.remove('layout-menu-hover')
+    }
+  }, [isCollapsed])
 
   const menuItems = [
     {
@@ -67,18 +141,19 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
   const handleToggleClick = (e: React.MouseEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     onToggle()
   }
 
   return (
-    <aside id="layout-menu" className={`layout-menu menu-vertical menu bg-menu-theme ${isCollapsed ? 'layout-menu-collapsed' : ''}`}>
+    <aside ref={sidebarRef} id="layout-menu" className="layout-menu menu-vertical menu bg-menu-theme">
       {/* App Brand */}
       <div className="app-brand demo">
         <Link href="/dashboard" className="app-brand-link">
           <span className="app-brand-logo demo">
           <img src="/logo.jpeg" alt="Logo" width="32" height="32" style={{ borderRadius: '4px' }} />
           </span>
-          {!isCollapsed && <span className="app-brand-text demo menu-text fw-bold text-primary">Tenant</span>}
+          <span className="app-brand-text demo menu-text fw-bold text-primary">Tenant</span>
         </Link>
 
        

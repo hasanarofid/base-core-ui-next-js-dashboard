@@ -49,6 +49,12 @@ export default function RootLayout({
       data-assets-path="/theme/assets/"
       data-template="vertical-menu-template"
     >
+      <head>
+        {/* Icon Stylesheets */}
+        <link rel="stylesheet" href="/theme/assets/vendor/fonts/fontawesome.css" />
+        <link rel="stylesheet" href="/theme/assets/vendor/fonts/tabler-icons.css" />
+        <link rel="stylesheet" href="/theme/assets/vendor/fonts/flag-icons.css" />
+      </head>
       <body className={`${publicSans.variable} antialiased`}>
         <ThemeProvider>
           <AuthProvider>

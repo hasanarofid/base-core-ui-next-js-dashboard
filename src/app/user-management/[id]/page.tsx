@@ -3,15 +3,13 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Head from 'next/head'
+import Image from 'next/image'
 import AuthGuard from '@/components/auth/AuthGuard'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { User } from '@/types'
 
-interface UserDetailResponse {
-  message: string
-  data: User
-}
+
 
 export default function UserDetailPage() {
   const params = useParams()
@@ -207,20 +205,24 @@ export default function UserDetailPage() {
             <div className="col-12">
               <div className="card mb-4">
                 <div className="user-profile-header-banner">
-                  <img 
+                  <Image 
                     src="/theme/assets/img/pages/profile-banner.png" 
                     alt="Banner image" 
                     className="rounded-top w-100" 
                     style={{ height: '200px', objectFit: 'cover' }}
+                    width={1200}
+                    height={200}
                   />
                 </div>
                 <div className="user-profile-header d-flex flex-column flex-sm-row text-sm-start text-center mb-4">
                   <div className="flex-shrink-0 mt-n2 mx-sm-0 mx-auto">
-                    <img
+                    <Image
                       src={user.avatar || '/theme/assets/img/avatars/14.png'}
                       alt="user image"
                       className="d-block h-auto ms-0 ms-sm-4 rounded user-profile-img"
                       style={{ width: '120px', height: '120px', objectFit: 'cover' }}
+                      width={120}
+                      height={120}
                     />
                   </div>
                   <div className="flex-grow-1 mt-3 mt-sm-5">

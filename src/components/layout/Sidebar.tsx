@@ -1,13 +1,14 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 
 // Type declaration for window.Menu
 declare global {
   interface Window {
-    Menu: any
+    Menu: unknown
   }
 }
 
@@ -26,8 +27,8 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     const initMenu = () => {
       if (typeof window !== 'undefined' && window.Menu) {
         const menuElement = document.getElementById('layout-menu')
-        if (menuElement && !(menuElement as any).menuInstance) {
-          new window.Menu(menuElement)
+        if (menuElement && !(menuElement as unknown as { menuInstance?: unknown }).menuInstance) {
+          new (window.Menu as new (element: HTMLElement) => unknown)(menuElement)
         }
       }
     }
@@ -151,7 +152,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       <div className="app-brand demo">
         <Link href="/dashboard" className="app-brand-link">
           <span className="app-brand-logo demo">
-          <img src="/logo.jpeg" alt="Logo" width="32" height="32" style={{ borderRadius: '4px' }} />
+          <Image src="/logo.jpeg" alt="Logo" width="32" height="32" style={{ borderRadius: '4px' }} />
           </span>
           <span className="app-brand-text demo menu-text fw-bold text-primary">Tenant</span>
         </Link>

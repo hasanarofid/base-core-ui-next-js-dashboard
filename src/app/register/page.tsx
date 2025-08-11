@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Eye, EyeOff, Mail, Lock, User, Loader2, Building, Globe, Phone, Image as ImageIcon } from 'lucide-react';
+import { Mail, Loader2, Building, Globe, Phone, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import Swal from 'sweetalert2';
 import AuthGuard from '@/components/auth/AuthGuard';

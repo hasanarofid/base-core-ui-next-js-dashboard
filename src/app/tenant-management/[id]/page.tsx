@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
-import { useToast } from '@/contexts/ToastContext';
+
 import Image from 'next/image';
 
 interface Tenant {

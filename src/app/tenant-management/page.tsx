@@ -10,7 +10,7 @@ import { Tenant } from '@/types/tenant';
 import Badge from '@/components/ui/Badge';
 import { getTenantsWithCookies, updateTenantStatusWithCookies, approveTenantWithCookies } from '@/lib/api';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { showAlert, confirmDelete, confirmApprove, confirmStatusChange, showLoading, closeLoading } from '@/lib/sweetalert-config';
+import { showAlert, confirmDelete, confirmApprove, confirmStatusChange, showLoading } from '@/lib/sweetalert-config';
 
 /**
  * Tenant Management Page

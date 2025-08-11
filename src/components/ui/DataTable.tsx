@@ -217,7 +217,7 @@ export function DataTable<T extends { id: string | number }>({
                 </td>
               </tr>
             ) : (
-              sortedData.map((row, index) => (
+              sortedData.map((row) => (
                 <tr key={row.id}>
                   {columns.map((column) => (
                     <td key={column.key} className="align-middle">

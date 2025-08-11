@@ -61,6 +61,65 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
     }
   }, [])
 
+  // Position dropdowns properly
+  useEffect(() => {
+    const positionDropdowns = () => {
+      if (isUserDropdownOpen && userDropdownRef.current) {
+        const dropdown = userDropdownRef.current.querySelector('.dropdown-menu') as HTMLElement
+        if (dropdown) {
+          const rect = userDropdownRef.current.getBoundingClientRect()
+          const viewportHeight = window.innerHeight
+          const dropdownHeight = dropdown.offsetHeight
+          
+          // Check if dropdown would go below viewport
+          if (rect.bottom + dropdownHeight > viewportHeight) {
+            dropdown.style.top = 'auto'
+            dropdown.style.bottom = '100%'
+            dropdown.style.marginTop = '0'
+            dropdown.style.marginBottom = '0.5rem'
+          } else {
+            dropdown.style.top = '100%'
+            dropdown.style.bottom = 'auto'
+            dropdown.style.marginTop = '0.5rem'
+            dropdown.style.marginBottom = '0'
+          }
+        }
+      }
+
+      if (isNotificationsDropdownOpen && notificationsDropdownRef.current) {
+        const dropdown = notificationsDropdownRef.current.querySelector('.dropdown-menu') as HTMLElement
+        if (dropdown) {
+          const rect = notificationsDropdownRef.current.getBoundingClientRect()
+          const viewportHeight = window.innerHeight
+          const dropdownHeight = dropdown.offsetHeight
+          
+          // Check if dropdown would go below viewport
+          if (rect.bottom + dropdownHeight > viewportHeight) {
+            dropdown.style.top = 'auto'
+            dropdown.style.bottom = '100%'
+            dropdown.style.marginTop = '0'
+            dropdown.style.marginBottom = '0.5rem'
+          } else {
+            dropdown.style.top = '100%'
+            dropdown.style.bottom = 'auto'
+            dropdown.style.marginTop = '0.5rem'
+            dropdown.style.marginBottom = '0'
+          }
+        }
+      }
+    }
+
+    // Position dropdowns when they open
+    if (isUserDropdownOpen || isNotificationsDropdownOpen) {
+      // Small delay to ensure DOM is updated
+      setTimeout(positionDropdowns, 10)
+    }
+
+    // Reposition on window resize
+    window.addEventListener('resize', positionDropdowns)
+    return () => window.removeEventListener('resize', positionDropdowns)
+  }, [isUserDropdownOpen, isNotificationsDropdownOpen])
+
   const toggleUserDropdown = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -169,7 +228,21 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
             </button>
 
             {isNotificationsDropdownOpen && (
-              <ul className="dropdown-menu dropdown-menu-end py-0 show" style={{ display: 'block', position: 'absolute', zIndex: 1000 }}>
+              <ul className="dropdown-menu dropdown-menu-end py-0 show" style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                left: 'auto',
+                zIndex: 9999,
+                minWidth: '320px',
+                maxWidth: '400px',
+                maxHeight: '400px',
+                marginTop: '0.5rem',
+                boxShadow: '0 0.25rem 1rem rgba(161, 172, 184, 0.45)',
+                border: '0 solid #d9dee3',
+                borderRadius: '0.5rem',
+                overflowY: 'auto'
+              }}>
                 <li className="dropdown-menu-header border-bottom">
                   <div className="dropdown-header d-flex align-items-center py-3">
                     <h5 className="text-body mb-0 me-auto">Notifications</h5>
@@ -246,7 +319,18 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
             </button>
 
             {isUserDropdownOpen && (
-              <ul className="dropdown-menu dropdown-menu-end show" style={{ display: 'block', position: 'absolute', zIndex: 1000 }}>
+              <ul className="dropdown-menu dropdown-menu-end show" style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                left: 'auto',
+                zIndex: 9999,
+                minWidth: '280px',
+                marginTop: '0.5rem',
+                boxShadow: '0 0.25rem 1rem rgba(161, 172, 184, 0.45)',
+                border: '0 solid #d9dee3',
+                borderRadius: '0.5rem'
+              }}>
                 <li>
                   <div className="dropdown-item">
                     <div className="d-flex">

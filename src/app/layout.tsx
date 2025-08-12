@@ -9,6 +9,7 @@ import "@/styles/template/core.css"
 import "@/styles/template/theme-default.css"
 import "@/styles/template/demo.css"
 import "@/styles/template/theme-toggle.css"
+import "@/styles/sweetalert-custom.css"
 
 
 const publicSans = Public_Sans({

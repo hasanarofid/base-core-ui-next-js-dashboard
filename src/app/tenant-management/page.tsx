@@ -10,7 +10,7 @@ import { Tenant } from '@/types/tenant';
 import Badge from '@/components/ui/Badge';
 import { getTenantsWithCookies, updateTenantStatusWithCookies, approveTenantWithCookies } from '@/lib/api';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { showAlert, confirmDelete, confirmApprove, confirmStatusChange, showLoading } from '@/lib/sweetalert-config';
+import { useSweetAlert } from '@/lib/sweetalert-config';
 
 /**
  * Tenant Management Page
@@ -42,6 +42,9 @@ export default function TenantManagementPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 10;
 
+  // Hook untuk SweetAlert dengan tema dinamis
+  const sweetAlert = useSweetAlert();
+
   // Dynamic title management using custom hook
   const { fullTitle, pageTitle, pageSubtitle } = usePageTitle({
     title: 'Manajemen Tenant',
@@ -50,85 +53,86 @@ export default function TenantManagementPage() {
     keywords: 'tenant management, admin panel, status management, tenant configuration'
   });
 
+  // Fetch tenants data function
+  const fetchTenants = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await getTenantsWithCookies();
+      console.log('🔍 Full API Response:', JSON.stringify(response, null, 2));
+      
+      // Handle multiple possible response formats
+      let tenantsData: Tenant[] = [];
+      
+      if (response) {
+        // Format 1: { message: "success", data: [...] } - Standard TenantListResponse
+        if (response.data && Array.isArray(response.data)) {
+          tenantsData = response.data;
+          console.log('✅ Found tenants in response.data:', tenantsData.length);
+        }
+        // Format 2: Direct array [...] - Fallback
+        else if (Array.isArray(response)) {
+          tenantsData = response as unknown as Tenant[];
+          console.log('✅ Found tenants as direct array:', tenantsData.length);
+        }
+        else {
+          console.warn('❌ Could not find tenant array in expected format');
+          console.warn('Response structure:', Object.keys(response));
+          console.warn('response.data exists:', !!response.data);
+          console.warn('response.data type:', typeof response.data);
+          console.warn('response.data is array:', Array.isArray(response.data));
+          
+          // Last resort: check if response.data exists but is not an array
+          if (response.data) {
+            console.log('🔍 response.data content:', response.data);
+          }
+        }
+      }
+      
+      console.log('🔍 Setting tenants count:', tenantsData.length);
+      setTenants(tenantsData);
+      
+      // 🧪 TEST: Add dummy data if no tenants found (for debugging)
+      if (tenantsData.length === 0) {
+        console.log('🧪 No tenants found, adding test data...');
+        const testTenants: Tenant[] = [
+          {
+            id: 'test-1',
+            name: 'Test Tenant 1',
+            email: 'test1@example.com',
+            status: 'active',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            domain: 'test1.example.com',
+            contact_person: 'John Doe'
+          },
+          {
+            id: 'test-2', 
+            name: 'Test Tenant 2',
+            email: 'test2@example.com',
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            domain: 'test2.example.com',
+            contact_person: 'Jane Smith'
+          }
+        ];
+        console.log('🧪 Setting test tenants:', testTenants);
+        setTenants(testTenants);
+      }
+      
+    } catch (err) {
+      console.error('❌ Error fetching tenants:', err);
+      setError('Gagal mengambil data tenant. Silakan coba lagi.');
+      setTenants([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fetch tenants data
   useEffect(() => {
-    const fetchTenants = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await getTenantsWithCookies();
-        console.log('🔍 Full API Response:', JSON.stringify(response, null, 2));
-        
-        // Handle multiple possible response formats
-        let tenantsData: Tenant[] = [];
-        
-        if (response) {
-          // Format 1: { message: "success", data: [...] } - Standard TenantListResponse
-          if (response.data && Array.isArray(response.data)) {
-            tenantsData = response.data;
-            console.log('✅ Found tenants in response.data:', tenantsData.length);
-          }
-          // Format 2: Direct array [...] - Fallback
-          else if (Array.isArray(response)) {
-            tenantsData = response as unknown as Tenant[];
-            console.log('✅ Found tenants as direct array:', tenantsData.length);
-          }
-          else {
-            console.warn('❌ Could not find tenant array in expected format');
-            console.warn('Response structure:', Object.keys(response));
-            console.warn('response.data exists:', !!response.data);
-            console.warn('response.data type:', typeof response.data);
-            console.warn('response.data is array:', Array.isArray(response.data));
-            
-            // Last resort: check if response.data exists but is not an array
-            if (response.data) {
-              console.log('🔍 response.data content:', response.data);
-            }
-          }
-        }
-        
-        console.log('🔍 Setting tenants count:', tenantsData.length);
-        setTenants(tenantsData);
-        
-        // 🧪 TEST: Add dummy data if no tenants found (for debugging)
-        if (tenantsData.length === 0) {
-          console.log('🧪 No tenants found, adding test data...');
-          const testTenants: Tenant[] = [
-            {
-              id: 'test-1',
-              name: 'Test Tenant 1',
-              email: 'test1@example.com',
-              status: 'active',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              domain: 'test1.example.com',
-              contact_person: 'John Doe'
-            },
-            {
-              id: 'test-2', 
-              name: 'Test Tenant 2',
-              email: 'test2@example.com',
-              status: 'pending',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              domain: 'test2.example.com',
-              contact_person: 'Jane Smith'
-            }
-          ];
-          console.log('🧪 Setting test tenants:', testTenants);
-          setTenants(testTenants);
-        }
-        
-      } catch (err) {
-        console.error('❌ Error fetching tenants:', err);
-        setError('Gagal mengambil data tenant. Silakan coba lagi.');
-        setTenants([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchTenants();
   }, []);
 
@@ -160,41 +164,39 @@ export default function TenantManagementPage() {
     const handleDelete = async (tenant: Tenant) => {
     // Validasi: tidak bisa hapus jika status aktif
     if (tenant.status === 'active') {
-      showAlert.warning("Tidak dapat menghapus!", "Tenant dengan status aktif tidak dapat dihapus. Ubah status terlebih dahulu.");
+      sweetAlert.warning("Tidak dapat menghapus!", "Tenant dengan status aktif tidak dapat dihapus. Ubah status terlebih dahulu.");
       return;
     }
 
-    const result = await confirmDelete(tenant.name);
+    const result = await sweetAlert.confirmDelete(tenant.name);
 
     if (result.isConfirmed) {
       try {
         // Tampilkan loading
-        showLoading('Memproses...', 'Sedang menghapus tenant');
+        sweetAlert.loading('Memproses...', 'Sedang menghapus tenant');
 
         const response = await fetch(`/api/tenants/${tenant.id}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
           },
-          credentials: 'include',
         });
 
-        const data = await response.json();
-        
         if (!response.ok) {
-          throw new Error(data.message || 'Gagal menghapus tenant');
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        setTenants(tenants.filter(t => t.id !== tenant.id));
+        // Reload data setelah delete berhasil
+        await fetchTenants();
         
         // Tampilkan splash success
-        showAlert.success("Berhasil!", `Tenant "${tenant.name}" berhasil dihapus.`);
+        sweetAlert.success("Berhasil!", `Tenant "${tenant.name}" berhasil dihapus.`);
       } catch (error) {
         // Tampilkan splash error
         if (error instanceof Error) {
-          showAlert.error("Error!", error.message);
+          sweetAlert.error("Error!", error.message);
         } else {
-          showAlert.error("Error!", "Terjadi kesalahan yang tidak diketahui");
+          sweetAlert.error("Error!", "Terjadi kesalahan yang tidak diketahui");
         }
       }
     }
@@ -203,34 +205,30 @@ export default function TenantManagementPage() {
   const handleApprove = async (tenant: Tenant) => {
     // Validasi: hanya bisa approve jika status pending
     if (tenant.status !== 'pending') {
-      showAlert.warning("Tidak dapat approve!", "Hanya tenant dengan status pending yang dapat diapprove.");
+      sweetAlert.warning("Tidak dapat approve!", "Hanya tenant dengan status pending yang dapat diapprove.");
       return;
     }
 
-    const result = await confirmApprove(tenant.name);
+    const result = await sweetAlert.confirmApprove(tenant.name);
 
     if (result.isConfirmed) {
       try {
         // Tampilkan loading
-        showLoading('Memproses...', 'Sedang approve tenant');
+        sweetAlert.loading('Memproses...', 'Sedang approve tenant');
 
         await approveTenantWithCookies(tenant.id);
-        
-        // Update tenant status di state
-        setTenants(tenants.map(t => 
-          t.id === tenant.id 
-            ? { ...t, status: 'active' as const }
-            : t
-        ));
+
+        // Reload data setelah approve berhasil
+        await fetchTenants();
         
         // Tampilkan splash success
-        showAlert.success("Berhasil!", `Tenant "${tenant.name}" berhasil diapprove dan diaktifkan.`);
+        sweetAlert.success("Berhasil!", `Tenant "${tenant.name}" berhasil diapprove dan diaktifkan.`);
       } catch (error) {
         // Tampilkan splash error
         if (error instanceof Error) {
-          showAlert.error("Error!", error.message);
+          sweetAlert.error("Error!", error.message);
         } else {
-          showAlert.error("Error!", "Terjadi kesalahan yang tidak diketahui");
+          sweetAlert.error("Error!", "Terjadi kesalahan yang tidak diketahui");
         }
       }
     }
@@ -239,34 +237,42 @@ export default function TenantManagementPage() {
   const handleStatusChange = async (tenant: Tenant) => {
     // Validasi: tidak bisa ubah status jika sudah aktif
     if (tenant.status === 'active') {
-      showAlert.warning("Tidak dapat mengubah status!", "Tenant dengan status aktif tidak dapat diubah statusnya.");
+      sweetAlert.warning("Tidak dapat mengubah status!", "Tenant dengan status aktif tidak dapat diubah statusnya.");
       return;
     }
 
-    const result = await confirmStatusChange(tenant.name, tenant.status);
+    const result = await sweetAlert.confirm(tenant.name, `Pilih status baru untuk ${tenant.name}:`, {
+      icon: 'question',
+      confirmButtonColor: '#696cff',
+      confirmButtonText: 'Ubah Status',
+      cancelButtonText: 'Batal',
+      input: 'select',
+      inputOptions: {
+        'pending': 'Pending',
+        'active': 'Aktif',
+        'suspended': 'Ditangguhkan'
+      },
+      inputValue: tenant.status
+    });
 
     if (result.value) {
       try {
         // Tampilkan loading
-        showLoading('Memproses...', 'Sedang mengubah status tenant');
+        sweetAlert.loading('Memproses...', 'Sedang mengubah status tenant');
 
         await updateTenantStatusWithCookies(tenant.id, result.value);
-        
-        // Update tenant status di state
-        setTenants(tenants.map(t => 
-          t.id === tenant.id 
-            ? { ...t, status: result.value as 'pending' | 'suspended' | 'active' }
-            : t
-        ));
+
+        // Reload data setelah status change berhasil
+        await fetchTenants();
         
         // Tampilkan splash success
-        showAlert.success("Berhasil!", `Status tenant "${tenant.name}" berhasil diubah menjadi ${getStatusText(result.value)}.`);
+        sweetAlert.success("Berhasil!", `Status tenant "${tenant.name}" berhasil diubah menjadi ${getStatusText(result.value)}.`);
       } catch (error) {
         // Tampilkan splash error
         if (error instanceof Error) {
-          showAlert.error("Error!", error.message);
+          sweetAlert.error("Error!", error.message);
         } else {
-          showAlert.error("Error!", "Terjadi kesalahan yang tidak diketahui");
+          sweetAlert.error("Error!", "Terjadi kesalahan yang tidak diketahui");
         }
       }
     }

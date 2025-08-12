@@ -9,7 +9,8 @@ import { DataTable, Column } from '@/components/ui/DataTable';
 import { User } from '@/types/user';
 import { getUsersWithCookies, deleteUserWithCookies } from '@/lib/api';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { showAlert, confirmDelete, closeLoading } from '@/lib/sweetalert-config';
+import { useSweetAlert } from '@/lib/sweetalert-config';
+import Swal from 'sweetalert2';
 
 /**
  * User Management Page
@@ -41,6 +42,9 @@ export default function UserManagementPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 10;
+
+  // Hook untuk SweetAlert dengan tema dinamis
+  const sweetAlert = useSweetAlert();
 
   // Dynamic title management using custom hook
   const { fullTitle, pageTitle, pageSubtitle } = usePageTitle({
@@ -174,31 +178,35 @@ export default function UserManagementPage() {
     router.push(`/user-management/${user.id}`);
   };
 
+  // Handle delete user
   const handleDelete = async (user: User) => {
     try {
-      const result = await confirmDelete(user.fullName || 'User');
+      const result = await sweetAlert.confirmDelete(user.fullName || 'User');
       
       if (result.isConfirmed) {
-        showAlert.loading('Menghapus user...');
+        sweetAlert.loading('Menghapus user...');
         
         await deleteUserWithCookies(user.id);
         
-        closeLoading();
-        showAlert.success('Berhasil', 'User berhasil dihapus');
+        sweetAlert.closeLoading();
+        sweetAlert.success('Berhasil', 'User berhasil dihapus');
         
         // Reload data setelah delete berhasil
         await fetchUsers();
       }
     } catch (error) {
-      closeLoading();
+      sweetAlert.closeLoading();
       console.error('Error deleting user:', error);
       
-      let errorMessage = 'Gagal menghapus user';
+      let errorMessage = 'Terjadi kesalahan saat menghapus user';
+      
       if (error instanceof Error) {
         errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
       }
       
-      showAlert.error('Error', errorMessage);
+      sweetAlert.error('Error', errorMessage);
     }
   };
 

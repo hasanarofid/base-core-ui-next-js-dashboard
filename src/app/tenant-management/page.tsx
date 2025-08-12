@@ -311,6 +311,10 @@ export default function TenantManagementPage() {
     router.push(`/tenant-management/${tenant.id}`);
   };
 
+  const handlePaymentMethods = (tenant: Tenant) => {
+    router.push(`/tenant-payment-methods/${tenant.id}`);
+  };
+
   const getStatusBadgeVariant = (status: unknown) => {
     const statusStr = String(status);
     switch (statusStr) {
@@ -543,9 +547,11 @@ export default function TenantManagementPage() {
                   onView={handleView}
                   onApprove={handleApprove}
                   onStatusChange={handleStatusChange}
+                  onPaymentMethods={handlePaymentMethods}
                   showApproveButton={showApproveButton}
                   showStatusButton={showStatusButton}
                   showDeleteButton={showDeleteButton}
+                  showPaymentMethodsButton={() => true}
                   pagination={{
                     currentPage,
                     totalPages,

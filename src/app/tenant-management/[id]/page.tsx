@@ -15,6 +15,7 @@ interface Tenant {
   email: string;
   contact_person: string;
   status: string;
+  config_json?: Record<string, unknown>;
   client_id?: string;
   client_key?: string;
   lastLogin?: string;
@@ -224,6 +225,42 @@ export default function TenantViewPage() {
                       <div className="flex-grow-1 min-w-0">
                         <p className="text-muted mb-1 small fw-medium">Kontak Person</p>
                         <h6 className="mb-0 text-truncate fw-semibold">{tenant.contact_person}</h6>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Configuration Information */}
+            <div className="card mb-4">
+              <div className="card-header">
+                <h5 className="card-title mb-1">Konfigurasi Sistem</h5>
+                <p className="card-subtitle text-muted mb-0">Pengaturan callback dan keamanan</p>
+              </div>
+              <div className="card-body">
+                <div className="row g-3">
+                  <div className="col-md-6">
+                    <div className="p-3 bg-light rounded">
+                      <p className="text-muted mb-2 small fw-medium">URL Callback</p>
+                      <code className="bg-white p-2 rounded d-block text-break fw-semibold small border">
+                        {(tenant.config_json?.url_callback as string) || 'Tidak tersedia'}
+                      </code>
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="p-3 bg-light rounded">
+                      <p className="text-muted mb-2 small fw-medium">IP Whitelist</p>
+                      <div className="bg-white p-2 rounded border">
+                        {(tenant.config_json?.ip_whitelist as string) ? (
+                          <div className="small">
+                            {(tenant.config_json?.ip_whitelist as string).split('\n').map((ip, index) => (
+                              <div key={index} className="text-break fw-semibold">{ip.trim()}</div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-muted small">Tidak tersedia</span>
+                        )}
                       </div>
                     </div>
                   </div>

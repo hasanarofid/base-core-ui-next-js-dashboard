@@ -162,10 +162,23 @@ export default function TenantManagementPage() {
   };
 
     const handleDelete = async (tenant: Tenant) => {
-    // Validasi: tidak bisa hapus jika status aktif
+    // Validasi: konfirmasi untuk tenant aktif
     if (tenant.status === 'active') {
-      sweetAlert.warning("Tidak dapat menghapus!", "Tenant dengan status aktif tidak dapat dihapus. Ubah status terlebih dahulu.");
-      return;
+      const confirmActive = await sweetAlert.confirm(
+        "Konfirmasi Hapus Tenant Aktif",
+        `Tenant "${tenant.name}" memiliki status aktif. Apakah Anda yakin ingin menghapusnya?`,
+        {
+          icon: 'warning',
+          confirmButtonColor: '#dc3545',
+          confirmButtonText: 'Ya, Hapus',
+          cancelButtonText: 'Batal',
+          showCancelButton: true
+        }
+      );
+      
+      if (!confirmActive.isConfirmed) {
+        return;
+      }
     }
 
     const result = await sweetAlert.confirmDelete(tenant.name);
@@ -235,9 +248,10 @@ export default function TenantManagementPage() {
   };
 
   const handleStatusChange = async (tenant: Tenant) => {
-    // Validasi: tidak bisa ubah status jika sudah aktif
-    if (tenant.status === 'active') {
-      sweetAlert.warning("Tidak dapat mengubah status!", "Tenant dengan status aktif tidak dapat diubah statusnya.");
+    // Validasi: status yang diizinkan
+    const allowedStatuses = ['pending', 'suspended', 'active'];
+    if (!allowedStatuses.includes(tenant.status)) {
+      sweetAlert.warning("Status tidak valid!", "Status tenant tidak valid untuk diubah.");
       return;
     }
 
@@ -284,13 +298,13 @@ export default function TenantManagementPage() {
   };
 
   const showStatusButton = (tenant: Tenant) => {
-    // Hanya tampilkan tombol status jika status bukan active
-    // dan status yang ada adalah salah satu dari yang diizinkan
-    return tenant.status !== 'active' && ['pending', 'suspended', 'active'].includes(tenant.status);
+    // Tampilkan tombol status untuk semua status yang diizinkan
+    return ['pending', 'suspended', 'active'].includes(tenant.status);
   };
 
   const showDeleteButton = (tenant: Tenant) => {
-    return tenant.status !== 'active';
+    // Tampilkan tombol delete untuk semua status
+    return true;
   };
 
   const handleView = (tenant: Tenant) => {

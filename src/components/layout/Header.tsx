@@ -1,17 +1,16 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import ThemeToggle from '@/components/ui/ThemeToggle'
 
 interface HeaderProps {
   onToggleSidebar?: () => void
 }
 
 export default function Header({ onToggleSidebar }: HeaderProps) {
-  const { isDarkMode, toggleDarkMode } = useTheme()
   const { logout, user } = useAuth()
   const router = useRouter()
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
@@ -201,18 +200,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
         <ul className="navbar-nav flex-row align-items-center ms-auto">
           {/* Style Switcher */}
           <li className="nav-item me-2 me-xl-0">
-            <button 
-              type="button"
-              className="nav-link style-switcher-toggle hide-arrow" 
-              onClick={toggleDarkMode}
-              style={{ border: 'none', background: 'none' }}
-            >
-              {isDarkMode ? (
-                <i className="ti ti-sun ti-md"></i>
-              ) : (
-                <i className="ti ti-moon ti-md"></i>
-              )}
-            </button>
+            <ThemeToggle size="md" />
           </li>
 
           {/* Notifications */}

@@ -8,7 +8,8 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import "@/styles/template/core.css"
 import "@/styles/template/theme-default.css"
 import "@/styles/template/demo.css"
-// import "./globals.css"
+import "@/styles/template/theme-toggle.css"
+
 
 const publicSans = Public_Sans({
   subsets: ["latin"],

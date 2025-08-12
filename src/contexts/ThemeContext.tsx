@@ -18,15 +18,20 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<ThemeConfig>(themeConfig);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false); // Default light mode
 
   useEffect(() => {
     // Check for saved theme preference or default to light mode
     const savedTheme = localStorage.getItem('theme');
     const savedDarkMode = localStorage.getItem('darkMode');
     
+    // Default to light mode if no preference is saved
     if (savedDarkMode === 'true') {
       setIsDarkMode(true);
+    } else if (savedDarkMode === null) {
+      // If no preference is saved, default to light mode
+      localStorage.setItem('darkMode', 'false');
+      setIsDarkMode(false);
     }
     
     if (savedTheme) {
@@ -40,11 +45,15 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   }, []);
 
   useEffect(() => {
-    // Apply dark mode to document
+    // Apply theme to document using Vuexy template classes
+    const htmlElement = document.documentElement;
+    
     if (isDarkMode) {
-      document.documentElement.classList.add('dark');
+      htmlElement.classList.remove('light-style');
+      htmlElement.classList.add('dark-style');
     } else {
-      document.documentElement.classList.remove('dark');
+      htmlElement.classList.remove('dark-style');
+      htmlElement.classList.add('light-style');
     }
     
     localStorage.setItem('darkMode', isDarkMode.toString());

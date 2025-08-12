@@ -33,7 +33,7 @@ export default function ThemeToggle({
     <button
       onClick={toggleDarkMode}
       className={cn(
-        'flex items-center justify-center rounded-md transition-all duration-200',
+        'theme-toggle-btn flex items-center justify-center rounded-md transition-all duration-200',
         'hover:bg-gray-100 dark:hover:bg-gray-700',
         'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-800',
         sizeClasses[size],

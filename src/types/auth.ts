@@ -4,6 +4,7 @@ export interface LoginUser {
   email: string;
   role: string;
   tenantId: string | null;
+  force_password_change: boolean;
 }
 
 export interface LoginResponse {

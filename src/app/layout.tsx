@@ -3,12 +3,17 @@ import { Public_Sans } from "next/font/google";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import VendorScripts from "@/components/VendorScripts";
+import ForcePasswordChangeGuard from "@/components/auth/ForcePasswordChangeGuard";
 
-import "@/styles/template/core.css";
-import "@/styles/template/theme-default.css";
-import "@/styles/template/demo.css";
+import "@/styles/template/core.css"
+import "@/styles/template/theme-default.css"
+import "@/styles/template/demo.css"
+import "@/styles/template/theme-toggle.css"
+import "@/styles/sweetalert-custom.css"
+import "@/styles/force-password-change.css"
+import VendorScripts from "@/components/VendorScripts";
 import PageScripts from "@/components/PageScripts";
+
 
 const publicSans = Public_Sans({
   subsets: ["latin"],
@@ -70,7 +75,11 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <AuthProvider>
-            <ToastProvider>{children}</ToastProvider>
+            <ToastProvider>
+              <ForcePasswordChangeGuard>
+                {children}
+              </ForcePasswordChangeGuard>
+            </ToastProvider>
           </AuthProvider>
         </ThemeProvider>
 

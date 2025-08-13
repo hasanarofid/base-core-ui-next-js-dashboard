@@ -4,12 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Head from 'next/head';
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import AuthGuard from '@/components/auth/AuthGuard'
+import SecureGuard from '@/components/auth/SecureGuard'
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { User } from '@/types/user';
 import { getUsersWithCookies, deleteUserWithCookies } from '@/lib/api';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { showAlert, confirmDelete, closeLoading } from '@/lib/sweetalert-config';
+import { useSweetAlert } from '@/lib/sweetalert-config';
+import Swal from 'sweetalert2';
 
 /**
  * User Management Page
@@ -41,6 +42,9 @@ export default function UserManagementPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 10;
+
+  // Hook untuk SweetAlert dengan tema dinamis
+  const sweetAlert = useSweetAlert();
 
   // Dynamic title management using custom hook
   const { fullTitle, pageTitle, pageSubtitle } = usePageTitle({
@@ -174,31 +178,35 @@ export default function UserManagementPage() {
     router.push(`/user-management/${user.id}`);
   };
 
+  // Handle delete user
   const handleDelete = async (user: User) => {
     try {
-      const result = await confirmDelete(user.fullName || 'User');
+      const result = await sweetAlert.confirmDelete(user.fullName || 'User');
       
       if (result.isConfirmed) {
-        showAlert.loading('Menghapus user...');
+        sweetAlert.loading('Menghapus user...');
         
         await deleteUserWithCookies(user.id);
         
-        closeLoading();
-        showAlert.success('Berhasil', 'User berhasil dihapus');
+        sweetAlert.closeLoading();
+        sweetAlert.success('Berhasil', 'User berhasil dihapus');
         
         // Reload data setelah delete berhasil
         await fetchUsers();
       }
     } catch (error) {
-      closeLoading();
+      sweetAlert.closeLoading();
       console.error('Error deleting user:', error);
       
-      let errorMessage = 'Gagal menghapus user';
+      let errorMessage = 'Terjadi kesalahan saat menghapus user';
+      
       if (error instanceof Error) {
         errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
       }
       
-      showAlert.error('Error', errorMessage);
+      sweetAlert.error('Error', errorMessage);
     }
   };
 
@@ -236,7 +244,7 @@ export default function UserManagementPage() {
   // Validasi data sebelum render
   if (!users) {
     return (
-      <AuthGuard requireAuth={true}>
+      <SecureGuard requireAuth={true}>
         <DashboardLayout>
           <div className="container-xxl flex-grow-1 container-p-y">
             <div className="alert alert-warning" role="alert">
@@ -245,7 +253,7 @@ export default function UserManagementPage() {
             </div>
           </div>
         </DashboardLayout>
-      </AuthGuard>
+              </SecureGuard>
     );
   }
 
@@ -285,48 +293,14 @@ export default function UserManagementPage() {
       )
     },
     {
-      key: 'isVerified',
+      key: 'forcePasswordChange',
       header: 'STATUS VERIFIKASI',
       sortable: true,
       render: (value) => (
         <div>
-          <span className={getVerificationBadgeClass(value as boolean)}>
-            {getVerificationText(value as boolean)}
+          <span className={getVerificationBadgeClass(!value as boolean)}>
+            {getVerificationText(!value as boolean)}
           </span>
-        </div>
-      )
-    },
-    {
-      key: 'force_password_change',
-      header: 'STATUS PASSWORD',
-      sortable: true,
-      render: (value) => (
-        <div>
-          <span className={getPasswordChangeBadgeClass(value as boolean)}>
-            {getPasswordChangeText(value as boolean)}
-          </span>
-        </div>
-      )
-    },
-    {
-      key: 'createdAt',
-      header: 'TANGGAL PENDAFTARAN',
-      sortable: true,
-      render: (value) => (
-        <div>
-          <span className="text-body fw-medium">
-            {new Date(String(value)).toLocaleDateString('id-ID', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric'
-            })}
-          </span>
-          <div className="text-muted small">
-            {new Date(String(value)).toLocaleTimeString('id-ID', {
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </div>
         </div>
       )
     },
@@ -364,7 +338,7 @@ export default function UserManagementPage() {
 
   if (error) {
     return (
-      <AuthGuard requireAuth={true}>
+      <SecureGuard requireAuth={true}>
         <DashboardLayout>
           <div className="container-xxl flex-grow-1 container-p-y">
             <div className="alert alert-danger" role="alert">
@@ -379,7 +353,7 @@ export default function UserManagementPage() {
             </div>
           </div>
         </DashboardLayout>
-      </AuthGuard>
+      </SecureGuard>
     );
   }
 
@@ -393,7 +367,7 @@ export default function UserManagementPage() {
         <meta name="keywords" content="user management, role management, user verification, admin panel" />
       </Head>
       
-      <AuthGuard requireAuth={true}>
+      <SecureGuard requireAuth={true}>
         <DashboardLayout>
           <div className="container-xxl flex-grow-1 container-p-y">
             {/* Page Header - Matching Dashboard Style */}
@@ -470,7 +444,7 @@ export default function UserManagementPage() {
             </div>
           </div>
         </DashboardLayout>
-      </AuthGuard>
+      </SecureGuard>
     </>
   )
 } 

@@ -4,6 +4,12 @@ import { debugApiRequest, debugApiResponse, debugError } from '@/utils/debug'
 import { UserResponse, TenantListResponse, Tenant, CreateTenantData } from '@/types/tenant'
 import { UserListResponse, User, CreateUserData, VerifyEmailData } from '@/types/user'
 import { PaymentMethod, PaymentMethodListResponse, CreatePaymentMethodData } from '@/types/paymentMethod'
+import { 
+  TenantPaymentMethod, 
+  TenantPaymentMethodListResponse, 
+  TenantPaymentMethodResponse,
+  CreateTenantPaymentMethodData 
+} from '@/types/tenantPaymentMethod'
 
 // Membuat instance axios dengan konfigurasi default
 export const api = axios.create({
@@ -336,7 +342,7 @@ export async function approvePaymentMethodWithCookies(id: string): Promise<{ mes
 
 // Fungsi untuk update status payment method dengan cookies
 export async function updatePaymentMethodStatusWithCookies(id: string, status: string): Promise<{ message: string; data: PaymentMethod }> {
-  return apiWithCookies(`/payment-method/${id}/status`, {
+  return apiWithCookies(`/payment-method/${id}`, {
     method: 'PUT',
     body: JSON.stringify({ status }),
   })
@@ -350,4 +356,39 @@ export async function deletePaymentMethodWithCookies(id: string): Promise<{ mess
   return apiWithCookies(`/payment-method/${id}`, {
     method: 'DELETE',
   });
+}
+
+// ===== TENANT PAYMENT METHOD API FUNCTIONS =====
+
+// Fungsi untuk mengambil data tenant payment method dengan cookies
+export async function getTenantPaymentMethodsWithCookies(tenantId: string): Promise<TenantPaymentMethodListResponse> {
+  return apiWithCookies(`/tenants/${tenantId}/payment-methods`);
+}
+
+// Fungsi untuk membuat tenant payment method baru dengan cookies
+export async function createTenantPaymentMethodWithCookies(tenantId: string, paymentMethodData: CreateTenantPaymentMethodData): Promise<TenantPaymentMethodResponse> {
+  return apiWithCookies(`/tenants/${tenantId}/payment-methods`, {
+    method: 'POST',
+    body: JSON.stringify(paymentMethodData),
+  });
+}
+
+// Fungsi untuk update tenant payment method dengan cookies
+export async function updateTenantPaymentMethodWithCookies(id: string, paymentMethodData: Partial<CreateTenantPaymentMethodData>): Promise<TenantPaymentMethodResponse> {
+  return apiWithCookies(`/tenant-payment-methods/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(paymentMethodData),
+  });
+}
+
+// Fungsi untuk menghapus tenant payment method dengan cookies
+export async function deleteTenantPaymentMethodWithCookies(id: string): Promise<{ message: string }> {
+  return apiWithCookies(`/tenant-payment-methods/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+// Fungsi untuk mengambil data tenant payment method individual dengan cookies
+export async function getTenantPaymentMethodByIdWithCookies(id: string): Promise<TenantPaymentMethodResponse> {
+  return apiWithCookies(`/tenant-payment-methods/${id}`);
 }

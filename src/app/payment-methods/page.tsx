@@ -7,13 +7,15 @@ import AuthGuard from '@/components/auth/AuthGuard';
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { PaymentMethod } from '@/types/paymentMethod';
 import Image from 'next/image';
-import { getPaymentMethod, deletePaymentMethodWithCookies } from '@/lib/api';
+import { getPaymentMethod, deletePaymentMethodWithCookies, updatePaymentMethodStatusWithCookies } from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import { confirmDelete } from '@/lib/sweetalert-config';
+import { useSweetAlert } from '@/lib/sweetalert-config';
 
 export default function PaymentMethodPage() {
   const router = useRouter();
   const { showToast } = useToast();
+  const sweetAlert = useSweetAlert();
   const [paymentmethods, setPaymentMethod] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,21 +23,22 @@ export default function PaymentMethodPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 10;
 
-  useEffect(() => {
-    const fetchPaymentMethods = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await getPaymentMethod();
-        setPaymentMethod(response.data);
-      } catch (err) {
-        console.error('Error fetching payment methods:', err);
-        setError('Gagal mengambil data metode pembayaran. Silakan coba lagi.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Fetch payment methods data function
+  const fetchPaymentMethods = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await getPaymentMethod();
+      setPaymentMethod(response.data);
+    } catch (err) {
+      console.error('Error fetching payment methods:', err);
+      setError('Gagal mengambil data metode pembayaran. Silakan coba lagi.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchPaymentMethods();
   }, []);
 
@@ -84,6 +87,50 @@ export default function PaymentMethodPage() {
 
   const handleView = (paymentmethod: PaymentMethod) => {
     router.push(`/payment-methods/${paymentmethod.id}`);
+  };
+
+  const handleStatusChange = async (paymentmethod: PaymentMethod) => {
+    // Validasi: status yang diizinkan
+    const allowedStatuses = ['active', 'inactive'];
+    if (!allowedStatuses.includes(paymentmethod.status)) {
+      sweetAlert.warning("Status tidak valid!", "Status payment method tidak valid untuk diubah.");
+      return;
+    }
+
+    const result = await sweetAlert.confirm(paymentmethod.name, `Pilih status baru untuk ${paymentmethod.name}:`, {
+      icon: 'question',
+      confirmButtonColor: '#696cff',
+      confirmButtonText: 'Ubah Status',
+      cancelButtonText: 'Batal',
+      input: 'select',
+      inputOptions: {
+        'active': 'Aktif',
+        'inactive': 'Tidak Aktif'
+      },
+      inputValue: paymentmethod.status
+    });
+
+    if (result.value) {
+      try {
+        // Tampilkan loading
+        sweetAlert.loading('Memproses...', 'Sedang mengubah status payment method');
+
+        await updatePaymentMethodStatusWithCookies(paymentmethod.id, result.value);
+
+        // Reload data setelah status change berhasil
+        await fetchPaymentMethods();
+        
+        // Tampilkan splash success
+        sweetAlert.success("Berhasil!", `Status payment method "${paymentmethod.name}" berhasil diubah menjadi ${getStatusText(result.value)}.`);
+      } catch (error) {
+        // Tampilkan splash error
+        if (error instanceof Error) {
+          sweetAlert.error("Error!", error.message);
+        } else {
+          sweetAlert.error("Error!", "Terjadi kesalahan yang tidak diketahui");
+        }
+      }
+    }
   };
 
   const getStatusBadgeVariant = (status: PaymentMethod['status']) => {
@@ -182,85 +229,79 @@ export default function PaymentMethodPage() {
     <AuthGuard requireAuth={true}>
       <DashboardLayout>
         <div className="container-xxl flex-grow-1 container-p-y">
-          {/* Page Header */}
-          <div className="row">
-            <div className="col-12">
-              <div className="page-header d-print-none">
-                <div className="container-xl">
-                  <div className="row g-2 align-items-center">
-                    <div className="col">
-                      <div className="page-pretitle">
-                        Payment Methods
-                      </div>
-                      <h2 className="page-title">
-                        Payment Method Master
-                      </h2>
-                    </div>
-                    <div className="col-auto ms-auto d-print-none">
-                      <button className="btn btn-outline-primary me-2">
-                        <i className="ti ti-download me-1"></i>
-                        Ekspor Data
-                      </button>
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => router.push('/payment-methods/create')}
-                      >
-                        <i className="ti ti-plus me-1"></i>
-                        Tambah Metode Pembayaran
-                      </button>
-                    </div>
+          {/* Page Header - Matching Dashboard Style */}
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <div>
+              <h4 className="fw-bold py-3 mb-4">
+                <span className="text-muted fw-light">Payment Config /</span> Konfigurasi Pembayaran
+              </h4>
+              <p className="text-muted mb-0">Kelola {paymentmethods.length} payment method dalam sistem</p>
+            </div>
+            <div className="d-flex gap-2">
+              <button className="btn btn-label-primary">
+                <i className="ti ti-download me-1"></i>
+                <span>Ekspor Data</span>
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={() => router.push('/payment-methods/create')}
+              >
+                <i className="ti ti-plus me-1"></i>
+                <span>Tambah Payment Method</span>
+              </button>
+            </div>
+          </div>
+
+          {/* DataTable Card */}
+          <div className="card">
+            <div className="card-header">
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <h5 className="card-title mb-1 text-primary">Daftar Payment Methods</h5>
+                  <p className="text-muted mb-0">
+                    {loading ? 'Memuat data...' : `${paymentmethods.length} payment method ditemukan`}
+                  </p>
+                </div>
+                <div className="d-flex align-items-center gap-6">
+                  <div className="flex-1" style={{ minWidth: '300px' }}>
+                    <input
+                      type="text"
+                      placeholder="Cari berdasarkan nama, kode, tipe, atau status..."
+                      className="form-control"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex-shrink-0">
+                    <button className="btn btn-label-primary">
+                      <i className="ti ti-filter me-1"></i>
+                      <span>Filter Lanjutan</span>
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Data Table */}
-          <div className="row">
-            <div className="col-12">
-              <div className="card">
-                <div className="card-header d-flex justify-content-between align-items-center">
-                  <div>
-                    <h5 className="card-title mb-1">Daftar Metode Pembayaran</h5>
-                    <p className="text-muted mb-0">
-                      {loading ? 'Memuat data...' : `${paymentmethods.length} metode ditemukan`}
-                    </p>
-                  </div>
-                  <div className="d-flex align-items-center gap-3">
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Cari metode pembayaran..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                    <button className="btn btn-outline-primary">
-                      <i className="ti ti-filter me-1"></i>
-                      Filter
-                    </button>
-                  </div>
-                </div>
-                <div className="card-body p-0">
-                  <DataTable
-                    data={paginatedPaymentMethods}
-                    columns={columns}
-                    loading={loading}
-                    searchable={false}
-                    filterable={false}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onView={handleView}
-                    pagination={{
-                      currentPage,
-                      totalPages,
-                      totalItems: filteredPaymentMethod.length,
-                      itemsPerPage,
-                      onPageChange: setCurrentPage
-                    }}
-                    className="border-0 shadow-none"
-                  />
-                </div>
-              </div>
+            <div className="card-body p-0">
+              <DataTable
+                data={paginatedPaymentMethods}
+                columns={columns}
+                loading={loading}
+                searchable={false}
+                filterable={false}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onView={handleView}
+                onStatusChange={handleStatusChange}
+                showStatusButton={() => true}
+                pagination={{
+                  currentPage,
+                  totalPages,
+                  totalItems: filteredPaymentMethod.length,
+                  itemsPerPage,
+                  onPageChange: setCurrentPage
+                }}
+                className="border-0 shadow-none"
+              />
             </div>
           </div>
         </div>

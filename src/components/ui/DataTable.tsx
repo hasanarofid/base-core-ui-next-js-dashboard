@@ -33,12 +33,14 @@ export interface DataTableProps<T> {
   onVerifyEmail?: (item: T) => void;
   onVerifyUser?: (item: T) => void;
   onResetPassword?: (item: T) => void;
+  onPaymentMethods?: (item: T) => void;
   showApproveButton?: (item: T) => boolean;
   showStatusButton?: (item: T) => boolean;
   showDeleteButton?: (item: T) => boolean;
   showVerifyEmailButton?: (item: T) => boolean;
   showVerifyUserButton?: (item: T) => boolean;
   showResetPasswordButton?: (item: T) => boolean;
+  showPaymentMethodsButton?: (item: T) => boolean;
   actions?: boolean;
   className?: string;
 }
@@ -59,12 +61,14 @@ export function DataTable<T extends { id: string | number }>({
   onVerifyEmail,
   onVerifyUser,
   onResetPassword,
+  onPaymentMethods,
   showApproveButton,
   showStatusButton,
   showDeleteButton,
   showVerifyEmailButton,
   showVerifyUserButton,
   showResetPasswordButton,
+  showPaymentMethodsButton,
   actions = true,
   className = ''
 }: DataTableProps<T>) {
@@ -297,6 +301,15 @@ export function DataTable<T extends { id: string | number }>({
                             title="Reset Password"
                           >
                             <i className="ti ti-key"></i>
+                          </button>
+                        )}
+                        {onPaymentMethods && (!showPaymentMethodsButton || showPaymentMethodsButton(row)) && (
+                          <button
+                            onClick={() => onPaymentMethods(row)}
+                            className="btn btn-sm btn-label-primary"
+                            title="Payment Methods"
+                          >
+                            <i className="ti ti-credit-card"></i>
                           </button>
                         )}
                       </div>

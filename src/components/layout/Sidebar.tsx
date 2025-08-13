@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 
 // Type declaration for window.Menu
 declare global {
@@ -20,6 +21,7 @@ interface SidebarProps {
 export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const pathname = usePathname()
   const sidebarRef = useRef<HTMLElement>(null)
+  const { user } = useAuth()
 
   // Initialize menu after component mounts
   useEffect(() => {
@@ -86,7 +88,8 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     }
   }, [isCollapsed])
 
-  const menuItems = [
+  // Menu items untuk Superadmin
+  const superadminMenuItems = [
     {
       title: 'Dashboard',
       href: '/dashboard',
@@ -107,17 +110,16 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       href: '/payment-methods',
       icon: 'ti ti-credit-card'
     },
-    // {
-    //   title: 'Products',
-    //   href: '/products',
-    //   icon: 'ti ti-package'
-    // },
-    // {
-    //   title: 'Client Credentials',
-    //   href: '/client-credentials',
-    //   icon: 'ti ti-key'
-    // },
-
+    {
+      title: 'Client Credentials',
+      href: '/client-credentials',
+      icon: 'ti ti-key'
+    },
+    {
+      title: 'Global Config',
+      href: '/global-config',
+      icon: 'ti ti-settings'
+    },
     {
       title: 'Transaction Monitoring',
       href: '/transaction-monitoring',
@@ -139,6 +141,71 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       icon: 'ti ti-settings'
     }
   ]
+
+  // Menu items untuk Admin Tenant (sesuai gambar)
+  const adminTenantMenuItems = [
+    {
+      title: 'Dashboard',
+      href: '/dashboard',
+      icon: 'ti ti-layout-dashboard'
+    },
+    {
+      title: 'User Management',
+      href: '/user-management',
+      icon: 'ti ti-users'
+    },
+    {
+      title: 'Payment Config',
+      href: '/payment-methods',
+      icon: 'ti ti-settings'
+    },
+    {
+      title: 'Fee Rules',
+      href: '/fee-rules',
+      icon: 'ti ti-diamond'
+    },
+    {
+      title: 'Callback Config',
+      href: '/callback-config',
+      icon: 'ti ti-refresh'
+    },
+    {
+      title: 'API Credential',
+      href: '/api-credentials',
+      icon: 'ti ti-folder'
+    },
+    {
+      title: 'Transaction Logs',
+      href: '/transaction-logs',
+      icon: 'ti ti-file-text'
+    },
+    {
+      title: 'Notifikasi',
+      href: '/notifications',
+      icon: 'ti ti-bell'
+    },
+    {
+      title: 'Integration Guide',
+      href: '/integration-guide',
+      icon: 'ti ti-tools'
+    }
+  ]
+
+  // Pilih menu berdasarkan role user
+  const getMenuItems = () => {
+    if (!user) return superadminMenuItems // Default fallback
+    
+    switch (user.role) {
+      case 'admin_tenant':
+      case 'tenant_admin': // Fallback untuk role yang mungkin berbeda
+        return adminTenantMenuItems
+      case 'superadmin':
+      default:
+        return superadminMenuItems
+    }
+  }
+
+  const menuItems = getMenuItems()
 
   const handleToggleClick = (e: React.MouseEvent) => {
     e.preventDefault()

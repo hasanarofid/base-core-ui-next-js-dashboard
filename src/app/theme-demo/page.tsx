@@ -23,10 +23,10 @@ export default function ThemeDemoPage() {
       <div className="space-y-8">
         {/* Page Header */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            Tenant System Theme Demo
+          <h1 className="text-3xl font-bold mb-4">
+            Toggle Dark atau Light Mode
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+          <p className="text-lg max-w-2xl mx-auto">
             Explore the beautiful Tenant System admin template theme with modern design, 
             dark mode support, and comprehensive component library.
           </p>
@@ -44,22 +44,43 @@ export default function ThemeDemoPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary mb-2">{theme.name}</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Template Name</div>
+                <div className="text-sm">Template Name</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary mb-2">v{theme.version}</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Version</div>
+                <div className="text-sm">Version</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary mb-2">
                   {isDarkMode ? 'Dark' : 'Light'}
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Current Mode</div>
+                <div className="text-sm">Current Mode</div>
               </div>
               <div className="text-center">
                 <ThemeToggle size="lg" />
-                <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">Toggle Theme</div>
+                <div className="text-sm mt-2">Toggle Theme</div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Items */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">Action items</h2>
+          </div>
+          <div className="card-body">
+            <div className="form-check">
+              <input className="form-check-input" type="checkbox" id="toggleIssue" checked readOnly />
+              <label className="form-check-label" htmlFor="toggleIssue">
+                ✅ Toggle theme sudah berfungsi dengan baik
+              </label>
+            </div>
+            <div className="form-check">
+              <input className="form-check-input" type="checkbox" id="colorIssue" checked readOnly />
+              <label className="form-check-label" htmlFor="colorIssue">
+                ✅ Warna badge dan icon sudah diperbaiki
+              </label>
             </div>
           </div>
         </div>
@@ -116,32 +137,32 @@ export default function ThemeDemoPage() {
               <div className="text-center">
                 <div className="w-16 h-16 bg-primary rounded-lg mx-auto mb-2"></div>
                 <p className="text-sm font-medium">Primary</p>
-                <p className="text-xs text-gray-500">{theme.colors.primary}</p>
+                <p className="text-xs">{theme.colors.primary}</p>
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 bg-secondary rounded-lg mx-auto mb-2"></div>
                 <p className="text-sm font-medium">Secondary</p>
-                <p className="text-xs text-gray-500">{theme.colors.secondary}</p>
+                <p className="text-xs">{theme.colors.secondary}</p>
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 bg-success rounded-lg mx-auto mb-2"></div>
                 <p className="text-sm font-medium">Success</p>
-                <p className="text-xs text-gray-500">{theme.colors.success}</p>
+                <p className="text-xs">{theme.colors.success}</p>
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 bg-warning rounded-lg mx-auto mb-2"></div>
                 <p className="text-sm font-medium">Warning</p>
-                <p className="text-xs text-gray-500">{theme.colors.warning}</p>
+                <p className="text-xs">{theme.colors.warning}</p>
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 bg-danger rounded-lg mx-auto mb-2"></div>
                 <p className="text-sm font-medium">Danger</p>
-                <p className="text-xs text-gray-500">{theme.colors.danger}</p>
+                <p className="text-xs">{theme.colors.danger}</p>
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 bg-info rounded-lg mx-auto mb-2"></div>
                 <p className="text-sm font-medium">Info</p>
-                <p className="text-xs text-gray-500">{theme.colors.info}</p>
+                <p className="text-xs">{theme.colors.info}</p>
               </div>
             </div>
           </div>
@@ -159,35 +180,35 @@ export default function ThemeDemoPage() {
             <div className="space-y-6">
               <div>
                 <h1 className="text-4xl font-bold">Heading 1 - Display Large</h1>
-                <p className="text-sm text-gray-500 mt-2">Font size: {theme.typography.fontSize['4xl']} | Weight: {theme.typography.fontWeight.bold}</p>
+                <p className="text-sm mt-2">Font size: {theme.typography.fontSize['4xl']} | Weight: {theme.typography.fontWeight.bold}</p>
               </div>
               <div>
                 <h2 className="text-3xl font-bold">Heading 2 - Display Medium</h2>
-                <p className="text-sm text-gray-500 mt-2">Font size: {theme.typography.fontSize['3xl']} | Weight: {theme.typography.fontWeight.bold}</p>
+                <p className="text-sm mt-2">Font size: {theme.typography.fontSize['3xl']} | Weight: {theme.typography.fontWeight.bold}</p>
               </div>
               <div>
                 <h3 className="text-2xl font-semibold">Heading 3 - Display Small</h3>
-                <p className="text-sm text-gray-500 mt-2">Font size: {theme.typography.fontSize['2xl']} | Weight: {theme.typography.fontWeight.semibold}</p>
+                <p className="text-sm mt-2">Font size: {theme.typography.fontSize['2xl']} | Weight: {theme.typography.fontWeight.semibold}</p>
               </div>
               <div>
                 <h4 className="text-xl font-semibold">Heading 4 - Headline</h4>
-                <p className="text-sm text-gray-500 mt-2">Font size: {theme.typography.fontSize.xl} | Weight: {theme.typography.fontWeight.semibold}</p>
+                <p className="text-sm mt-2">Font size: {theme.typography.fontSize.xl} | Weight: {theme.typography.fontWeight.semibold}</p>
               </div>
               <div>
                 <h5 className="text-lg font-medium">Heading 5 - Title</h5>
-                <p className="text-sm text-gray-500 mt-2">Font size: {theme.typography.fontSize.lg} | Weight: {theme.typography.fontWeight.medium}</p>
+                <p className="text-sm mt-2">Font size: {theme.typography.fontSize.lg} | Weight: {theme.typography.fontWeight.medium}</p>
               </div>
               <div>
                 <h6 className="text-base font-medium">Heading 6 - Subtitle</h6>
-                <p className="text-sm text-gray-500 mt-2">Font size: {theme.typography.fontSize.base} | Weight: {theme.typography.fontWeight.medium}</p>
+                <p className="text-sm mt-2">Font size: {theme.typography.fontSize.base} | Weight: {theme.typography.fontWeight.medium}</p>
               </div>
               <div>
                 <p className="text-base">Body text - This is the default body text size and weight used throughout the application.</p>
-                <p className="text-sm text-gray-500 mt-2">Font size: {theme.typography.fontSize.base} | Weight: {theme.typography.fontWeight.normal}</p>
+                <p className="text-sm mt-2">Font size: {theme.typography.fontSize.base} | Weight: {theme.typography.fontWeight.normal}</p>
               </div>
               <div>
                 <p className="text-sm">Small text - Used for captions, metadata, and secondary information.</p>
-                <p className="text-sm text-gray-500 mt-2">Font size: {theme.typography.fontSize.sm} | Weight: {theme.typography.fontWeight.normal}</p>
+                <p className="text-sm mt-2">Font size: {theme.typography.fontSize.sm} | Weight: {theme.typography.fontWeight.normal}</p>
               </div>
             </div>
           </div>
@@ -297,19 +318,19 @@ export default function ThemeDemoPage() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Sidebar Width:</span>
-                    <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{theme.layout.sidebarWidth}</code>
+                    <code className="px-2 py-1 rounded">{theme.layout.sidebarWidth}</code>
                   </div>
                   <div className="flex justify-between">
                     <span>Sidebar Collapsed:</span>
-                    <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{theme.layout.sidebarCollapsedWidth}</code>
+                    <code className="px-2 py-1 rounded">{theme.layout.sidebarCollapsedWidth}</code>
                   </div>
                   <div className="flex justify-between">
                     <span>Header Height:</span>
-                    <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{theme.layout.headerHeight}</code>
+                    <code className="px-2 py-1 rounded">{theme.layout.headerHeight}</code>
                   </div>
                   <div className="flex justify-between">
                     <span>Border Radius:</span>
-                    <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{theme.layout.borderRadius}</code>
+                    <code className="px-2 py-1 rounded">{theme.layout.borderRadius}</code>
                   </div>
                 </div>
               </div>
@@ -319,26 +340,49 @@ export default function ThemeDemoPage() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Extra Small:</span>
-                    <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{theme.spacing.xs}</code>
+                    <code className="px-2 py-1 rounded">{theme.spacing.xs}</code>
                   </div>
                   <div className="flex justify-between">
                     <span>Small:</span>
-                    <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{theme.spacing.sm}</code>
+                    <code className="px-2 py-1 rounded">{theme.spacing.sm}</code>
                   </div>
                   <div className="flex justify-between">
                     <span>Medium:</span>
-                    <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{theme.spacing.md}</code>
+                    <code className="px-2 py-1 rounded">{theme.spacing.md}</code>
                   </div>
                   <div className="flex justify-between">
                     <span>Large:</span>
-                    <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{theme.spacing.lg}</code>
+                    <code className="px-2 py-1 rounded">{theme.spacing.lg}</code>
                   </div>
                   <div className="flex justify-between">
                     <span>Extra Large:</span>
-                    <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{theme.spacing.xl}</code>
+                    <code className="px-2 py-1 rounded">{theme.spacing.xl}</code>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Documents */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">Documents</h2>
+          </div>
+          <div className="card-body">
+            <div className="space-y-4">
+              <button className="btn btn-outline w-full text-left">
+                <i className="ti ti-brand-google-drive me-2"></i>
+                Embed Google Drive
+              </button>
+              <button className="btn btn-outline w-full text-left">
+                <i className="ti ti-file-text me-2"></i>
+                Embed a PDF
+              </button>
+              <button className="btn btn-outline w-full text-left">
+                <i className="ti ti-brand-figma me-2"></i>
+                Embed Figma
+              </button>
             </div>
           </div>
         </div>

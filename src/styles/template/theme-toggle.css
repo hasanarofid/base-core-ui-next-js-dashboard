@@ -1,0 +1,301 @@
+/*
+* theme-toggle.css
+* File untuk menangani toggle tema light dan dark mode
+* Berdasarkan template Vuexy Bootstrap Admin Template
+******************************************************************************/
+
+/* Light Mode (Default) */
+.light-style {
+  --bs-body-bg: #f8f7fa;
+  --bs-body-color: #6f6b7d;
+  --bs-heading-color: #5d596c;
+  --bs-text-muted: #a5a3ae;
+  --bs-border-color: #dbdade;
+  --bs-card-bg: #fff;
+  --bs-navbar-bg: #fff;
+  --bs-menu-bg: #fff;
+  --bs-footer-bg: #fff;
+  --bs-box-shadow: 0 0.25rem 1.125rem rgba(75, 70, 92, 0.1);
+  --bs-box-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* Dark Mode */
+.dark-style {
+  --bs-body-bg: #25293c;
+  --bs-body-color: #b6bee3;
+  --bs-heading-color: #cfd3ec;
+  --bs-text-muted: #7983bb;
+  --bs-border-color: #434968;
+  --bs-card-bg: #2f3349;
+  --bs-navbar-bg: #2f3349;
+  --bs-menu-bg: #2f3349;
+  --bs-footer-bg: #2f3349;
+  --bs-box-shadow: 0 0.25rem 1.125rem rgba(0, 0, 0, 0.3);
+  --bs-box-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.2);
+}
+
+/* Apply theme variables */
+body {
+  background-color: var(--bs-body-bg) !important;
+  color: var(--bs-body-color) !important;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.bg-body {
+  background-color: var(--bs-body-bg) !important;
+}
+
+.bg-navbar-theme {
+  background-color: var(--bs-navbar-bg) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.bg-menu-theme {
+  background-color: var(--bs-menu-bg) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.bg-footer-theme {
+  background-color: var(--bs-footer-bg) !important;
+  color: var(--bs-body-color) !important;
+}
+
+/* Card styling */
+.card {
+  background-color: var(--bs-card-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  box-shadow: var(--bs-box-shadow-sm) !important;
+}
+
+/* Text colors */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--bs-heading-color) !important;
+}
+
+.text-muted {
+  color: var(--bs-text-muted) !important;
+}
+
+/* Border colors */
+.border {
+  border-color: var(--bs-border-color) !important;
+}
+
+/* Form elements */
+.form-control {
+  background-color: var(--bs-card-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.form-control:focus {
+  background-color: var(--bs-card-bg) !important;
+  border-color: #7367f0 !important;
+  color: var(--bs-body-color) !important;
+}
+
+/* Table styling */
+.table {
+  color: var(--bs-body-color) !important;
+}
+
+.table th {
+  color: var(--bs-heading-color) !important;
+  border-color: var(--bs-border-color) !important;
+}
+
+.table td {
+  border-color: var(--bs-border-color) !important;
+}
+
+/* Navbar specific styling */
+.layout-navbar {
+  box-shadow: 0 0 10px var(--bs-border-color) !important;
+  backdrop-filter: saturate(200%) blur(6px);
+}
+
+/* Menu specific styling */
+.bg-menu-theme .menu-inner .menu-item:not(.active) > .menu-link:hover {
+  background: rgba(115, 103, 240, 0.04) !important;
+}
+
+.bg-menu-theme .menu-inner .menu-item.active > .menu-link {
+  background: #7367f0 !important;
+  color: #fff !important;
+}
+
+/* Theme toggle button styling */
+.theme-toggle-btn {
+  background: transparent;
+  border: 1px solid var(--bs-border-color);
+  color: var(--bs-body-color);
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(115, 103, 240, 0.1);
+  border-color: #7367f0;
+}
+
+.theme-toggle-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(115, 103, 240, 0.25);
+}
+
+/* Smooth transitions for all elements */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Override template specific classes */
+.light-style .layout-wrapper {
+  background-color: var(--bs-body-bg) !important;
+}
+
+.dark-style .layout-wrapper {
+  background-color: var(--bs-body-bg) !important;
+}
+
+/* Ensure proper contrast in both modes */
+.light-style .btn-outline-secondary {
+  color: var(--bs-body-color) !important;
+  border-color: var(--bs-border-color) !important;
+}
+
+.dark-style .btn-outline-secondary {
+  color: var(--bs-body-color) !important;
+  border-color: var(--bs-border-color) !important;
+}
+
+/* Dropdown styling */
+.dropdown-menu {
+  background-color: var(--bs-card-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  box-shadow: var(--bs-box-shadow) !important;
+}
+
+.dropdown-item {
+  color: var(--bs-body-color) !important;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(115, 103, 240, 0.1) !important;
+  color: var(--bs-body-color) !important;
+}
+
+/* Modal styling */
+.modal-content {
+  background-color: var(--bs-card-bg) !important;
+  border-color: var(--bs-border-color) !important;
+}
+
+.modal-header {
+  border-bottom-color: var(--bs-border-color) !important;
+}
+
+.modal-footer {
+  border-top-color: var(--bs-border-color) !important;
+}
+
+/* Alert styling */
+.alert {
+  background-color: var(--bs-card-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+}
+
+/* Badge styling - Preserve original Vuexy colors */
+.badge {
+  /* Remove the override to preserve original colors */
+}
+
+/* Specific badge colors - preserve Vuexy template colors */
+.badge.bg-danger {
+  background-color: #ea5455 !important;
+  color: #fff !important;
+}
+
+.badge.bg-primary {
+  background-color: #7367f0 !important;
+  color: #fff !important;
+}
+
+.badge.bg-success {
+  background-color: #28c76f !important;
+  color: #fff !important;
+}
+
+.badge.bg-warning {
+  background-color: #ff9f43 !important;
+  color: #fff !important;
+}
+
+.badge.bg-info {
+  background-color: #00cfe8 !important;
+  color: #fff !important;
+}
+
+.badge.bg-secondary {
+  background-color: #a8aaae !important;
+  color: #fff !important;
+}
+
+/* Avatar styling - preserve original colors */
+.avatar-initial.rounded-circle.bg-label-primary {
+  background-color: #7367f0 !important;
+  color: #fff !important;
+}
+
+/* Icon colors - preserve original colors */
+.ti {
+  color: inherit !important;
+}
+
+/* Menu icon colors */
+.menu-inner .menu-item .menu-link .menu-icon {
+  color: var(--bs-body-color) !important;
+}
+
+.menu-inner .menu-item.active .menu-link .menu-icon {
+  color: #fff !important;
+}
+
+/* Progress bar background */
+.progress {
+  background-color: rgba(var(--bs-text-muted), 0.2) !important;
+}
+
+/* List group styling */
+.list-group-item {
+  background-color: var(--bs-card-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+}
+
+/* Input group styling */
+.input-group-text {
+  background-color: var(--bs-text-muted) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-card-bg) !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bs-body-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bs-text-muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--bs-border-color);
+} 

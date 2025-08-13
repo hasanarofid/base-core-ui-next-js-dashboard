@@ -14,6 +14,8 @@ const editTenantSchema = z.object({
   domain: z.string().url('Domain harus valid').optional().or(z.literal('')),
   email: z.string().email('Email harus valid'),
   contact_person: z.string().min(1, 'Kontak person harus diisi'),
+  url_callback: z.string().url('URL callback harus valid').optional().or(z.literal('')),
+  ip_whitelist: z.string().optional().or(z.literal('')),
 });
 
 type EditTenantForm = z.infer<typeof editTenantSchema>;
@@ -26,6 +28,7 @@ interface Tenant {
   email: string;
   contact_person: string;
   status: string;
+  config_json?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -74,6 +77,11 @@ export default function EditTenantPage() {
         setValue('domain', tenantData.domain || '');
         setValue('email', tenantData.email);
         setValue('contact_person', tenantData.contact_person);
+        
+        // Set config_json values
+        const config = tenantData.config_json || {};
+        setValue('url_callback', (config.url_callback as string) || '');
+        setValue('ip_whitelist', (config.ip_whitelist as string) || '');
       } catch (error) {
         console.error('Error fetching tenant:', error);
         showToast({ 
@@ -95,12 +103,21 @@ export default function EditTenantPage() {
   const onSubmit = async (data: EditTenantForm) => {
     setUpdating(true);
     try {
+      // Prepare the data with config_json
+      const submitData = {
+        ...data,
+        config_json: {
+          url_callback: data.url_callback || null,
+          ip_whitelist: data.ip_whitelist || null,
+        }
+      };
+
       const response = await fetch(`/api/tenants/${tenantId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(submitData),
       });
 
       const result = await response.json();
@@ -266,7 +283,7 @@ export default function EditTenantPage() {
                   </div>
                 </div>
 
-                <div className="col-6">
+                <div className="col-md-6">
                   <div className="form-group">
                     <label className="form-label">
                       Kontak Person <span className="text-danger">*</span>
@@ -280,6 +297,38 @@ export default function EditTenantPage() {
                     {errors.contact_person && (
                       <div className="invalid-feedback">{errors.contact_person.message}</div>
                     )}
+                  </div>
+                </div>
+
+                <div className="col-md-6">
+                  <div className="form-group">
+                    <label className="form-label">URL Callback</label>
+                    <input
+                      type="url"
+                      className={`form-control ${errors.url_callback ? 'is-invalid' : ''}`}
+                      placeholder="https://example.com/callback"
+                      {...register('url_callback')}
+                    />
+                    {errors.url_callback && (
+                      <div className="invalid-feedback">{errors.url_callback.message}</div>
+                    )}
+                    <div className="form-text">URL untuk menerima callback dari sistem</div>
+                  </div>
+                </div>
+
+                <div className="col-md-6">
+                  <div className="form-group">
+                    <label className="form-label">IP Whitelist</label>
+                    <textarea
+                      className={`form-control ${errors.ip_whitelist ? 'is-invalid' : ''}`}
+                      placeholder="192.168.1.1&#10;10.0.0.1&#10;172.16.0.1"
+                      rows={3}
+                      {...register('ip_whitelist')}
+                    />
+                    {errors.ip_whitelist && (
+                      <div className="invalid-feedback">{errors.ip_whitelist.message}</div>
+                    )}
+                    <div className="form-text">Masukkan satu IP address per baris</div>
                   </div>
                 </div>
               </div>

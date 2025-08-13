@@ -232,9 +232,8 @@ export default function PaymentMethodPage() {
           {/* Page Header - Matching Dashboard Style */}
           <div className="d-flex justify-content-between align-items-center mb-4">
             <div>
-              <h4 className="fw-bold mb-1 text-primary">
-                <i className="ti ti-credit-card me-2"></i>
-                Payment Method Master
+              <h4 className="fw-bold py-3 mb-4">
+                <span className="text-muted fw-light">Payment Config /</span> Konfigurasi Pembayaran
               </h4>
               <p className="text-muted mb-0">Kelola {paymentmethods.length} payment method dalam sistem</p>
             </div>

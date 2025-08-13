@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Head from 'next/head';
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import AuthGuard from '@/components/auth/AuthGuard'
+import SecureGuard from '@/components/auth/SecureGuard'
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { User } from '@/types/user';
 import { getUsersWithCookies, deleteUserWithCookies } from '@/lib/api';
@@ -244,7 +244,7 @@ export default function UserManagementPage() {
   // Validasi data sebelum render
   if (!users) {
     return (
-      <AuthGuard requireAuth={true}>
+      <SecureGuard requireAuth={true}>
         <DashboardLayout>
           <div className="container-xxl flex-grow-1 container-p-y">
             <div className="alert alert-warning" role="alert">
@@ -253,7 +253,7 @@ export default function UserManagementPage() {
             </div>
           </div>
         </DashboardLayout>
-      </AuthGuard>
+              </SecureGuard>
     );
   }
 
@@ -293,48 +293,14 @@ export default function UserManagementPage() {
       )
     },
     {
-      key: 'isVerified',
+      key: 'forcePasswordChange',
       header: 'STATUS VERIFIKASI',
       sortable: true,
       render: (value) => (
         <div>
-          <span className={getVerificationBadgeClass(value as boolean)}>
-            {getVerificationText(value as boolean)}
+          <span className={getVerificationBadgeClass(!value as boolean)}>
+            {getVerificationText(!value as boolean)}
           </span>
-        </div>
-      )
-    },
-    {
-      key: 'force_password_change',
-      header: 'STATUS PASSWORD',
-      sortable: true,
-      render: (value) => (
-        <div>
-          <span className={getPasswordChangeBadgeClass(value as boolean)}>
-            {getPasswordChangeText(value as boolean)}
-          </span>
-        </div>
-      )
-    },
-    {
-      key: 'createdAt',
-      header: 'TANGGAL PENDAFTARAN',
-      sortable: true,
-      render: (value) => (
-        <div>
-          <span className="text-body fw-medium">
-            {new Date(String(value)).toLocaleDateString('id-ID', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric'
-            })}
-          </span>
-          <div className="text-muted small">
-            {new Date(String(value)).toLocaleTimeString('id-ID', {
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </div>
         </div>
       )
     },
@@ -372,7 +338,7 @@ export default function UserManagementPage() {
 
   if (error) {
     return (
-      <AuthGuard requireAuth={true}>
+      <SecureGuard requireAuth={true}>
         <DashboardLayout>
           <div className="container-xxl flex-grow-1 container-p-y">
             <div className="alert alert-danger" role="alert">
@@ -387,7 +353,7 @@ export default function UserManagementPage() {
             </div>
           </div>
         </DashboardLayout>
-      </AuthGuard>
+      </SecureGuard>
     );
   }
 
@@ -401,7 +367,7 @@ export default function UserManagementPage() {
         <meta name="keywords" content="user management, role management, user verification, admin panel" />
       </Head>
       
-      <AuthGuard requireAuth={true}>
+      <SecureGuard requireAuth={true}>
         <DashboardLayout>
           <div className="container-xxl flex-grow-1 container-p-y">
             {/* Page Header - Matching Dashboard Style */}
@@ -478,7 +444,7 @@ export default function UserManagementPage() {
             </div>
           </div>
         </DashboardLayout>
-      </AuthGuard>
+      </SecureGuard>
     </>
   )
 } 

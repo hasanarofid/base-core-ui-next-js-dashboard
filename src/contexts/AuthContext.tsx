@@ -10,6 +10,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   checkAuth: () => Promise<void>
+  updateUser: (user: LoginUser) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -20,22 +21,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      // Coba ambil data user dari API menggunakan cookies
+      setIsLoading(true)
+      console.log('🔍 Checking authentication...')
+      
       const response = await fetch('/api/auth/me', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         credentials: 'include', // Penting: untuk mengirim cookies
       })
 
       if (response.ok) {
         const data = await response.json()
+        console.log('🔍 CheckAuth response:', data)
+        
         if (data.user) {
-          setUser(data.user)
+          // Map user data untuk memastikan struktur yang benar
+          const userData = {
+            id: data.user.id,
+            fullName: data.user.fullName || data.user.full_name,
+            email: data.user.email,
+            role: data.user.role,
+            tenantId: data.user.tenantId || data.user.tenant_id,
+            force_password_change: data.user.forcePasswordChange || data.user.force_password_change || false
+          };
+          
+          console.log('🔍 User data from checkAuth:', userData)
+          console.log('🔍 User role:', userData.role)
+          console.log('🔍 Force password change:', userData.force_password_change)
+          setUser(userData)
         }
       } else {
         // Jika tidak ada session yang valid, clear data
+        console.log('❌ CheckAuth failed, clearing user data')
         setUser(null)
       }
     } catch (error) {
@@ -70,12 +85,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // API response structure: { message: string, data: { user: User, token: string } }
       if (data.data && data.data.user) {
-        // Set user data (token disimpan dalam cookies oleh API)
-        setUser(data.data.user)
-        console.log('🎯 User set successfully:', data.data.user)
+        // Map user data untuk memastikan struktur yang benar
+        const userData = {
+          id: data.data.user.id,
+          fullName: data.data.user.fullName || data.data.user.full_name,
+          email: data.data.user.email,
+          role: data.data.user.role,
+          tenantId: data.data.user.tenantId || data.data.user.tenant_id,
+          force_password_change: data.data.user.forcePasswordChange || data.data.user.force_password_change || false
+        };
         
-        // Redirect to dashboard after successful login
-        window.location.href = '/dashboard'
+        // Set user data (token disimpan dalam cookies oleh API)
+        setUser(userData)
+        console.log('🎯 User set successfully:', userData)
+        
+        // Jangan langsung redirect, biarkan ForcePasswordChangeGuard mengecek kondisi
+        // Jika user adalah admin_tenant dan force_password_change = true, modal akan muncul
+        // Jika tidak, user akan diarahkan ke dashboard oleh ForcePasswordChangeGuard
+        console.log('🔍 User role:', userData.role)
+        console.log('🔍 Force password change:', userData.force_password_change)
+        
+        // Redirect ke dashboard setelah delay singkat untuk memastikan state ter-update
+        // ForcePasswordChangeGuard akan mengecek kondisi sebelum redirect
+        setTimeout(() => {
+          window.location.href = '/dashboard'
+        }, 100)
       } else {
         throw new Error('Invalid response structure from login API')
       }
@@ -113,6 +147,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const updateUser = (updatedUser: LoginUser) => {
+    setUser(updatedUser);
+  };
+
   useEffect(() => {
     checkAuth()
   }, [])
@@ -124,6 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     logout,
     checkAuth,
+    updateUser,
   }
 
   return (

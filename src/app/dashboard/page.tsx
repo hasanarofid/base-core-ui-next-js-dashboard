@@ -3,6 +3,7 @@
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import UserInfo from '@/components/dashboard/UserInfo'
 import AuthGuard from '@/components/auth/AuthGuard'
+import TestForcePasswordChange from '@/components/auth/TestForcePasswordChange'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function DashboardPage() {
@@ -25,6 +26,8 @@ export default function DashboardPage() {
           <h4 className="fw-bold py-3 mb-4">
             <span className="text-muted fw-light">Dashboard /</span> {user?.role}
           </h4>
+
+         
 
           {/* Main Statistics Cards */}
         

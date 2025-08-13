@@ -4,12 +4,14 @@ import Script from "next/script";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import ForcePasswordChangeGuard from "@/components/auth/ForcePasswordChangeGuard";
 
 import "@/styles/template/core.css"
 import "@/styles/template/theme-default.css"
 import "@/styles/template/demo.css"
 import "@/styles/template/theme-toggle.css"
 import "@/styles/sweetalert-custom.css"
+import "@/styles/force-password-change.css"
 
 
 const publicSans = Public_Sans({
@@ -61,7 +63,9 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <ToastProvider>
-              {children}
+              <ForcePasswordChangeGuard>
+                {children}
+              </ForcePasswordChangeGuard>
             </ToastProvider>
           </AuthProvider>
         </ThemeProvider>

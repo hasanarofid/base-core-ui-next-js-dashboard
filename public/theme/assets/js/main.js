@@ -35,8 +35,8 @@ if (document.getElementById('layout-menu')) {
       showDropdownOnHover: localStorage.getItem('templateCustomizer-' + templateName + '--ShowDropdownOnHover') // If value(showDropdownOnHover) is set in local storage
         ? localStorage.getItem('templateCustomizer-' + templateName + '--ShowDropdownOnHover') === 'true' // Use the local storage value
         : window.templateCustomizer !== undefined // If value is set in config.js
-        ? window.templateCustomizer.settings.defaultShowDropdownOnHover // Use the config.js value
-        : true // Use this if you are not using the config.js and want to set value directly from here
+          ? window.templateCustomizer.settings.defaultShowDropdownOnHover // Use the config.js value
+          : true // Use this if you are not using the config.js and want to set value directly from here
     });
     // Change parameter to true if you want scroll animation
     window.Helpers.scrollToActive((animate = false));
@@ -56,7 +56,7 @@ if (document.getElementById('layout-menu')) {
             'templateCustomizer-' + templateName + '--LayoutCollapsed',
             String(window.Helpers.isCollapsed())
           );
-        } catch (e) {}
+        } catch (e) { }
       }
     });
   });
@@ -90,41 +90,36 @@ if (document.getElementById('layout-menu')) {
   //---------------------------------
 
   let styleSwitcherToggleEl = document.querySelector('.style-switcher-toggle');
+
   if (window.templateCustomizer) {
     // setStyle light/dark on click of styleSwitcherToggleEl
     if (styleSwitcherToggleEl) {
       styleSwitcherToggleEl.addEventListener('click', function () {
-        if (window.Helpers.isLightStyle()) {
-          window.templateCustomizer.setStyle('dark');
-        } else {
-          window.templateCustomizer.setStyle('light');
-        }
+        if (window.Helpers.isLightStyle()) window.templateCustomizer.setStyle('dark');
+        else window.templateCustomizer.setStyle('light');
       });
     }
-    // Update style switcher icon and tooltip based on current style
+    // Update icon & tooltip
     if (window.Helpers.isLightStyle()) {
       if (styleSwitcherToggleEl) {
-        styleSwitcherToggleEl.querySelector('i').classList.add('ti-moon-stars');
-        new bootstrap.Tooltip(styleSwitcherToggleEl, {
-          title: 'Dark mode',
-          fallbackPlacements: ['bottom']
-        });
+        styleSwitcherToggleEl.querySelector('i')?.classList.add('ti-moon-stars');
+        new bootstrap.Tooltip(styleSwitcherToggleEl, { title: 'Dark mode', fallbackPlacements: ['bottom'] });
       }
       switchImage('light');
     } else {
       if (styleSwitcherToggleEl) {
-        styleSwitcherToggleEl.querySelector('i').classList.add('ti-sun');
-        new bootstrap.Tooltip(styleSwitcherToggleEl, {
-          title: 'Light mode',
-          fallbackPlacements: ['bottom']
-        });
+        styleSwitcherToggleEl.querySelector('i')?.classList.add('ti-sun');
+        new bootstrap.Tooltip(styleSwitcherToggleEl, { title: 'Light mode', fallbackPlacements: ['bottom'] });
       }
       switchImage('dark');
     }
   } else {
-    // Removed style switcher element if not using template customizer
-    styleSwitcherToggleEl.parentElement.remove();
+    // ✅ aman: cek dulu
+    if (styleSwitcherToggleEl?.parentElement) {
+      styleSwitcherToggleEl.parentElement.remove();
+    }
   }
+
 
   // Update light/dark image based on current style
   function switchImage(style) {
@@ -329,7 +324,7 @@ if (document.getElementById('layout-menu')) {
             localStorage.getItem('templateCustomizer-' + templateName + '--LayoutCollapsed') === 'true',
             false
           );
-      } catch (e) {}
+      } catch (e) { }
     }
   }
 })();

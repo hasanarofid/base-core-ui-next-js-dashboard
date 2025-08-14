@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  reverse-proxy:
+    image: traefik:v3.1
+    container_name: traefik
+    command:
+      - "--api.dashboard=false"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+
+      # Entrypoints
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+
+      # Let's Encrypt (HTTP challenge)
+      - "--certificatesresolvers.letsencrypt.acme.email=you@example.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nextjs-dashboard
+    env_file:
+      - .env.local
+    expose:
+      - "3034"
+    labels:
+      - "traefik.enable=true"
+
+      # Router HTTPS
+      - "traefik.http.routers.nextjs-https.rule=Host(`tenant-app-innovia.duckdns.org`)"
+      - "traefik.http.routers.nextjs-https.entrypoints=websecure"
+      - "traefik.http.routers.nextjs-https.tls=true"
+      - "traefik.http.routers.nextjs-https.tls.certresolver=letsencrypt"
+
+      # Service -> arahkan ke port internal 3034
+      - "traefik.http.services.nextjs.loadbalancer.server.port=3034"
+
+      # Router HTTP -> redirect ke HTTPS
+      - "traefik.http.routers.nextjs-http.rule=Host(`tenant-app-innovia.duckdns.org`)"
+      - "traefik.http.routers.nextjs-http.entrypoints=web"
+      - "traefik.http.routers.nextjs-http.middlewares=redirect-to-https@docker"
+
+      # Middleware redirect
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+    depends_on:
+      - reverse-proxy
+    restart: unless-stopped

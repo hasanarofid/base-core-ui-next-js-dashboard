@@ -86,7 +86,23 @@ export default function UserManagementPage() {
         // 3. Cek jika response memiliki property users
         else if (responseAny.users && Array.isArray(responseAny.users)) {
           console.log('✅ Found response.users array with', responseAny.users.length, 'items');
-          usersData = responseAny.users;
+          // Map data untuk memastikan field forcePasswordChange dipetakan dengan benar
+          usersData = responseAny.users.map((user: Record<string, unknown>) => {
+            const mappedUser = {
+              ...user,
+              force_password_change: (user.forcePasswordChange as boolean) || (user.force_password_change as boolean) || false
+            };
+            console.log('🔍 Mapping user:', {
+              original: {
+                forcePasswordChange: user.forcePasswordChange,
+                force_password_change: user.force_password_change
+              },
+              mapped: {
+                force_password_change: mappedUser.force_password_change
+              }
+            });
+            return mappedUser;
+          }) as User[];
         }
         // 4. Cek jika response memiliki property result atau results
         else if (responseAny.result && Array.isArray(responseAny.result)) {
@@ -137,7 +153,8 @@ export default function UserManagementPage() {
               id: user.id,
               name: user.fullName,
               email: user.email,
-              role: user.role
+              role: user.role,
+              force_password_change: user.force_password_change
             });
           });
           
@@ -210,12 +227,13 @@ export default function UserManagementPage() {
     }
   };
 
-  const getVerificationBadgeClass = (isVerified: boolean) => {
-    return isVerified ? 'badge bg-label-success rounded-pill' : 'badge bg-label-warning rounded-pill';
+  const getVerificationBadgeClass = (forcePasswordChange: boolean) => {
+    return forcePasswordChange ? 'badge bg-label-success rounded-pill' : 'badge bg-label-warning rounded-pill';
   };
 
-  const getVerificationText = (isVerified: boolean) => {
-    return isVerified ? 'Terverifikasi' : 'Belum Terverifikasi';
+  const getVerificationText = (forcePasswordChange: boolean) => {
+    console.log('🔍 ForcePasswordChange:', forcePasswordChange);
+    return forcePasswordChange ? 'Terverifikasi' : 'Belum Terverifikasi';
   };
 
   const getPasswordChangeBadgeClass = (forcePasswordChange: boolean) => {
@@ -293,16 +311,24 @@ export default function UserManagementPage() {
       )
     },
     {
-      key: 'forcePasswordChange',
+      key: 'force_password_change',
       header: 'STATUS VERIFIKASI',
       sortable: true,
-      render: (value) => (
-        <div>
-          <span className={getVerificationBadgeClass(!value as boolean)}>
-            {getVerificationText(!value as boolean)}
-          </span>
-        </div>
-      )
+      render: (value, row) => {
+        console.log('🎨 Rendering status for user:', {
+          userId: row.id,
+          fullName: row.fullName,
+          forcePasswordChange: value,
+          force_password_change: row.force_password_change
+        });
+        return (
+          <div>
+            <span className={getVerificationBadgeClass(value as boolean)}>
+              {getVerificationText(value as boolean)}
+            </span>
+          </div>
+        );
+      }
     },
     {
       key: 'actions',

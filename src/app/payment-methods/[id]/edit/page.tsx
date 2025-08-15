@@ -16,7 +16,7 @@ const updatePaymentMethodSchema = z.object({
   type: z.enum(['VA', 'QRIS', 'EWALLET', 'CC', 'BANK_TRANSFER'], {
     message: 'Tipe harus dipilih dari opsi yang tersedia'
   }),
-  status: z.enum(['active', 'inactive'])
+  logo_url: z.string().optional()
 });
 
 type UpdatePaymentMethodFormData = z.infer<typeof updatePaymentMethodSchema>;
@@ -54,13 +54,13 @@ export default function EditPaymentMethodPage() {
         setValue('name', methodData.name);
         setValue('code', methodData.code || '');
         setValue('type', methodData.type as 'VA' | 'QRIS' | 'EWALLET' | 'CC' | 'BANK_TRANSFER');
-        setValue('status', methodData.status as 'active' | 'inactive');
+        setValue('logo_url', methodData.logo_url || '');
         
         console.log('Form values set:', {
           name: methodData.name,
           code: methodData.code || '',
           type: methodData.type,
-          status: methodData.status
+          logo_url: methodData.logo_url || ''
         });
       } catch (error) {
         console.error('Failed to fetch payment method:', error);
@@ -88,7 +88,7 @@ export default function EditPaymentMethodPage() {
         name: data.name,
         code: data.code,
         type: data.type,
-        status: data.status
+        logo_url: data.logo_url || ''
       };
       
       console.log('Update data to be sent:', updateData);
@@ -253,21 +253,15 @@ export default function EditPaymentMethodPage() {
                     <div className="col-md-6">
                       <div className="form-group">
                         <label className="form-label">
-                          Status <span className="text-danger">*</span>
+                          Logo URL
                         </label>
-                        <select
-                          className={`form-control ${errors.status ? 'is-invalid' : ''}`}
-                          {...register('status')}
-                          onChange={(e) => {
-                            console.log('Status changed to:', e.target.value);
-                            setValue('status', e.target.value as 'active' | 'inactive');
-                          }}
-                        >
-                          <option value="">Pilih Status</option>
-                          <option value="active">Aktif</option>
-                          <option value="inactive">Tidak Aktif</option>
-                        </select>
-                        {errors.status && <div className="invalid-feedback">{errors.status.message}</div>}
+                        <input
+                          type="url"
+                          className={`form-control ${errors.logo_url ? 'is-invalid' : ''}`}
+                          placeholder="Masukkan URL logo (opsional)"
+                          {...register('logo_url')}
+                        />
+                        {errors.logo_url && <div className="invalid-feedback">{errors.logo_url.message}</div>}
                       </div>
                     </div>
                   </div>

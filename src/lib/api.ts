@@ -342,8 +342,8 @@ export async function approvePaymentMethodWithCookies(id: string): Promise<{ mes
 
 // Fungsi untuk update status payment method dengan cookies
 export async function updatePaymentMethodStatusWithCookies(id: string, status: string): Promise<{ message: string; data: PaymentMethod }> {
-  return apiWithCookies(`/payment-method/${id}`, {
-    method: 'PUT',
+  return apiWithCookies(`/payment-method/${id}/status`, {
+    method: 'PATCH',
     body: JSON.stringify({ status }),
   })
 } 

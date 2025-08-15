@@ -13,6 +13,14 @@ declare global {
   }
 }
 
+interface MenuItem {
+  title: string
+  href: string
+  icon: string
+  hasSubmenu?: boolean
+  submenu?: MenuItem[]
+}
+
 interface SidebarProps {
   isCollapsed: boolean
   onToggle: () => void
@@ -89,7 +97,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   }, [isCollapsed])
 
   // Menu items untuk Superadmin
-  const superadminMenuItems = [
+  const superadminMenuItems: MenuItem[] = [
     {
       title: 'Dashboard',
       href: '/dashboard',
@@ -142,57 +150,45 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     }
   ]
 
-  // Menu items untuk Admin Tenant (sesuai gambar)
-  const adminTenantMenuItems = [
+  // Menu items untuk Admin Tenant (sesuai permintaan)
+  const adminTenantMenuItems: MenuItem[] = [
     {
       title: 'Dashboard',
       href: '/dashboard',
       icon: 'ti ti-layout-dashboard'
     },
     {
-      title: 'User Management',
-      href: '/user-management',
-      icon: 'ti ti-users'
+      title: 'Akun & Merchant',
+      href: '#',
+      icon: 'ti ti-user-circle',
+      hasSubmenu: true,
+      submenu: [
+        {
+          title: 'Detail Akun',
+          href: '/account-details',
+          icon: 'ti ti-user'
+        },
+        {
+          title: 'Detail Merchant',
+          href: '/merchant-details',
+          icon: 'ti ti-building-store'
+        }
+      ]
     },
     {
-      title: 'Payment Config',
-      href: '/payment-methods',
-      icon: 'ti ti-settings'
+      title: 'Payment Channel',
+      href: '/payment-channel',
+      icon: 'ti ti-credit-card'
     },
     {
-      title: 'Fee Rules',
-      href: '/fee-rules',
-      icon: 'ti ti-diamond'
-    },
-    {
-      title: 'Callback Config',
-      href: '/callback-config',
-      icon: 'ti ti-refresh'
-    },
-    {
-      title: 'API Credential',
-      href: '/api-credentials',
-      icon: 'ti ti-folder'
-    },
-    {
-      title: 'Transaction Logs',
-      href: '/transaction-logs',
-      icon: 'ti ti-file-text'
-    },
-    {
-      title: 'Notifikasi',
-      href: '/notifications',
-      icon: 'ti ti-bell'
-    },
-    {
-      title: 'Integration Guide',
-      href: '/integration-guide',
-      icon: 'ti ti-tools'
+      title: 'Transaction',
+      href: '/transaction',
+      icon: 'ti ti-receipt'
     }
   ]
 
   // Pilih menu berdasarkan role user
-  const getMenuItems = () => {
+  const getMenuItems = (): MenuItem[] => {
     if (!user) return superadminMenuItems // Default fallback
     
     switch (user.role) {
@@ -241,7 +237,31 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       {/* Menu Items */}
       <ul className="menu-inner py-1">
         {menuItems.map((item) => {
-          const isActive = pathname === item.href
+          const isActive = pathname === item.href || (item.submenu && item.submenu.some(sub => pathname === sub.href))
+          
+          if (item.hasSubmenu && item.submenu) {
+            return (
+              <li key={item.href} className={`menu-item ${isActive ? 'active open' : ''}`}>
+                <a href={item.href} className="menu-link menu-toggle">
+                  <i className={`menu-icon tf-icons ${item.icon} ${isActive ? 'text-white' : 'text-body'}`}></i>
+                  <div data-i18n={item.title} className={isActive ? 'text-white' : 'text-body'}>{item.title}</div>
+                </a>
+                <ul className="menu-sub">
+                  {item.submenu.map((subItem) => {
+                    const isSubActive = pathname === subItem.href
+                    return (
+                      <li key={subItem.href} className={`menu-item ${isSubActive ? 'active' : ''}`}>
+                        <Link href={subItem.href} className="menu-link">
+                          <div data-i18n={subItem.title} className={isSubActive ? 'text-white' : 'text-body'}>{subItem.title}</div>
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </li>
+            )
+          }
+          
           return (
             <li key={item.href} className={`menu-item ${isActive ? 'active' : ''}`}>
               <Link href={item.href} className="menu-link">

@@ -2,33 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
-    // Debug request info
-    console.log('🔍 GET /api/user called')
-    console.log('🔍 Request method:', request.method)
-    console.log('🔍 Request URL:', request.url)
-    
-    // Ambil token dari header Authorization atau cookies
-    const authHeader = request.headers.get('authorization')
+    // Ambil cookies dari request
     const cookies = request.cookies
-    console.log('All cookies received:', Array.from(cookies.getAll()))
-    console.log('Authorization header:', authHeader ? 'Found' : 'Not found')
+    const sessionCookie = cookies.get('session') || cookies.get('token') || cookies.get('auth')
     
-    let token = null
-    
-    // Prioritas: Authorization header dulu, kemudian cookies
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.substring(7) // Remove 'Bearer ' prefix
-      console.log('Token found in Authorization header')
-    } else {
-      const sessionCookie = cookies.get('session') || cookies.get('token') || cookies.get('auth')
-      if (sessionCookie) {
-        token = sessionCookie.value
-        console.log('Token found in cookies:', sessionCookie.name)
-      }
-    }
-    
-    if (!token) {
-      console.error('No authentication token found in headers or cookies')
+    if (!sessionCookie) {
       return NextResponse.json(
         { message: 'Session tidak ditemukan' },
         { status: 401 }
@@ -37,54 +15,43 @@ export async function GET(request: NextRequest) {
 
     const externalApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3030/api/v1'
     
-    console.log('Fetching users data from:', `${externalApiUrl}/admin/user`)
-    console.log('Using token:', token.substring(0, 10) + '...')
+    console.log('Fetching user data from:', `${externalApiUrl}/user`)
+    console.log('Using session cookie:', sessionCookie.name)
 
-    const response = await fetch(`${externalApiUrl}/admin/user`, {
+    const response = await fetch(`${externalApiUrl}/user`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        'Cookie': `${sessionCookie.name}=${sessionCookie.value}`,
       },
     })
 
-    console.log('External API response status:', response.status)
-    console.log('External API response headers:', Object.fromEntries(response.headers.entries()))
-
-    // Coba parse response sebagai JSON, jika gagal ambil sebagai text
-    let data
-    try {
-      data = await response.json()
-    } catch (parseError) {
-      console.error('Failed to parse response as JSON:', parseError)
-      const textData = await response.text()
-      console.log('Response as text:', textData)
-      data = { message: 'Invalid response format from external API' }
-    }
+    const data = await response.json()
     
-    console.log('Users API response data:', data)
+    console.log('User API response status:', response.status)
+    console.log('User API response data:', data)
 
     if (!response.ok) {
-      console.error('External API error:', data)
       return NextResponse.json(
-        { message: data.message || 'Gagal mengambil data users' },
+        { message: data.message || 'Gagal mengambil data user' },
         { status: response.status }
+      )
+    }
+
+    // Cek role user, hanya admin_tenant yang bisa mengakses endpoint ini
+    if (data.user && data.user.role !== 'admin_tenant') {
+      return NextResponse.json(
+        { message: 'Akses ditolak. Hanya admin tenant yang dapat mengakses endpoint ini.' },
+        { status: 403 }
       )
     }
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error('Users API error:', error)
-    
-    // Log error details untuk debugging
-    if (error instanceof Error) {
-      console.error('Error message:', error.message)
-      console.error('Error stack:', error.stack)
-    }
-    
+    console.error('User API error:', error)
     return NextResponse.json(
-      { message: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { message: 'Internal server error' },
       { status: 500 }
     )
   }
@@ -92,28 +59,11 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    // Ambil token dari header Authorization atau cookies
-    const authHeader = request.headers.get('authorization')
+    // Ambil cookies dari request
     const cookies = request.cookies
-    console.log('All cookies received:', Array.from(cookies.getAll()))
-    console.log('Authorization header:', authHeader ? 'Found' : 'Not found')
+    const sessionCookie = cookies.get('session') || cookies.get('token') || cookies.get('auth')
     
-    let token = null
-    
-    // Prioritas: Authorization header dulu, kemudian cookies
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.substring(7) // Remove 'Bearer ' prefix
-      console.log('Token found in Authorization header')
-    } else {
-      const sessionCookie = cookies.get('session') || cookies.get('token') || cookies.get('auth')
-      if (sessionCookie) {
-        token = sessionCookie.value
-        console.log('Token found in cookies:', sessionCookie.name)
-      }
-    }
-    
-    if (!token) {
-      console.error('No authentication token found in headers or cookies')
+    if (!sessionCookie) {
       return NextResponse.json(
         { message: 'Session tidak ditemukan' },
         { status: 401 }
@@ -151,34 +101,22 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const response = await fetch(`${externalApiUrl}/admin/user`, {
+    const response = await fetch(`${externalApiUrl}/user`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        'Cookie': `${sessionCookie.name}=${sessionCookie.value}`,
       },
       body: JSON.stringify(body),
     })
 
-    console.log('External API response status:', response.status)
-    console.log('External API response headers:', Object.fromEntries(response.headers.entries()))
-
-    // Coba parse response sebagai JSON, jika gagal ambil sebagai text
-    let data
-    try {
-      data = await response.json()
-    } catch (parseError) {
-      console.error('Failed to parse response as JSON:', parseError)
-      const textData = await response.text()
-      console.log('Response as text:', textData)
-      data = { message: 'Invalid response format from external API' }
-    }
+    const data = await response.json()
     
+    console.log('User update API response status:', response.status)
     console.log('User update API response data:', data)
 
     if (!response.ok) {
-      console.error('External API error:', data)
       return NextResponse.json(
         { message: data.message || 'Gagal memperbarui data user' },
         { status: response.status }
@@ -188,15 +126,8 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json(data)
   } catch (error) {
     console.error('User update API error:', error)
-    
-    // Log error details untuk debugging
-    if (error instanceof Error) {
-      console.error('Error message:', error.message)
-      console.error('Error stack:', error.stack)
-    }
-    
     return NextResponse.json(
-      { message: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { message: 'Internal server error' },
       { status: 500 }
     )
   }

@@ -242,3 +242,84 @@
     padding: 0.4375rem 1.25rem !important;
   }
 } 
+
+/* SweetAlert Custom Styles */
+.swal-custom-popup {
+  z-index: 9999 !important;
+}
+
+/* Override SweetAlert backdrop z-index */
+.swal2-backdrop-show {
+  z-index: 9998 !important;
+}
+
+/* Ensure SweetAlert appears above Bootstrap modal */
+.swal2-container {
+  z-index: 9999 !important;
+}
+
+/* Custom styling for SweetAlert */
+.swal2-popup {
+  border-radius: 0.5rem !important;
+  font-family: 'Public Sans', sans-serif !important;
+}
+
+.swal2-title {
+  color: #566a7f !important;
+  font-weight: 600 !important;
+}
+
+.swal2-html-container {
+  color: #697a8d !important;
+}
+
+.swal2-confirm {
+  background-color: #696cff !important;
+  border-color: #696cff !important;
+  border-radius: 0.375rem !important;
+  font-weight: 500 !important;
+}
+
+.swal2-confirm:hover {
+  background-color: #5f62e6 !important;
+  border-color: #5f62e6 !important;
+}
+
+.swal2-cancel {
+  background-color: #8592a3 !important;
+  border-color: #8592a3 !important;
+  border-radius: 0.375rem !important;
+  font-weight: 500 !important;
+}
+
+.swal2-cancel:hover {
+  background-color: #6b7785 !important;
+  border-color: #6b7785 !important;
+}
+
+/* Success icon styling */
+.swal2-icon.swal2-success {
+  border-color: #696cff !important;
+}
+
+.swal2-icon.swal2-success [class^='swal2-success-line'] {
+  background-color: #696cff !important;
+}
+
+.swal2-icon.swal2-success .swal2-success-ring {
+  border-color: #696cff !important;
+}
+
+/* Error icon styling */
+.swal2-icon.swal2-error {
+  border-color: #dc3545 !important;
+}
+
+.swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+  background-color: #dc3545 !important;
+}
+
+/* Timer progress bar */
+.swal2-timer-progress-bar {
+  background-color: #696cff !important;
+} 

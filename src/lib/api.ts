@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { config } from '@/config'
 import { debugApiRequest, debugApiResponse, debugError } from '@/utils/debug'
-import { UserResponse, TenantListResponse, Tenant, CreateTenantData } from '@/types/tenant'
+import { TenantListResponse, Tenant, CreateTenantData } from '@/types/tenant'
 import { UserListResponse, User, CreateUserData, VerifyEmailData } from '@/types/user'
 import { PaymentMethod, PaymentMethodListResponse, CreatePaymentMethodData } from '@/types/paymentMethod'
 import { 
@@ -113,10 +113,31 @@ export const dashboardAPI = {
   getCharts: () => api.get('/dashboard/charts'),
 } 
 
-// Fungsi untuk mengambil data user
+// Interface untuk response API user
+interface UserData {
+  id: string;
+  fullName: string;
+  email: string;
+  role: string;
+  forcePasswordChange: boolean;
+  tenantId: string;
+  tenant?: {
+    id: string;
+    name: string;
+    status: string;
+    domain: string;
+  };
+}
+
+interface UserResponse {
+  message: string;
+  user: UserData;
+}
+
+// Fungsi untuk mengambil data user dari endpoint /user
 export async function getUser(): Promise<UserResponse> {
   try {
-    const response = await fetch('/api/auth/me', {
+    const response = await fetch('/api/user', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -131,6 +152,30 @@ export async function getUser(): Promise<UserResponse> {
     return await response.json()
   } catch (error) {
     console.error('Error fetching user:', error)
+    throw error
+  }
+}
+
+// Fungsi untuk update data user
+export async function updateUser(userData: { id: string; fullName?: string; email?: string }): Promise<UserResponse> {
+  try {
+    const response = await fetch('/api/user', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(userData),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.message || 'Gagal memperbarui data user')
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error updating user:', error)
     throw error
   }
 }

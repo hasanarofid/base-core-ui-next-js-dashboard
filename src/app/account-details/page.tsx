@@ -29,10 +29,32 @@ interface UserData {
   };
 }
 
+// Interface untuk response API tenant
+interface TenantData {
+  id: string;
+  name: string;
+  logo_url: string;
+  domain: string;
+  email: string;
+  contact_person: string;
+  config_json: Record<string, unknown>;
+  status: string;
+  client_id: string;
+  client_key: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface TenantResponse {
+  message: string;
+  data: TenantData;
+}
+
 export default function AccountDetailsPage() {
   const { user: authUser, updateUser } = useAuth()
   const { showToast } = useToast()
   const [user, setUser] = useState<UserData | null>(null)
+  const [tenantData, setTenantData] = useState<TenantData | null>(null)
   const [loading, setLoading] = useState(true)
   const [showUpdateModal, setShowUpdateModal] = useState(false)
   const [showTenantModal, setShowTenantModal] = useState(false)
@@ -80,16 +102,12 @@ export default function AccountDetailsPage() {
             fullName: data.user.fullName || '',
             email: data.user.email || ''
           })
-          if (data.user.tenant) {
-            setTenantForm({
-              name: data.user.tenant.name || '',
-              logo_url: data.user.tenant.logo_url || '',
-              domain: data.user.tenant.domain || '',
-              email: data.user.tenant.email || '',
-              contact_person: data.user.tenant.contact_person || ''
-            })
-          }
           console.log('✅ User data set successfully')
+          
+          // Fetch tenant data if tenantId exists
+          if (data.user.tenantId) {
+            await fetchTenantData(data.user.tenantId)
+          }
         }
       } catch (error) {
         console.error('❌ Error fetching user data:', error)
@@ -105,6 +123,42 @@ export default function AccountDetailsPage() {
 
     fetchUserData()
   }, [showToast])
+
+  // Fetch tenant data from API
+  const fetchTenantData = async (tenantId: string) => {
+    try {
+      console.log('🔍 Fetching tenant data for ID:', tenantId)
+      const response = await fetch(`/api/tenant/${tenantId}`, {
+        credentials: 'include'
+      })
+      
+      if (!response.ok) {
+        throw new Error('Gagal mengambil data tenant')
+      }
+      
+      const data: TenantResponse = await response.json()
+      console.log('📦 Tenant data received:', data)
+      
+      if (data.data) {
+        setTenantData(data.data)
+        setTenantForm({
+          name: data.data.name || '',
+          logo_url: data.data.logo_url || '',
+          domain: data.data.domain || '',
+          email: data.data.email || '',
+          contact_person: data.data.contact_person || ''
+        })
+        console.log('✅ Tenant data set successfully')
+      }
+    } catch (error) {
+      console.error('❌ Error fetching tenant data:', error)
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Gagal mengambil data tenant'
+      })
+    }
+  }
 
   // Handle user update
   const handleUserUpdate = async () => {
@@ -181,7 +235,7 @@ export default function AccountDetailsPage() {
 
   // Handle tenant update (only for admin_tenant role)
   const handleTenantUpdate = async () => {
-    if (!user?.tenant?.id) {
+    if (!tenantData?.id) {
       // Show SweetAlert error
       await Swal.fire({
         icon: 'error',
@@ -206,7 +260,7 @@ export default function AccountDetailsPage() {
     try {
       setUpdating(true)
       console.log('🔄 Updating tenant data...')
-      const response = await fetch(`/api/tenants/${user.tenant.id}`, {
+      const response = await fetch(`/api/tenant/${tenantData.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -228,18 +282,8 @@ export default function AccountDetailsPage() {
       }
 
       // Update local state
-      if (data.data && user) {
-        setUser({
-          ...user,
-          tenant: {
-            ...user.tenant,
-            name: data.data.name,
-            logo_url: data.data.logo_url,
-            domain: data.data.domain,
-            email: data.data.email,
-            contact_person: data.data.contact_person
-          }
-        })
+      if (data.data) {
+        setTenantData(data.data)
         console.log('✅ Tenant updated successfully')
       }
 
@@ -397,39 +441,43 @@ export default function AccountDetailsPage() {
                     <button 
                       className="btn btn-sm btn-outline-primary"
                       onClick={() => setShowTenantModal(true)}
-                      disabled={!user?.tenant}
+                      disabled={!tenantData}
                     >
                       <i className="ti ti-edit me-1"></i>
                       Edit
                     </button>
                   </div>
                   <div className="card-body">
-                    {user?.tenant ? (
+                    {tenantData ? (
                       <div className="row">
                         <div className="col-12">
                           <div className="d-flex justify-content-between align-items-center mb-3">
                             <span className="text-muted">Nama Tenant</span>
-                            <span className="fw-semibold">{user.tenant.name || '-'}</span>
+                            <span className="fw-semibold">{tenantData.name || '-'}</span>
                           </div>
                           <div className="d-flex justify-content-between align-items-center mb-3">
                             <span className="text-muted">Domain</span>
-                            <span className="fw-semibold">{user.tenant.domain || '-'}</span>
+                            <span className="fw-semibold">{tenantData.domain || '-'}</span>
                           </div>
                           <div className="d-flex justify-content-between align-items-center mb-3">
                             <span className="text-muted">Email</span>
-                            <span className="fw-semibold">{user.tenant.email || '-'}</span>
+                            <span className="fw-semibold">{tenantData.email || '-'}</span>
                           </div>
                           <div className="d-flex justify-content-between align-items-center mb-3">
                             <span className="text-muted">Contact Person</span>
-                            <span className="fw-semibold">{user.tenant.contact_person || '-'}</span>
+                            <span className="fw-semibold">{tenantData.contact_person || '-'}</span>
+                          </div>
+                          <div className="d-flex justify-content-between align-items-center mb-3">
+                            <span className="text-muted">Client ID</span>
+                            <span className="fw-semibold text-muted">{tenantData.client_id || '-'}</span>
                           </div>
                           <div className="d-flex justify-content-between align-items-center mb-3">
                             <span className="text-muted">Tenant ID</span>
-                            <span className="fw-semibold text-muted">{user.tenant.id || '-'}</span>
+                            <span className="fw-semibold text-muted">{tenantData.id || '-'}</span>
                           </div>
                           <div className="d-flex justify-content-between align-items-center">
                             <span className="text-muted">Status Tenant</span>
-                            <span className="badge bg-label-success">{user.tenant.status || 'Aktif'}</span>
+                            <span className="badge bg-label-success">{tenantData.status || 'Aktif'}</span>
                           </div>
                         </div>
                       </div>
@@ -523,7 +571,7 @@ export default function AccountDetailsPage() {
                     ></button>
                   </div>
                   <div className="modal-body">
-                    {user?.tenant ? (
+                    {tenantData ? (
                       <>
                         <div className="mb-3">
                           <label className="form-label">Nama Tenant</label>
@@ -590,7 +638,7 @@ export default function AccountDetailsPage() {
                     >
                       Tutup
                     </button>
-                    {user?.tenant && (
+                    {tenantData && (
                       <button 
                         type="button" 
                         className="btn btn-primary" 

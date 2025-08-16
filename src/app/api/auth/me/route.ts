@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const externalApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3030/api/v1'
+    const externalApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3032/api/v1'
     
     console.log('Fetching user data from:', `${externalApiUrl}/user`)
     console.log('Using session cookie:', sessionCookie.name)

@@ -29,46 +29,18 @@ interface UserData {
   };
 }
 
-// Interface untuk response API tenant
-interface TenantData {
-  id: string;
-  name: string;
-  logo_url: string;
-  domain: string;
-  email: string;
-  contact_person: string;
-  config_json: Record<string, unknown>;
-  status: string;
-  client_id: string;
-  client_key: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
-interface TenantResponse {
-  message: string;
-  data: TenantData;
-}
 
 export default function AccountDetailsPage() {
   const { user: authUser, updateUser } = useAuth()
   const { showToast } = useToast()
   const [user, setUser] = useState<UserData | null>(null)
-  const [tenantData, setTenantData] = useState<TenantData | null>(null)
   const [loading, setLoading] = useState(true)
   const [showUpdateModal, setShowUpdateModal] = useState(false)
-  const [showTenantModal, setShowTenantModal] = useState(false)
   const [updating, setUpdating] = useState(false)
   const [updateForm, setUpdateForm] = useState({
     fullName: '',
     email: ''
-  })
-  const [tenantForm, setTenantForm] = useState({
-    name: '',
-    logo_url: '',
-    domain: '',
-    email: '',
-    contact_person: ''
   })
 
   // Dynamic title management using custom hook
@@ -103,11 +75,6 @@ export default function AccountDetailsPage() {
             email: data.user.email || ''
           })
           console.log('✅ User data set successfully')
-          
-          // Fetch tenant data if tenantId exists
-          if (data.user.tenantId) {
-            await fetchTenantData(data.user.tenantId)
-          }
         }
       } catch (error) {
         console.error('❌ Error fetching user data:', error)
@@ -123,42 +90,6 @@ export default function AccountDetailsPage() {
 
     fetchUserData()
   }, [showToast])
-
-  // Fetch tenant data from API
-  const fetchTenantData = async (tenantId: string) => {
-    try {
-      console.log('🔍 Fetching tenant data for ID:', tenantId)
-      const response = await fetch(`/api/tenant/${tenantId}`, {
-        credentials: 'include'
-      })
-      
-      if (!response.ok) {
-        throw new Error('Gagal mengambil data tenant')
-      }
-      
-      const data: TenantResponse = await response.json()
-      console.log('📦 Tenant data received:', data)
-      
-      if (data.data) {
-        setTenantData(data.data)
-        setTenantForm({
-          name: data.data.name || '',
-          logo_url: data.data.logo_url || '',
-          domain: data.data.domain || '',
-          email: data.data.email || '',
-          contact_person: data.data.contact_person || ''
-        })
-        console.log('✅ Tenant data set successfully')
-      }
-    } catch (error) {
-      console.error('❌ Error fetching tenant data:', error)
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: 'Gagal mengambil data tenant'
-      })
-    }
-  }
 
   // Handle user update
   const handleUserUpdate = async () => {
@@ -233,106 +164,7 @@ export default function AccountDetailsPage() {
     }
   }
 
-  // Handle tenant update (only for admin_tenant role)
-  const handleTenantUpdate = async () => {
-    if (!tenantData?.id) {
-      // Show SweetAlert error
-      await Swal.fire({
-        icon: 'error',
-        title: 'Error!',
-        text: 'Tidak ada data tenant yang dapat diupdate',
-        confirmButtonText: 'OK',
-        confirmButtonColor: '#dc3545',
-        customClass: {
-          popup: 'swal-custom-popup'
-        }
-      })
-      
-      // Also show toast notification
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: 'Tidak ada data tenant yang dapat diupdate'
-      })
-      return
-    }
 
-    try {
-      setUpdating(true)
-      console.log('🔄 Updating tenant data...')
-      const response = await fetch(`/api/tenant/${tenantData.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: tenantForm.name,
-          logo_url: tenantForm.logo_url,
-          domain: tenantForm.domain,
-          email: tenantForm.email,
-          contact_person: tenantForm.contact_person
-        })
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Gagal memperbarui data tenant')
-      }
-
-      // Update local state
-      if (data.data) {
-        setTenantData(data.data)
-        console.log('✅ Tenant updated successfully')
-      }
-
-      // Show SweetAlert success
-      await Swal.fire({
-        icon: 'success',
-        title: 'Berhasil!',
-        text: 'Data tenant berhasil diperbarui',
-        confirmButtonText: 'OK',
-        confirmButtonColor: '#696cff',
-        timer: 3000,
-        timerProgressBar: true,
-        customClass: {
-          popup: 'swal-custom-popup'
-        }
-      })
-      
-      // Also show toast notification
-      showToast({
-        type: 'success',
-        title: 'Berhasil',
-        message: 'Data tenant berhasil diperbarui'
-      })
-      setShowTenantModal(false)
-    } catch (error) {
-      console.error('❌ Error updating tenant:', error)
-      
-      // Show SweetAlert error
-      await Swal.fire({
-        icon: 'error',
-        title: 'Error!',
-        text: error instanceof Error ? error.message : 'Gagal memperbarui data tenant',
-        confirmButtonText: 'OK',
-        confirmButtonColor: '#dc3545',
-        customClass: {
-          popup: 'swal-custom-popup'
-        }
-      })
-      
-      // Also show toast notification
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Gagal memperbarui data tenant'
-      })
-    } finally {
-      setUpdating(false)
-    }
-  }
 
   if (loading) {
     return (
@@ -380,7 +212,7 @@ export default function AccountDetailsPage() {
 
             <div className="row">
               {/* Card Informasi Akun */}
-              <div className="col-lg-6 mb-4">
+              <div className="col-12 mb-4">
                 <div className="card h-100">
                   <div className="card-header d-flex justify-content-between align-items-center">
                     <h5 className="card-title mb-0">
@@ -426,67 +258,6 @@ export default function AccountDetailsPage() {
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card Informasi Tenant */}
-              <div className="col-lg-6 mb-4">
-                <div className="card h-100">
-                  <div className="card-header d-flex justify-content-between align-items-center">
-                    <h5 className="card-title mb-0">
-                      <i className="ti ti-building text-primary me-2"></i>
-                      Informasi Tenant
-                    </h5>
-                    <button 
-                      className="btn btn-sm btn-outline-primary"
-                      onClick={() => setShowTenantModal(true)}
-                      disabled={!tenantData}
-                    >
-                      <i className="ti ti-edit me-1"></i>
-                      Edit
-                    </button>
-                  </div>
-                  <div className="card-body">
-                    {tenantData ? (
-                      <div className="row">
-                        <div className="col-12">
-                          <div className="d-flex justify-content-between align-items-center mb-3">
-                            <span className="text-muted">Nama Tenant</span>
-                            <span className="fw-semibold">{tenantData.name || '-'}</span>
-                          </div>
-                          <div className="d-flex justify-content-between align-items-center mb-3">
-                            <span className="text-muted">Domain</span>
-                            <span className="fw-semibold">{tenantData.domain || '-'}</span>
-                          </div>
-                          <div className="d-flex justify-content-between align-items-center mb-3">
-                            <span className="text-muted">Email</span>
-                            <span className="fw-semibold">{tenantData.email || '-'}</span>
-                          </div>
-                          <div className="d-flex justify-content-between align-items-center mb-3">
-                            <span className="text-muted">Contact Person</span>
-                            <span className="fw-semibold">{tenantData.contact_person || '-'}</span>
-                          </div>
-                          <div className="d-flex justify-content-between align-items-center mb-3">
-                            <span className="text-muted">Client ID</span>
-                            <span className="fw-semibold text-muted">{tenantData.client_id || '-'}</span>
-                          </div>
-                          <div className="d-flex justify-content-between align-items-center mb-3">
-                            <span className="text-muted">Tenant ID</span>
-                            <span className="fw-semibold text-muted">{tenantData.id || '-'}</span>
-                          </div>
-                          <div className="d-flex justify-content-between align-items-center">
-                            <span className="text-muted">Status Tenant</span>
-                            <span className="badge bg-label-success">{tenantData.status || 'Aktif'}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-4">
-                        <i className="ti ti-building-off text-muted fs-1 mb-3"></i>
-                        <p className="text-muted mb-0">Tidak ada data tenant</p>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -556,110 +327,7 @@ export default function AccountDetailsPage() {
             </div>
           )}
 
-          {/* Modal Update Tenant */}
-          {showTenantModal && (
-            <div className="modal fade show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-              <div className="modal-dialog modal-dialog-centered">
-                <div className="modal-content">
-                  <div className="modal-header">
-                    <h5 className="modal-title">Edit Informasi Tenant</h5>
-                    <button 
-                      type="button" 
-                      className="btn-close" 
-                      onClick={() => setShowTenantModal(false)}
-                      aria-label="Close"
-                    ></button>
-                  </div>
-                  <div className="modal-body">
-                    {tenantData ? (
-                      <>
-                        <div className="mb-3">
-                          <label className="form-label">Nama Tenant</label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            value={tenantForm.name}
-                            onChange={(e) => setTenantForm({...tenantForm, name: e.target.value})}
-                          />
-                        </div>
-                        <div className="mb-3">
-                          <label className="form-label">Logo URL</label>
-                          <input
-                            type="url"
-                            className="form-control"
-                            value={tenantForm.logo_url}
-                            onChange={(e) => setTenantForm({...tenantForm, logo_url: e.target.value})}
-                            placeholder="https://example.com/logo.png"
-                          />
-                        </div>
-                        <div className="mb-3">
-                          <label className="form-label">Domain</label>
-                          <input
-                            type="url"
-                            className="form-control"
-                            value={tenantForm.domain}
-                            onChange={(e) => setTenantForm({...tenantForm, domain: e.target.value})}
-                            placeholder="https://example.com"
-                          />
-                        </div>
-                        <div className="mb-3">
-                          <label className="form-label">Email</label>
-                          <input
-                            type="email"
-                            className="form-control"
-                            value={tenantForm.email}
-                            onChange={(e) => setTenantForm({...tenantForm, email: e.target.value})}
-                            placeholder="tenant@example.com"
-                          />
-                        </div>
-                        <div className="mb-3">
-                          <label className="form-label">Contact Person</label>
-                          <input
-                            type="tel"
-                            className="form-control"
-                            value={tenantForm.contact_person}
-                            onChange={(e) => setTenantForm({...tenantForm, contact_person: e.target.value})}
-                            placeholder="08123456789"
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-center py-4">
-                        <i className="ti ti-building-off text-muted fs-1 mb-3"></i>
-                        <p className="text-muted mb-0">Tidak ada data tenant yang dapat diedit</p>
-                      </div>
-                    )}
-                  </div>
-                  <div className="modal-footer">
-                    <button 
-                      type="button" 
-                      className="btn btn-secondary" 
-                      onClick={() => setShowTenantModal(false)}
-                    >
-                      Tutup
-                    </button>
-                    {tenantData && (
-                      <button 
-                        type="button" 
-                        className="btn btn-primary" 
-                        onClick={handleTenantUpdate}
-                        disabled={updating}
-                      >
-                        {updating ? (
-                          <>
-                            <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                            Menyimpan...
-                          </>
-                        ) : (
-                          'Simpan'
-                        )}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+
         </DashboardLayout>
       </SecureGuard>
     </>

@@ -14,8 +14,8 @@ const editTenantSchema = z.object({
   domain: z.string().url('Domain harus valid').optional().or(z.literal('')),
   email: z.string().email('Email harus valid'),
   contact_person: z.string().min(1, 'Kontak person harus diisi'),
-  url_callback: z.string().url('URL callback harus valid').optional().or(z.literal('')),
-  ip_whitelist: z.string().optional().or(z.literal('')),
+  callbackUrl: z.string().url('URL callback harus valid').optional().or(z.literal('')),
+  ipConfig: z.string().optional().or(z.literal('')),
 });
 
 type EditTenantForm = z.infer<typeof editTenantSchema>;
@@ -80,8 +80,8 @@ export default function EditTenantPage() {
         
         // Set config_json values
         const config = tenantData.config_json || {};
-        setValue('url_callback', (config.url_callback as string) || '');
-        setValue('ip_whitelist', (config.ip_whitelist as string) || '');
+        setValue('callbackUrl', (config.callbackUrl as string) || '');
+        setValue('ipConfig', Array.isArray(config.ipConfig) ? config.ipConfig.join('\n') : '');
       } catch (error) {
         console.error('Error fetching tenant:', error);
         showToast({ 
@@ -107,8 +107,8 @@ export default function EditTenantPage() {
       const submitData = {
         ...data,
         config_json: {
-          url_callback: data.url_callback || null,
-          ip_whitelist: data.ip_whitelist || null,
+          callbackUrl: data.callbackUrl || null,
+          ipConfig: data.ipConfig ? data.ipConfig.split('\n').filter(ip => ip.trim() !== '') : [],
         }
       };
 
@@ -305,12 +305,12 @@ export default function EditTenantPage() {
                     <label className="form-label">URL Callback</label>
                     <input
                       type="url"
-                      className={`form-control ${errors.url_callback ? 'is-invalid' : ''}`}
+                      className={`form-control ${errors.callbackUrl ? 'is-invalid' : ''}`}
                       placeholder="https://example.com/callback"
-                      {...register('url_callback')}
+                      {...register('callbackUrl')}
                     />
-                    {errors.url_callback && (
-                      <div className="invalid-feedback">{errors.url_callback.message}</div>
+                    {errors.callbackUrl && (
+                      <div className="invalid-feedback">{errors.callbackUrl.message}</div>
                     )}
                     <div className="form-text">URL untuk menerima callback dari sistem</div>
                   </div>
@@ -318,15 +318,15 @@ export default function EditTenantPage() {
 
                 <div className="col-md-6">
                   <div className="form-group">
-                    <label className="form-label">IP Whitelist</label>
+                    <label className="form-label">IP Config</label>
                     <textarea
-                      className={`form-control ${errors.ip_whitelist ? 'is-invalid' : ''}`}
+                      className={`form-control ${errors.ipConfig ? 'is-invalid' : ''}`}
                       placeholder="192.168.1.1&#10;10.0.0.1&#10;172.16.0.1"
                       rows={3}
-                      {...register('ip_whitelist')}
+                      {...register('ipConfig')}
                     />
-                    {errors.ip_whitelist && (
-                      <div className="invalid-feedback">{errors.ip_whitelist.message}</div>
+                    {errors.ipConfig && (
+                      <div className="invalid-feedback">{errors.ipConfig.message}</div>
                     )}
                     <div className="form-text">Masukkan satu IP address per baris</div>
                   </div>

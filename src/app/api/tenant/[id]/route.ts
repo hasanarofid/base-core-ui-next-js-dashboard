@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('🔍 GET /api/tenant/[id] - Fetching tenant data for ID:', params.id)
+    const { id: tenantId } = await params
+    console.log('🔍 GET /api/tenant/[id] - Fetching tenant data for ID:', tenantId)
     
     // Get cookies from request
     const cookies = request.cookies
@@ -22,7 +23,7 @@ export async function GET(
     console.log('🔑 Using session cookie:', sessionCookie.name)
 
     // Make request to external API
-    const externalApiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3032/api/v1'}/tenant/${params.id}`
+    const externalApiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3032/api/v1'}/tenant/${tenantId}`
     console.log('🌐 Making request to external API:', externalApiUrl)
     
     const response = await fetch(externalApiUrl, {
@@ -61,10 +62,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('🔄 PUT /api/tenant/[id] - Updating tenant data for ID:', params.id)
+    const { id: tenantId } = await params
+    console.log('🔄 PUT /api/tenant/[id] - Updating tenant data for ID:', tenantId)
     
     // Get cookies from request
     const cookies = request.cookies
@@ -85,7 +87,7 @@ export async function PUT(
     console.log('📦 Request body:', body)
 
     // Make request to external API
-    const externalApiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3032/api/v1'}/tenant/${params.id}`
+    const externalApiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3032/api/v1'}/tenant/${tenantId}`
     console.log('🌐 Making request to external API:', externalApiUrl)
     
     const response = await fetch(externalApiUrl, {

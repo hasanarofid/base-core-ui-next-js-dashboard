@@ -1,94 +1,119 @@
 'use client'
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import SecureGuard from '@/components/auth/SecureGuard'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePageTitle } from '@/hooks/usePageTitle';
+import { useToast } from '@/contexts/ToastContext';
+import Swal from 'sweetalert2';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+// Interface untuk response API transactions
+interface Transaction {
+  id: string;
+  transaction_code: string;
+  tenant_id: string;
+  user_id: string;
+  tenant_payment_method_id: string;
+  amount: string;
+  fee_amount: string;
+  total_amount: string;
+  status: string;
+  reference_code: string;
+  meta_json: {
+    qrUrl?: string;
+    gateway?: string;
+    isStatic?: boolean;
+    expiredAt?: string;
+    qrContent?: string | null;
+    contractId?: string;
+    terminalId?: string | null;
+    description?: string;
+    customer_name?: string;
+    winpay_reference?: string;
+    partnerReferenceNo?: string;
+    gateway_response_code?: string;
+    gateway_response_message?: string;
+  };
+  gateway_fee_amount: string;
+  tenant_net_amount: string;
+  platform_revenue: string;
+  createdAt: string;
+  updatedAt: string;
+  tenantPaymentMethod: {
+    id: string;
+    fee_type: string;
+    fee_value: number;
+    paymentMethod: {
+      id: string;
+      code: string;
+      type: string;
+      logo_url: string;
+    };
+  };
+  user: {
+    id: string;
+    email: string;
+  };
+  tenant: {
+    id: string;
+    name: string;
+  };
+}
+
+interface TransactionResponse {
+  message: string;
+  data: {
+    total: number;
+    page: number;
+    limit: number;
+    transactions: Transaction[];
+  };
+}
+
+// Schema untuk form add transaction
+const addTransactionSchema = z.object({
+  tenant_payment_method_id: z.string().min(1, 'Payment method harus dipilih'),
+  amount: z.number().min(1000, 'Amount minimal Rp 1.000'),
+  description: z.string().optional(),
+  customer_name: z.string().min(1, 'Customer name harus diisi'),
+});
+
+type AddTransactionForm = z.infer<typeof addTransactionSchema>;
 
 export default function TransactionPage() {
   const { user } = useAuth()
+  const { showToast } = useToast()
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showDetailModal, setShowDetailModal] = useState(false)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
+  const [tenantId, setTenantId] = useState<string | null>(null)
+  const [loadingDetail, setLoadingDetail] = useState(false)
+  const [loadingAdd, setLoadingAdd] = useState(false)
+  const [paymentMethods, setPaymentMethods] = useState<{id: string, payment_method_id: string, fee_type: string, fee_value: number, status: string, paymentMethod?: {code: string, type: string}}[]>([])
+  const [userData, setUserData] = useState<{fullName: string, email: string} | null>(null)
 
-  // Data transaksi dummy
-  const transactions = [
-    {
-      id: 'TXN001',
-      orderId: 'ORD-2024-001',
-      amount: 150000,
-      status: 'SUCCESS',
-      paymentMethod: 'Bank Transfer',
-      customerName: 'John Doe',
-      customerEmail: 'john@example.com',
-      createdAt: '2024-01-15 10:30:00',
-      updatedAt: '2024-01-15 10:32:00',
-      fee: 4500,
-      netAmount: 145500,
-      bankCode: 'BCA',
-      referenceNumber: 'REF123456789'
-    },
-    {
-      id: 'TXN002',
-      orderId: 'ORD-2024-002',
-      amount: 75000,
-      status: 'PENDING',
-      paymentMethod: 'E-Wallet',
-      customerName: 'Jane Smith',
-      customerEmail: 'jane@example.com',
-      createdAt: '2024-01-15 11:15:00',
-      updatedAt: '2024-01-15 11:15:00',
-      fee: 2000,
-      netAmount: 73000,
-      provider: 'GoPay',
-      referenceNumber: 'REF987654321'
-    },
-    {
-      id: 'TXN003',
-      orderId: 'ORD-2024-003',
-      amount: 250000,
-      status: 'FAILED',
-      paymentMethod: 'Virtual Account',
-      customerName: 'Bob Johnson',
-      customerEmail: 'bob@example.com',
-      createdAt: '2024-01-15 12:00:00',
-      updatedAt: '2024-01-15 12:05:00',
-      fee: 3000,
-      netAmount: 247000,
-      bankCode: 'BNI',
-      referenceNumber: 'REF456789123',
-      failureReason: 'Insufficient funds'
-    },
-    {
-      id: 'TXN004',
-      orderId: 'ORD-2024-004',
+  // Form hook untuk add transaction
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset
+  } = useForm<AddTransactionForm>({
+    resolver: zodResolver(addTransactionSchema),
+    defaultValues: {
+      tenant_payment_method_id: '',
       amount: 50000,
-      status: 'SUCCESS',
-      paymentMethod: 'QRIS',
-      customerName: 'Alice Brown',
-      customerEmail: 'alice@example.com',
-      createdAt: '2024-01-15 13:45:00',
-      updatedAt: '2024-01-15 13:46:00',
-      fee: 1000,
-      netAmount: 49000,
-      provider: 'OVO',
-      referenceNumber: 'REF789123456'
-    },
-    {
-      id: 'TXN005',
-      orderId: 'ORD-2024-005',
-      amount: 300000,
-      status: 'EXPIRED',
-      paymentMethod: 'Bank Transfer',
-      customerName: 'Charlie Wilson',
-      customerEmail: 'charlie@example.com',
-      createdAt: '2024-01-15 14:20:00',
-      updatedAt: '2024-01-15 15:20:00',
-      fee: 4500,
-      netAmount: 295500,
-      bankCode: 'BRI',
-      referenceNumber: 'REF321654987'
+      description: '',
+      customer_name: ''
     }
-  ]
+  });
 
   // Dynamic title management using custom hook
   const { fullTitle, pageTitle, pageSubtitle } = usePageTitle({
@@ -98,27 +123,271 @@ export default function TransactionPage() {
     keywords: 'transaction, payment monitoring, transaction management, payment history'
   });
 
+  // Fetch user data to get tenant ID (for tenant_admin role)
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true)
+        console.log('🔍 Fetching user data to get tenant ID...')
+        
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include'
+        })
+        
+        if (!response.ok) {
+          throw new Error('Gagal mengambil data user')
+        }
+        
+        const data = await response.json()
+        console.log('📦 User data received:', data)
+        
+        // Check if user has tenant_admin role
+        if (data.user && data.user.role !== 'tenant_admin') {
+          throw new Error('Akses ditolak. Hanya admin tenant yang dapat mengakses halaman ini.')
+        }
+        
+        if (data.user && data.user.tenantId) {
+          setTenantId(data.user.tenantId)
+          setUserData(data.user)
+          console.log('✅ Tenant ID set:', data.user.tenantId)
+          console.log('✅ User data set:', data.user)
+          
+          // Fetch transactions and payment methods after getting tenant ID
+          await Promise.all([
+            fetchTransactions(data.user.tenantId),
+            fetchPaymentMethods(data.user.tenantId)
+          ])
+        } else {
+          throw new Error('Tenant ID tidak ditemukan')
+        }
+      } catch (error) {
+        console.error('❌ Error fetching user data:', error)
+        showToast({
+          type: 'error',
+          title: 'Error',
+          message: error instanceof Error ? error.message : 'Gagal mengambil data user'
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUserData()
+  }, [showToast])
+
+  // Fetch transactions data from API
+  const fetchTransactions = async (tenantId: string) => {
+    try {
+      console.log('🔍 Fetching transactions for tenant:', tenantId)
+      
+      const response = await fetch(`/api/tenants/${tenantId}/transactions`, {
+        credentials: 'include'
+      })
+      
+      if (!response.ok) {
+        throw new Error('Gagal mengambil data transaksi')
+      }
+      
+      const data: TransactionResponse = await response.json()
+      console.log('📦 Transactions data received:', data)
+      
+      if (data.data && data.data.transactions) {
+        setTransactions(data.data.transactions)
+        console.log('✅ Transactions data set successfully')
+      }
+    } catch (error) {
+      console.error('❌ Error fetching transactions:', error)
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Gagal mengambil data transaksi'
+      })
+    }
+  }
+
+  // Fetch payment methods for the form (using payment channel endpoint)
+  const fetchPaymentMethods = async (tenantId: string) => {
+    try {
+      console.log('🔍 Fetching payment methods for tenant:', tenantId)
+      
+      const response = await fetch(`/api/tenants/${tenantId}/payment-methods`, {
+        credentials: 'include'
+      })
+      
+      if (!response.ok) {
+        throw new Error('Gagal mengambil data payment methods')
+      }
+      
+      const data = await response.json()
+      console.log('📦 Payment methods data received:', data)
+      
+      if (data.data) {
+        setPaymentMethods(data.data)
+        console.log('✅ Payment methods data set successfully')
+      }
+    } catch (error) {
+      console.error('❌ Error fetching payment methods:', error)
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Gagal mengambil data payment methods'
+      })
+    }
+  }
+
+  // Handle add transaction
+  const handleAddTransaction = () => {
+    // Set customer name from logged-in user
+    if (userData) {
+      reset({
+        tenant_payment_method_id: '',
+        amount: 50000,
+        description: '',
+        customer_name: userData.fullName || userData.email || ''
+      })
+    }
+    setShowAddModal(true)
+  }
+
+  // Handle submit add transaction form
+  const onSubmitAddTransaction = async (data: AddTransactionForm) => {
+    if (!tenantId) return
+
+    try {
+      setLoadingAdd(true)
+      console.log('🔄 Creating new transaction...')
+      
+      const payload = {
+        tenant_payment_method_id: data.tenant_payment_method_id,
+        amount: data.amount,
+        meta_json: {
+          description: data.description || '',
+          customer_name: data.customer_name
+        }
+      }
+
+      console.log('📦 Transaction payload:', payload)
+
+      const response = await fetch(`/api/tenants/${tenantId}/qris-generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      })
+
+      if (!response.ok) {
+        throw new Error('Gagal membuat transaksi')
+      }
+
+      const result = await response.json()
+      console.log('✅ Transaction created successfully:', result)
+
+      // Show success message
+      await Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Transaksi berhasil dibuat',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#696cff',
+        timer: 3000,
+        timerProgressBar: true
+      })
+
+      // Close modal and reset form
+      setShowAddModal(false)
+      reset()
+      
+      // Refresh transactions list
+      await fetchTransactions(tenantId)
+
+      // Show toast notification
+      showToast({
+        type: 'success',
+        title: 'Berhasil',
+        message: 'Transaksi berhasil dibuat'
+      })
+    } catch (error) {
+      console.error('❌ Error creating transaction:', error)
+      
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: error instanceof Error ? error.message : 'Gagal membuat transaksi',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#dc3545'
+      })
+      
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error instanceof Error ? error.message : 'Gagal membuat transaksi'
+      })
+    } finally {
+      setLoadingAdd(false)
+    }
+  }
+
+  // Handle view transaction detail
+  const handleViewDetail = async (transaction: Transaction) => {
+    try {
+      setLoadingDetail(true)
+      console.log('🔍 Fetching transaction detail for ID:', transaction.id)
+      
+      const response = await fetch(`/api/transactions/${transaction.id}`, {
+        credentials: 'include'
+      })
+      
+      if (!response.ok) {
+        throw new Error('Gagal mengambil detail transaksi')
+      }
+      
+      const data = await response.json()
+      console.log('📦 Transaction detail received:', data)
+      
+      if (data.data) {
+        setSelectedTransaction(data.data)
+        setShowDetailModal(true)
+      } else {
+        throw new Error('Data transaksi tidak ditemukan')
+      }
+    } catch (error) {
+      console.error('❌ Error fetching transaction detail:', error)
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error instanceof Error ? error.message : 'Gagal mengambil detail transaksi'
+      })
+    } finally {
+      setLoadingDetail(false)
+    }
+  }
+
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'SUCCESS':
+    switch (status.toLowerCase()) {
+      case 'paid':
         return <span className="badge bg-label-success">Berhasil</span>
-      case 'PENDING':
+      case 'pending':
         return <span className="badge bg-label-warning">Menunggu</span>
-      case 'FAILED':
+      case 'failed':
         return <span className="badge bg-label-danger">Gagal</span>
-      case 'EXPIRED':
+      case 'expired':
         return <span className="badge bg-label-info">Kadaluarsa</span>
+      case 'cancelled':
+        return <span className="badge bg-label-secondary">Dibatalkan</span>
       default:
         return <span className="badge bg-label-secondary">{status}</span>
     }
   }
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: string) => {
+    const numAmount = parseFloat(amount)
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
       minimumFractionDigits: 0
-    }).format(amount)
+    }).format(numAmount)
   }
 
   const formatDate = (dateString: string) => {
@@ -129,6 +398,20 @@ export default function TransactionPage() {
       hour: '2-digit',
       minute: '2-digit'
     })
+  }
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="container-xxl flex-grow-1 container-p-y">
+          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
   }
 
   return (
@@ -144,7 +427,7 @@ export default function TransactionPage() {
       <SecureGuard requireAuth={true}>
         <DashboardLayout>
           <div className="container-xxl flex-grow-1 container-p-y">
-            {/* Page Header - Matching Dashboard Style */}
+            {/* Page Header */}
             <div className="d-flex justify-content-between align-items-center mb-4">
               <div>
                 <h4 className="fw-bold mb-1 text-primary">
@@ -158,7 +441,10 @@ export default function TransactionPage() {
                   <i className="ti ti-download me-1"></i>
                   <span>Export</span>
                 </button>
-                <button className="btn btn-primary">
+                <button 
+                  className="btn btn-primary"
+                  onClick={handleAddTransaction}
+                >
                   <i className="ti ti-plus me-1"></i>
                   <span>Buat Transaksi</span>
                 </button>
@@ -191,7 +477,7 @@ export default function TransactionPage() {
                       <div>
                         <p className="text-muted mb-1">Total Volume</p>
                         <h4 className="fw-bold mb-0 text-success">
-                          {formatCurrency(transactions.reduce((sum, t) => sum + t.amount, 0))}
+                          {formatCurrency(transactions.reduce((sum, t) => sum + parseFloat(t.amount), 0).toString())}
                         </h4>
                       </div>
                       <div className="avatar">
@@ -210,7 +496,7 @@ export default function TransactionPage() {
                       <div>
                         <p className="text-muted mb-1">Success Rate</p>
                         <h4 className="fw-bold mb-0 text-info">
-                          {Math.round((transactions.filter(t => t.status === 'SUCCESS').length / transactions.length) * 100)}%
+                          {transactions.length > 0 ? Math.round((transactions.filter(t => t.status === 'paid').length / transactions.length) * 100) : 0}%
                         </h4>
                       </div>
                       <div className="avatar">
@@ -229,7 +515,7 @@ export default function TransactionPage() {
                       <div>
                         <p className="text-muted mb-1">Total Fee</p>
                         <h4 className="fw-bold mb-0 text-warning">
-                          {formatCurrency(transactions.reduce((sum, t) => sum + t.fee, 0))}
+                          {formatCurrency(transactions.reduce((sum, t) => sum + parseFloat(t.fee_amount), 0).toString())}
                         </h4>
                       </div>
                       <div className="avatar">
@@ -243,146 +529,324 @@ export default function TransactionPage() {
               </div>
             </div>
 
-            {/* Filter dan Pencarian */}
-            <div className="card mb-4">
-              <div className="card-body">
-                <div className="row">
-                  <div className="col-md-3 mb-3">
-                    <label className="form-label">Status</label>
-                    <select className="form-select">
-                      <option value="">Semua Status</option>
-                      <option value="SUCCESS">Berhasil</option>
-                      <option value="PENDING">Menunggu</option>
-                      <option value="FAILED">Gagal</option>
-                      <option value="EXPIRED">Kadaluarsa</option>
-                    </select>
-                  </div>
-                  <div className="col-md-3 mb-3">
-                    <label className="form-label">Payment Method</label>
-                    <select className="form-select">
-                      <option value="">Semua Method</option>
-                      <option value="BANK_TRANSFER">Bank Transfer</option>
-                      <option value="E_WALLET">E-Wallet</option>
-                      <option value="VIRTUAL_ACCOUNT">Virtual Account</option>
-                      <option value="QRIS">QRIS</option>
-                    </select>
-                  </div>
-                  <div className="col-md-3 mb-3">
-                    <label className="form-label">Tanggal Mulai</label>
-                    <input type="date" className="form-control" />
-                  </div>
-                  <div className="col-md-3 mb-3">
-                    <label className="form-label">Tanggal Akhir</label>
-                    <input type="date" className="form-control" />
-                  </div>
-                </div>
-                <div className="d-flex gap-2">
-                  <button className="btn btn-primary">
-                    <i className="ti ti-filter me-1"></i>
-                    Filter
-                  </button>
-                  <button className="btn btn-outline-secondary">
-                    <i className="ti ti-refresh me-1"></i>
-                    Reset
-                  </button>
-                </div>
-              </div>
-            </div>
-
             {/* Tabel Transaksi */}
             <div className="card">
               <div className="card-header">
                 <h5 className="card-title mb-0">Daftar Transaksi</h5>
               </div>
               <div className="card-body">
-                <div className="table-responsive">
-                  <table className="table table-striped">
-                    <thead>
-                      <tr>
-                        <th>ID Transaksi</th>
-                        <th>Order ID</th>
-                        <th>Customer</th>
-                        <th>Amount</th>
-                        <th>Payment Method</th>
-                        <th>Status</th>
-                        <th>Created At</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {transactions.map((transaction) => (
-                        <tr key={transaction.id}>
-                          <td>
-                            <span className="fw-semibold">{transaction.id}</span>
-                          </td>
-                          <td>
-                            <span className="fw-semibold">{transaction.orderId}</span>
-                          </td>
-                          <td>
-                            <div>
-                              <h6 className="mb-1">{transaction.customerName}</h6>
-                              <small className="text-muted">{transaction.customerEmail}</small>
-                            </div>
-                          </td>
-                          <td>
-                            <div>
-                              <h6 className="mb-1">{formatCurrency(transaction.amount)}</h6>
-                              <small className="text-muted">Fee: {formatCurrency(transaction.fee)}</small>
-                            </div>
-                          </td>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <i className={`ti ${
-                                transaction.paymentMethod === 'Bank Transfer' ? 'ti-building-bank' :
-                                transaction.paymentMethod === 'E-Wallet' ? 'ti-device-mobile' :
-                                transaction.paymentMethod === 'Virtual Account' ? 'ti-credit-card' :
-                                'ti-qrcode'
-                              } text-primary me-2`}></i>
-                              <span>{transaction.paymentMethod}</span>
-                            </div>
-                          </td>
-                          <td>{getStatusBadge(transaction.status)}</td>
-                          <td>
-                            <span className="text-muted">{formatDate(transaction.createdAt)}</span>
-                          </td>
-                          <td>
-                            <div className="dropdown">
-                              <button className="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                                <i className="ti ti-dots-vertical"></i>
-                              </button>
-                              <ul className="dropdown-menu">
-                                <li><a className="dropdown-item" href="#"><i className="ti ti-eye me-2"></i>Detail</a></li>
-                                <li><a className="dropdown-item" href="#"><i className="ti ti-bell me-2"></i>Resend Notification</a></li>
-                                <li><hr className="dropdown-divider" /></li>
-                                <li><a className="dropdown-item text-danger" href="#"><i className="ti ti-rotate me-2"></i>Refund</a></li>
-                              </ul>
-                            </div>
-                          </td>
+                {transactions.length === 0 ? (
+                  <div className="text-center py-4">
+                    <i className="ti ti-receipt text-muted" style={{ fontSize: '3rem' }}></i>
+                    <p className="text-muted mt-3">Belum ada transaksi</p>
+                  </div>
+                ) : (
+                  <div className="table-responsive">
+                    <table className="table table-striped">
+                      <thead>
+                        <tr>
+                          <th>Transaction Code</th>
+                          <th>Customer</th>
+                          <th>Amount</th>
+                          <th>Payment Method</th>
+                          <th>Status</th>
+                          <th>Created At</th>
+                          <th>Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-
-            {/* Pagination */}
-            <div className="d-flex justify-content-between align-items-center">
-              <p className="text-muted mb-0">
-                Menampilkan 1-{transactions.length} dari {transactions.length} transaksi
-              </p>
-              <div className="d-flex gap-2">
-                <button className="btn btn-sm btn-outline-secondary" disabled>
-                  <i className="ti ti-chevron-left me-1"></i>
-                  Previous
-                </button>
-                <button className="btn btn-sm btn-outline-secondary">
-                  Next
-                  <i className="ti ti-chevron-right ms-1"></i>
-                </button>
+                      </thead>
+                      <tbody>
+                        {transactions.map((transaction) => (
+                          <tr key={transaction.id}>
+                            <td>
+                              <span className="fw-semibold">{transaction.transaction_code}</span>
+                              <br />
+                              <small className="text-muted">{transaction.reference_code}</small>
+                            </td>
+                            <td>
+                              <div>
+                                <h6 className="mb-1">{transaction.meta_json?.customer_name || 'N/A'}</h6>
+                                <small className="text-muted">{transaction.user.email}</small>
+                              </div>
+                            </td>
+                            <td>
+                              <div>
+                                <h6 className="mb-1">{formatCurrency(transaction.amount)}</h6>
+                                <small className="text-muted">Fee: {formatCurrency(transaction.fee_amount)}</small>
+                              </div>
+                            </td>
+                            <td>
+                              <div className="d-flex align-items-center">
+                                {transaction.tenantPaymentMethod?.paymentMethod?.logo_url && (
+                                  <img 
+                                    src={transaction.tenantPaymentMethod.paymentMethod.logo_url} 
+                                    alt={transaction.tenantPaymentMethod.paymentMethod.code}
+                                    style={{ width: '24px', height: '24px', marginRight: '8px' }}
+                                  />
+                                )}
+                                <span>{transaction.tenantPaymentMethod?.paymentMethod?.code || 'N/A'}</span>
+                              </div>
+                            </td>
+                            <td>{getStatusBadge(transaction.status)}</td>
+                            <td>
+                              <span className="text-muted">{formatDate(transaction.createdAt)}</span>
+                            </td>
+                                                         <td>
+                               <button 
+                                 className="btn btn-sm btn-outline-primary"
+                                 onClick={() => handleViewDetail(transaction)}
+                                 disabled={loadingDetail}
+                               >
+                                 {loadingDetail ? (
+                                   <>
+                                     <span className="spinner-border spinner-border-sm me-1" role="status"></span>
+                                     Loading...
+                                   </>
+                                 ) : (
+                                   <>
+                                     <i className="ti ti-eye me-1"></i>
+                                     Detail
+                                   </>
+                                 )}
+                               </button>
+                             </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           </div>
+
+          {/* Modal Detail Transaksi */}
+          {showDetailModal && selectedTransaction && (
+            <div className="modal fade show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+              <div className="modal-dialog modal-dialog-centered modal-lg">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <h5 className="modal-title">Detail Transaksi</h5>
+                    <button 
+                      type="button" 
+                      className="btn-close" 
+                      onClick={() => {
+                        setShowDetailModal(false)
+                        setSelectedTransaction(null)
+                      }}
+                      aria-label="Close"
+                    ></button>
+                  </div>
+                  <div className="modal-body">
+                    <div className="row">
+                      <div className="col-md-6">
+                        <h6 className="mb-3">Informasi Transaksi</h6>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <span className="text-muted">Transaction Code</span>
+                          <span className="fw-semibold">{selectedTransaction.transaction_code}</span>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <span className="text-muted">Reference Code</span>
+                          <span className="fw-semibold">{selectedTransaction.reference_code}</span>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <span className="text-muted">Status</span>
+                          {getStatusBadge(selectedTransaction.status)}
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <span className="text-muted">Amount</span>
+                          <span className="fw-semibold">{formatCurrency(selectedTransaction.amount)}</span>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <span className="text-muted">Fee Amount</span>
+                          <span className="fw-semibold">{formatCurrency(selectedTransaction.fee_amount)}</span>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <span className="text-muted">Total Amount</span>
+                          <span className="fw-semibold">{formatCurrency(selectedTransaction.total_amount)}</span>
+                        </div>
+                      </div>
+                      <div className="col-md-6">
+                        <h6 className="mb-3">Informasi Customer</h6>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <span className="text-muted">Customer Name</span>
+                          <span className="fw-semibold">{selectedTransaction.meta_json?.customer_name || 'N/A'}</span>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <span className="text-muted">Email</span>
+                          <span className="fw-semibold">{selectedTransaction.user.email}</span>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <span className="text-muted">Payment Method</span>
+                          <span className="fw-semibold">{selectedTransaction.tenantPaymentMethod?.paymentMethod?.code || 'N/A'}</span>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <span className="text-muted">Gateway</span>
+                          <span className="fw-semibold">{selectedTransaction.meta_json?.gateway || 'N/A'}</span>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <span className="text-muted">Created At</span>
+                          <span className="fw-semibold">{formatDate(selectedTransaction.createdAt)}</span>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <span className="text-muted">Updated At</span>
+                          <span className="fw-semibold">{formatDate(selectedTransaction.updatedAt)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    {selectedTransaction.meta_json?.description && (
+                      <div className="mt-3">
+                        <h6 className="mb-2">Description</h6>
+                        <p className="text-muted">{selectedTransaction.meta_json.description}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="modal-footer">
+                    <button 
+                      type="button" 
+                      className="btn btn-secondary" 
+                      onClick={() => {
+                        setShowDetailModal(false)
+                        setSelectedTransaction(null)
+                      }}
+                    >
+                      Tutup
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal Add Transaction */}
+          {showAddModal && (
+            <div className="modal fade show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+              <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <h5 className="modal-title">Buat Transaksi Baru</h5>
+                    <button 
+                      type="button" 
+                      className="btn-close" 
+                      onClick={() => {
+                        setShowAddModal(false)
+                        reset()
+                      }}
+                      aria-label="Close"
+                    ></button>
+                  </div>
+                  <form onSubmit={handleSubmit(onSubmitAddTransaction)}>
+                    <div className="modal-body">
+                      <div className="row g-3">
+                        <div className="col-12">
+                          <div className="form-group">
+                            <label className="form-label">
+                              Payment Method <span className="text-danger">*</span>
+                            </label>
+                            <select
+                              className={`form-select ${errors.tenant_payment_method_id ? 'is-invalid' : ''}`}
+                              {...register('tenant_payment_method_id')}
+                            >
+                              <option value="">Pilih Payment Method</option>
+                              {paymentMethods.map((method) => (
+                                <option key={method.id} value={method.id}>
+                                  Payment Method ID: {method.payment_method_id.substring(0, 8)}... - Fee: {method.fee_value}{method.fee_type === 'percent' ? '%' : ' Rp'} ({method.status})
+                                </option>
+                              ))}
+                            </select>
+                            {errors.tenant_payment_method_id && (
+                              <div className="invalid-feedback">{errors.tenant_payment_method_id.message}</div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="col-12">
+                          <div className="form-group">
+                            <label className="form-label">
+                              Amount (Rp) <span className="text-danger">*</span>
+                            </label>
+                            <input
+                              type="number"
+                              className={`form-control ${errors.amount ? 'is-invalid' : ''}`}
+                              placeholder="50000"
+                              {...register('amount', { valueAsNumber: true })}
+                            />
+                            {errors.amount && (
+                              <div className="invalid-feedback">{errors.amount.message}</div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="col-12">
+                          <div className="form-group">
+                            <label className="form-label">
+                              Description
+                            </label>
+                            <input
+                              type="text"
+                              className={`form-control ${errors.description ? 'is-invalid' : ''}`}
+                              placeholder="Masukkan deskripsi transaksi (opsional)"
+                              {...register('description')}
+                            />
+                            {errors.description && (
+                              <div className="invalid-feedback">{errors.description.message}</div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="col-12">
+                          <div className="form-group">
+                            <label className="form-label">
+                              Customer Name <span className="text-danger">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              className={`form-control ${errors.customer_name ? 'is-invalid' : ''}`}
+                              placeholder="Nama customer"
+                              {...register('customer_name')}
+                            />
+                            {errors.customer_name && (
+                              <div className="invalid-feedback">{errors.customer_name.message}</div>
+                            )}
+                            <div className="form-text">Nama customer akan diisi otomatis dari data user login</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="modal-footer">
+                      <button 
+                        type="button" 
+                        className="btn btn-secondary" 
+                        onClick={() => {
+                          setShowAddModal(false)
+                          reset()
+                        }}
+                        disabled={loadingAdd}
+                      >
+                        Batal
+                      </button>
+                      <button 
+                        type="submit" 
+                        className="btn btn-primary" 
+                        disabled={loadingAdd}
+                      >
+                        {loadingAdd ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                            Membuat Transaksi...
+                          </>
+                        ) : (
+                          <>
+                            <i className="ti ti-plus me-1"></i>
+                            Buat Transaksi
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
         </DashboardLayout>
       </SecureGuard>
     </>

@@ -19,7 +19,7 @@ export async function GET(
     const externalApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3032/api/v1'
     const { id: tenantId } = await params
     
-    console.log('Fetching tenant payment methods from:', `${externalApiUrl}/tenants/${tenantId}/payment-methods`)
+    console.log('Fetching payment methods from:', `${externalApiUrl}/tenants/${tenantId}/payment-methods`)
     console.log('Using session cookie:', sessionCookie.name)
 
     const response = await fetch(`${externalApiUrl}/tenants/${tenantId}/payment-methods`, {
@@ -33,19 +33,19 @@ export async function GET(
 
     const data = await response.json()
     
-    console.log('Tenant payment methods API response status:', response.status)
-    console.log('Tenant payment methods API response data:', data)
+    console.log('Payment methods API response status:', response.status)
+    console.log('Payment methods API response data:', data)
 
     if (!response.ok) {
       return NextResponse.json(
-        { message: data.message || 'Gagal mengambil data payment methods tenant' },
+        { message: data.message || 'Gagal mengambil data payment methods' },
         { status: response.status }
       )
     }
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error('Tenant payment methods API error:', error)
+    console.error('Payment methods API error:', error)
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }
@@ -53,7 +53,7 @@ export async function GET(
   }
 }
 
-export async function POST(
+export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -73,35 +73,40 @@ export async function POST(
     const { id: tenantId } = await params
     const body = await request.json()
     
-    console.log('Creating tenant payment method at:', `${externalApiUrl}/tenants/${tenantId}/payment-methods`)
+    // Extract payment method ID from URL
+    const url = new URL(request.url)
+    const pathParts = url.pathname.split('/')
+    const paymentMethodId = pathParts[pathParts.length - 1]
+    
+    console.log('Updating payment method:', `${externalApiUrl}/tenants/${tenantId}/payment-methods/${paymentMethodId}`)
     console.log('Using session cookie:', sessionCookie.name)
-    console.log('Payment method data:', body)
+    console.log('Request body:', body)
 
-    const response = await fetch(`${externalApiUrl}/tenants/${tenantId}/payment-methods`, {
-      method: 'POST',
+    const response = await fetch(`${externalApiUrl}/tenants/${tenantId}/payment-methods/${paymentMethodId}`, {
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'Cookie': `${sessionCookie.name}=${sessionCookie.value}`,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(body)
     })
 
     const data = await response.json()
     
-    console.log('Tenant payment method creation API response status:', response.status)
-    console.log('Tenant payment method creation API response data:', data)
+    console.log('Payment method update API response status:', response.status)
+    console.log('Payment method update API response data:', data)
 
     if (!response.ok) {
       return NextResponse.json(
-        { message: data.message || 'Gagal membuat payment method tenant baru' },
+        { message: data.message || 'Gagal memperbarui payment method' },
         { status: response.status }
       )
     }
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error('Tenant payment method creation API error:', error)
+    console.error('Payment method update API error:', error)
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

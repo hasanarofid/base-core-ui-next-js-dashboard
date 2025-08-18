@@ -8,7 +8,7 @@ import AuthGuard from '@/components/auth/AuthGuard'
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { TenantPaymentMethod } from '@/types/tenantPaymentMethod';
 import Badge from '@/components/ui/Badge';
-import { getTenantPaymentMethodsWithCookies, deleteTenantPaymentMethodWithCookies } from '@/lib/api';
+import { getTenantPaymentMethodsWithCookies, deleteTenantPaymentMethodWithCookies, getPaymentMethodByIdWithCookies } from '@/lib/api';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSweetAlert } from '@/lib/sweetalert-config';
 import { useToast } from '@/contexts/ToastContext';
@@ -78,6 +78,7 @@ export default function TenantPaymentMethodsPage() {
   const params = useParams();
   const { showToast } = useToast();
   const [paymentMethods, setPaymentMethods] = useState<TenantPaymentMethod[]>([]);
+  const [paymentMethodNames, setPaymentMethodNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -96,6 +97,17 @@ export default function TenantPaymentMethodsPage() {
     description: `Kelola payment method tenant. Fitur lengkap untuk mengelola payment method, fee, dan konfigurasi tenant.`,
     keywords: 'tenant payment method, fee management, payment configuration'
   });
+
+  // Fetch payment method name by ID
+  const fetchPaymentMethodName = async (paymentMethodId: string): Promise<string> => {
+    try {
+      const response = await getPaymentMethodByIdWithCookies(paymentMethodId);
+      return response.data.name || 'Payment Method';
+    } catch (error) {
+      console.error(`❌ Error fetching payment method name for ID ${paymentMethodId}:`, error);
+      return 'Payment Method';
+    }
+  };
 
   // Fetch payment methods data function
   const fetchPaymentMethods = async () => {
@@ -129,6 +141,16 @@ export default function TenantPaymentMethodsPage() {
       console.log('🔍 Setting payment methods count:', paymentMethodsData.length);
       setPaymentMethods(paymentMethodsData);
       
+      // Fetch payment method names for each payment method
+      const namesMap: Record<string, string> = {};
+      for (const paymentMethod of paymentMethodsData) {
+        if (paymentMethod.payment_method_id) {
+          const name = await fetchPaymentMethodName(paymentMethod.payment_method_id);
+          namesMap[paymentMethod.payment_method_id] = name;
+        }
+      }
+      setPaymentMethodNames(namesMap);
+      
     } catch (err) {
       console.error('❌ Error fetching payment methods:', err);
       setError('Gagal mengambil data payment methods tenant. Silakan coba lagi.');
@@ -150,12 +172,20 @@ export default function TenantPaymentMethodsPage() {
     console.log('🔍 Payment methods state updated:', paymentMethods.length, 'items');
   }, [paymentMethods]);
 
-  const filteredPaymentMethods = paymentMethods.filter(paymentMethod =>
-    (paymentMethod.payment_method_name && paymentMethod.payment_method_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (paymentMethod.tenant_name && paymentMethod.tenant_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    paymentMethod.fee_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    paymentMethod.status.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Watch payment method names state changes
+  useEffect(() => {
+    console.log('🔍 Payment method names updated:', Object.keys(paymentMethodNames).length, 'names');
+  }, [paymentMethodNames]);
+
+  const filteredPaymentMethods = paymentMethods.filter(paymentMethod => {
+    const paymentMethodName = paymentMethodNames[paymentMethod.payment_method_id] || paymentMethod.payment_method_name || '';
+    return (
+      (paymentMethodName && paymentMethodName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (paymentMethod.tenant_name && paymentMethod.tenant_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      paymentMethod.fee_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      paymentMethod.status.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   const paginatedPaymentMethods = filteredPaymentMethods.slice(
     (currentPage - 1) * itemsPerPage,
@@ -173,9 +203,8 @@ export default function TenantPaymentMethodsPage() {
   };
 
   const handleDelete = async (paymentMethod: TenantPaymentMethod) => {
-    const result = await sweetAlert.confirmDelete(
-      paymentMethod.payment_method_name || 'Payment Method'
-    );
+    const paymentMethodName = paymentMethodNames[paymentMethod.payment_method_id] || paymentMethod.payment_method_name || 'Payment Method';
+    const result = await sweetAlert.confirmDelete(paymentMethodName);
 
     if (result.isConfirmed) {
       try {
@@ -188,7 +217,7 @@ export default function TenantPaymentMethodsPage() {
         await fetchPaymentMethods();
         
         // Tampilkan splash success
-        sweetAlert.success("Berhasil!", `Payment method "${paymentMethod.payment_method_name}" berhasil dihapus.`);
+        sweetAlert.success("Berhasil!", `Payment method "${paymentMethodName}" berhasil dihapus.`);
       } catch (error) {
         // Tampilkan splash error
         if (error instanceof Error) {
@@ -237,27 +266,30 @@ export default function TenantPaymentMethodsPage() {
     {
       key: 'payment_method_name',
       header: 'PAYMENT METHOD',
-      render: (_, row) => (
-        <div className="d-flex align-items-center gap-3">
-          {row.payment_method_logo_url ? (
-            <img 
-              src={row.payment_method_logo_url} 
-              alt={row.payment_method_name || 'Payment Method'} 
-              width={32} 
-              height={32} 
-              className="rounded"
-            />
-          ) : (
-            <div className="payment-method-icon">
-              <i className="ti ti-credit-card"></i>
+      render: (_, row) => {
+        const paymentMethodName = paymentMethodNames[row.payment_method_id] || row.payment_method_name || 'Payment Method';
+        return (
+          <div className="d-flex align-items-center gap-3">
+            {row.payment_method_logo_url ? (
+              <img 
+                src={row.payment_method_logo_url} 
+                alt={paymentMethodName} 
+                width={32} 
+                height={32} 
+                className="rounded"
+              />
+            ) : (
+              <div className="payment-method-icon">
+                <i className="ti ti-credit-card"></i>
+              </div>
+            )}
+            <div>
+              <div className="fw-semibold text-body">{paymentMethodName}</div>
+              <div className="text-muted small">Payment Method</div>
             </div>
-          )}
-          <div>
-            <div className="fw-semibold text-body">{row.payment_method_name || '-'}</div>
-            <div className="text-muted small">Payment Method</div>
           </div>
-        </div>
-      )
+        );
+      }
     },
     {
       key: 'fee_type',

@@ -10,6 +10,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { updateTenantPaymentMethodWithCookies, getPaymentMethodWithCookies, getTenantPaymentMethodsWithCookies } from '@/lib/api';
 import { PaymentMethod } from '@/types/paymentMethod';
 import { TenantPaymentMethod } from '@/types/tenantPaymentMethod';
+import { useSweetAlert } from '@/lib/sweetalert-config';
 import Link from 'next/link';
 
 const updateTenantPaymentMethodSchema = z.object({
@@ -27,6 +28,7 @@ export default function EditTenantPaymentMethodPage() {
   const router = useRouter();
   const params = useParams();
   const { showToast } = useToast();
+  const sweetAlert = useSweetAlert();
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -100,6 +102,8 @@ export default function EditTenantPaymentMethodPage() {
   const onSubmit = async (data: UpdateTenantPaymentMethodForm) => {
     setUpdating(true);
     try {
+      console.log('🔍 Updating payment method data:', data);
+      
       const payload = {
         payment_method_id: data.payment_method_id,
         fee_type: data.fee_type,
@@ -107,34 +111,34 @@ export default function EditTenantPaymentMethodPage() {
         status: data.status
       };
 
+      console.log('🔍 API payload:', payload);
+
+      // Tampilkan loading SweetAlert
+      sweetAlert.loading('Memproses...', 'Sedang memperbarui data payment method');
+
       await updateTenantPaymentMethodWithCookies(paymentMethodId, payload);
 
-      showToast({
-        type: 'success',
-        title: 'Berhasil!',
-        message: 'Payment method tenant berhasil diperbarui',
-        duration: 3000
-      });
+      // Tampilkan success SweetAlert
+      sweetAlert.success("Berhasil!", "Payment method tenant berhasil diperbarui.");
 
-      router.push(`/tenant-payment-methods/${tenantId}`);
+      // Redirect setelah delay singkat
+      setTimeout(() => {
+        router.push(`/tenant-payment-methods/${tenantId}`);
+      }, 1500);
+
     } catch (error: unknown) {
-      console.error('Error updating tenant payment method:', error);
+      console.error('❌ Error updating tenant payment method:', error);
 
+      let errorMessage = 'Terjadi kesalahan yang tidak diketahui.';
+      
       if (error instanceof Error) {
-        showToast({
-          type: 'error',
-          title: 'Error!',
-          message: error.message,
-          duration: 5000
-        });
-      } else {
-        showToast({
-          type: 'error',
-          title: 'Error!',
-          message: 'Terjadi kesalahan yang tidak diketahui.',
-          duration: 5000
-        });
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+        errorMessage = String(error.message);
       }
+
+      // Tampilkan error SweetAlert
+      sweetAlert.error("Error!", errorMessage);
     } finally {
       setUpdating(false);
     }

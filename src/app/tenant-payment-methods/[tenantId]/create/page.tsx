@@ -6,9 +6,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import AuthGuard from '@/components/auth/AuthGuard';
 import { useToast } from '@/contexts/ToastContext';
 import { createTenantPaymentMethodWithCookies, getPaymentMethodWithCookies } from '@/lib/api';
 import { PaymentMethod } from '@/types/paymentMethod';
+import { useSweetAlert } from '@/lib/sweetalert-config';
 import Link from 'next/link';
 
 const createTenantPaymentMethodSchema = z.object({
@@ -16,8 +18,7 @@ const createTenantPaymentMethodSchema = z.object({
   fee_type: z.enum(['flat', 'percent'], {
     message: 'Tipe fee harus dipilih dari opsi yang tersedia'
   }),
-  fee_value: z.number().min(0, 'Fee value harus lebih dari atau sama dengan 0'),
-  status: z.enum(['active', 'inactive'])
+  fee_value: z.number().min(0.01, 'Fee value harus lebih dari 0')
 });
 
 type CreateTenantPaymentMethodForm = z.infer<typeof createTenantPaymentMethodSchema>;
@@ -26,6 +27,7 @@ export default function CreateTenantPaymentMethodPage() {
   const router = useRouter();
   const params = useParams();
   const { showToast } = useToast();
+  const sweetAlert = useSweetAlert();
   const [loading, setLoading] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(true);
@@ -40,8 +42,7 @@ export default function CreateTenantPaymentMethodPage() {
     resolver: zodResolver(createTenantPaymentMethodSchema),
     defaultValues: {
       fee_type: 'flat',
-      fee_value: 0,
-      status: 'active'
+      fee_value: 0.01
     }
   });
 
@@ -50,10 +51,12 @@ export default function CreateTenantPaymentMethodPage() {
     const fetchPaymentMethods = async () => {
       try {
         setLoadingPaymentMethods(true);
+        console.log('🔍 Fetching payment methods...');
         const response = await getPaymentMethodWithCookies();
+        console.log('✅ Payment methods response:', response);
         setPaymentMethods(response.data);
       } catch (error) {
-        console.error('Error fetching payment methods:', error);
+        console.error('❌ Error fetching payment methods:', error);
         showToast({
           type: 'error',
           title: 'Error',
@@ -70,50 +73,55 @@ export default function CreateTenantPaymentMethodPage() {
   const onSubmit = async (data: CreateTenantPaymentMethodForm) => {
     setLoading(true);
     try {
+      console.log('🔍 Submitting form data:', data);
+      
       const payload = {
-        tenant_id: tenantId,
         payment_method_id: data.payment_method_id,
         fee_type: data.fee_type,
-        fee_value: data.fee_value,
-        status: data.status
+        fee_value: data.fee_value
       };
 
-      await createTenantPaymentMethodWithCookies(tenantId, payload);
+      console.log('🔍 API payload:', payload);
 
-      showToast({
-        type: 'success',
-        title: 'Berhasil!',
-        message: 'Payment method tenant berhasil dibuat',
-        duration: 3000
+      // Tampilkan loading SweetAlert
+      sweetAlert.loading('Memproses...', 'Sedang menyimpan data payment method');
+
+      const response = await createTenantPaymentMethodWithCookies(tenantId, {
+        ...payload,
+        tenant_id: tenantId
       });
+      console.log('✅ API response:', response);
 
-      router.push(`/tenant-payment-methods/${tenantId}`);
+      // Tampilkan success SweetAlert
+      sweetAlert.success("Berhasil!", "Payment method tenant berhasil dibuat.");
+
+      // Redirect setelah delay singkat
+      setTimeout(() => {
+        router.push(`/tenant-payment-methods/${tenantId}`);
+      }, 1500);
+
     } catch (error: unknown) {
-      console.error('Error creating tenant payment method:', error);
+      console.error('❌ Error creating tenant payment method:', error);
 
+      let errorMessage = 'Terjadi kesalahan yang tidak diketahui.';
+      
       if (error instanceof Error) {
-        showToast({
-          type: 'error',
-          title: 'Error!',
-          message: error.message,
-          duration: 5000
-        });
-      } else {
-        showToast({
-          type: 'error',
-          title: 'Error!',
-          message: 'Terjadi kesalahan yang tidak diketahui.',
-          duration: 5000
-        });
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+        errorMessage = String(error.message);
       }
+
+      // Tampilkan error SweetAlert
+      sweetAlert.error("Error!", errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <DashboardLayout>
-      <div className="container-xxl flex-grow-1 container-p-y">
+    <AuthGuard requireAuth={true}>
+      <DashboardLayout>
+        <div className="container-xxl flex-grow-1 container-p-y">
         {/* Header */}
         <div className="row">
           <div className="col-12">
@@ -199,7 +207,7 @@ export default function CreateTenantPaymentMethodPage() {
                         <input
                           type="number"
                           step="0.01"
-                          min="0"
+                          min="0.01"
                           className={`form-control ${errors.fee_value ? 'is-invalid' : ''}`}
                           placeholder="Masukkan nilai fee"
                           {...register('fee_value', { valueAsNumber: true })}
@@ -213,23 +221,7 @@ export default function CreateTenantPaymentMethodPage() {
                       </div>
                     </div>
 
-                    <div className="col-md-6">
-                      <div className="form-group mb-3">
-                        <label className="form-label">
-                          Status <span className="text-danger">*</span>
-                        </label>
-                        <select
-                          className={`form-control ${errors.status ? 'is-invalid' : ''}`}
-                          {...register('status')}
-                        >
-                          <option value="active">Aktif</option>
-                          <option value="inactive">Tidak Aktif</option>
-                        </select>
-                        {errors.status && (
-                          <div className="invalid-feedback">{errors.status.message}</div>
-                        )}
-                      </div>
-                    </div>
+
                   </div>
 
                   <div className="row mt-4">
@@ -268,6 +260,7 @@ export default function CreateTenantPaymentMethodPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
-  );
-} 
+        </DashboardLayout>
+      </AuthGuard>
+    );
+  } 

@@ -16,13 +16,14 @@ export async function GET(
       )
     }
 
-    const externalApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3032/api/v1'
-    const { id: paymentMethodId } = await params
+    const { id } = await params
     
-    console.log('Fetching tenant payment method from:', `${externalApiUrl}/tenant-payment-methods/${paymentMethodId}`)
+    const externalApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3030/api/v1'
+    
+    console.log('Fetching tenant payment method from:', `${externalApiUrl}/tenant-payment-methods/${id}`)
     console.log('Using session cookie:', sessionCookie.name)
 
-    const response = await fetch(`${externalApiUrl}/tenant-payment-methods/${paymentMethodId}`, {
+    const response = await fetch(`${externalApiUrl}/tenant-payment-methods/${id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -31,33 +32,77 @@ export async function GET(
       },
     })
 
-    // Check if response is JSON
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      console.error('❌ Response is not JSON:', contentType);
-      const responseText = await response.text();
-      console.error('❌ Response text:', responseText.substring(0, 200));
-      return NextResponse.json(
-        { message: 'Backend mengembalikan response yang tidak valid' },
-        { status: 500 }
-      )
-    }
-
     const data = await response.json()
     
-    console.log('Tenant payment method API response status:', response.status)
-    console.log('Tenant payment method API response data:', data)
+    console.log('Tenant Payment Method API response status:', response.status)
+    console.log('Tenant Payment Method API response data:', data)
 
     if (!response.ok) {
       return NextResponse.json(
-        { message: data.message || 'Gagal mengambil data payment method tenant' },
+        { message: data.message || 'Gagal mengambil data tenant payment method' },
         { status: response.status }
       )
     }
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error('Tenant payment method API error:', error)
+    console.error('Tenant Payment Method API error:', error)
+    return NextResponse.json(
+      { message: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Ambil cookies dari request
+    const cookies = request.cookies
+    const sessionCookie = cookies.get('session') || cookies.get('token') || cookies.get('auth')
+    
+    if (!sessionCookie) {
+      return NextResponse.json(
+        { message: 'Session tidak ditemukan' },
+        { status: 401 }
+      )
+    }
+
+    const { id } = await params
+    const body = await request.json()
+    
+    const externalApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3030/api/v1'
+    
+    console.log('Updating tenant payment method:', `${externalApiUrl}/tenant-payment-methods/${id}`)
+    console.log('Update data:', body)
+
+    const response = await fetch(`${externalApiUrl}/tenant-payment-methods/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Cookie': `${sessionCookie.name}=${sessionCookie.value}`,
+      },
+      body: JSON.stringify(body)
+    })
+
+    const data = await response.json()
+    
+    console.log('Update API response status:', response.status)
+    console.log('Update API response data:', data)
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { message: data.message || 'Gagal mengupdate payment method' },
+        { status: response.status }
+      )
+    }
+
+    return NextResponse.json(data)
+  } catch (error) {
+    console.error('Update API error:', error)
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

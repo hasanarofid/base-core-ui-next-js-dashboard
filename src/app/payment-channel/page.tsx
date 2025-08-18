@@ -8,6 +8,46 @@ import { useAuth } from '@/contexts/AuthContext'
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useToast } from '@/contexts/ToastContext';
 
+// CSS untuk styling card payment channel
+const paymentChannelStyles = `
+  .payment-channel-card {
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+  }
+  
+  .payment-channel-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  /* Toggle switch styling - hidden for now
+  .payment-channel-card .form-check-input {
+    width: 2.5rem;
+    height: 1.25rem;
+    margin-top: 0;
+  }
+  
+  .payment-channel-card .form-check-input:checked {
+    background-color: #696cff;
+    border-color: #696cff;
+  }
+  */
+  
+  .payment-channel-card .badge {
+    font-size: 0.75rem;
+  }
+`;
+
+// Interface untuk payment method detail
+interface PaymentMethod {
+  id: string;
+  code: string;
+  name: string;
+  type: string;
+  logo_url: string;
+}
+
 // Interface untuk response API tenant payment methods
 interface TenantPaymentMethod {
   id: string;
@@ -18,6 +58,7 @@ interface TenantPaymentMethod {
   status: 'active' | 'inactive';
   createdAt: string;
   updatedAt: string;
+  paymentMethod: PaymentMethod;
 }
 
 interface TenantPaymentMethodsResponse {
@@ -112,7 +153,7 @@ export default function PaymentChannelPage() {
     try {
       console.log('🔍 Fetching payment methods for tenant:', tenantId)
       
-      const response = await fetch(`/api/tenants/${tenantId}/payment-methods`, {
+      const response = await fetch(`/api/tenant-payment-methods?tenant_id=${tenantId}`, {
         credentials: 'include'
       })
       
@@ -137,7 +178,45 @@ export default function PaymentChannelPage() {
     }
   }
 
-
+  // Toggle status payment method
+  const togglePaymentMethodStatus = async (methodId: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active'
+      
+      const response = await fetch(`/api/tenant-payment-methods/${methodId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ status: newStatus })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Gagal mengubah status payment method')
+      }
+      
+      // Update local state
+      setPaymentMethods(prev => prev.map(method => 
+        method.id === methodId 
+          ? { ...method, status: newStatus as 'active' | 'inactive' }
+          : method
+      ))
+      
+      showToast({
+        type: 'success',
+        title: 'Berhasil',
+        message: `Status payment method berhasil diubah menjadi ${newStatus === 'active' ? 'aktif' : 'nonaktif'}`
+      })
+    } catch (error) {
+      console.error('❌ Error toggling payment method status:', error)
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Gagal mengubah status payment method'
+      })
+    }
+  }
 
   if (loading) {
     return (
@@ -161,6 +240,7 @@ export default function PaymentChannelPage() {
         <meta property="og:title" content={fullTitle} />
         <meta property="og:description" content={`${pageSubtitle}. Kelola channel pembayaran.`} />
         <meta name="keywords" content="payment channel, payment method, payment configuration, payment gateway" />
+        <style>{paymentChannelStyles}</style>
       </Head>
       
       <SecureGuard requireAuth={true}>
@@ -183,68 +263,82 @@ export default function PaymentChannelPage() {
               </div>
             </div>
 
-            {/* Informasi Payment Channel */}
+            {/* Payment Channel Cards */}
             <div className="row">
-              <div className="col-12 mb-4">
-                <div className="card">
-                  <div className="card-header d-flex justify-content-between align-items-center">
-                    <h5 className="card-title mb-0">
-                      <i className="ti ti-credit-card text-primary me-2"></i>
-                      Informasi Payment Channel
-                    </h5>
-                  </div>
-                  <div className="card-body">
-                    {paymentMethods.length === 0 ? (
-                      <div className="text-center py-4">
-                        <i className="ti ti-credit-card text-muted" style={{ fontSize: '3rem' }}></i>
-                        <p className="text-muted mt-3">Belum ada payment channel yang dikonfigurasi</p>
-                      </div>
-                    ) : (
-                      <div className="row">
-                        {paymentMethods.map((method) => (
-                          <div key={method.id} className="col-12">
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                              <span className="text-muted">Payment Method ID</span>
-                              <span className="fw-semibold">{method.payment_method_id}</span>
-                            </div>
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                              <span className="text-muted">Fee Type</span>
-                              <span className={`badge ${method.fee_type === 'percent' ? 'bg-label-info' : 'bg-label-warning'}`}>
-                                {method.fee_type === 'percent' ? 'Percent' : 'Flat'}
-                              </span>
-                            </div>
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                              <span className="text-muted">Fee Value</span>
-                              <span className="fw-semibold">
-                                {method.fee_type === 'percent' ? `${method.fee_value}%` : `Rp ${method.fee_value.toLocaleString()}`}
-                              </span>
-                            </div>
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                              <span className="text-muted">Status</span>
-                              <span className={`badge ${method.status === 'active' ? 'bg-label-success' : 'bg-label-danger'}`}>
-                                {method.status === 'active' ? 'Aktif' : 'Nonaktif'}
-                              </span>
-                            </div>
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                              <span className="text-muted">Tanggal Dibuat</span>
-                              <span className="fw-semibold">{new Date(method.createdAt).toLocaleDateString('id-ID')}</span>
-                            </div>
-                            <div className="d-flex justify-content-between align-items-center mb-3">
-                              <span className="text-muted">ID</span>
-                              <span className="fw-semibold text-muted">{method.id.substring(0, 8)}...</span>
-                            </div>
-                            <hr className="my-4" />
-                          </div>
-                        ))}
-                      </div>
-                    )}
+              {paymentMethods.length === 0 ? (
+                <div className="col-12">
+                  <div className="card">
+                    <div className="card-body text-center py-5">
+                      <i className="ti ti-credit-card text-muted" style={{ fontSize: '3rem' }}></i>
+                      <p className="text-muted mt-3">Belum ada payment channel yang dikonfigurasi</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                paymentMethods.map((method) => (
+                  <div key={method.id} className="col-md-6 col-lg-3 mb-3">
+                    <div className="card h-100 shadow-sm payment-channel-card">
+                      <div className="card-body p-4">
+                        {/* Header */}
+                        <div className="mb-3">
+                          <h6 className="card-title fw-bold mb-0">
+                            {method.paymentMethod.name}
+                          </h6>
+                        </div>
+
+                        {/* Logo Bank */}
+                        <div className="text-center mb-3">
+                          {method.paymentMethod.logo_url ? (
+                            <img
+                              src={method.paymentMethod.logo_url}
+                              alt={method.paymentMethod.name}
+                              className="img-fluid"
+                              style={{ maxHeight: '50px', maxWidth: '100px', objectFit: 'contain' }}
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="bg-light rounded p-2 d-inline-block">
+                              <i className="ti ti-building-bank text-muted" style={{ fontSize: '1.5rem' }}></i>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Informasi Payment Method */}
+                        <div className="mb-3">
+                          <div className="d-flex justify-content-between align-items-center mb-2">
+                            <span className="text-muted small">Kode:</span>
+                            <span className="fw-semibold small">{method.paymentMethod.code}</span>
+                          </div>
+                          <div className="d-flex justify-content-between align-items-center mb-2">
+                            <span className="text-muted small">Tipe:</span>
+                            <span className="fw-semibold small">{method.paymentMethod.type}</span>
+                          </div>
+                          <div className="d-flex justify-content-between align-items-center mb-2">
+                            <span className="text-muted small">Status:</span>
+                            <span className={`badge ${method.status === 'active' ? 'bg-label-success' : 'bg-label-danger'} small`}>
+                              {method.status === 'active' ? 'Aktif' : 'Nonaktif'}
+                            </span>
+                          </div>
+                          <div className="d-flex justify-content-between align-items-center mb-2">
+                            <span className="text-muted small">Biaya:</span>
+                            <span className="fw-semibold small">
+                              {method.fee_type === 'percent' 
+                                ? `${(method.fee_value * 100).toFixed(1)}%` 
+                                : `Rp ${method.fee_value.toLocaleString()}`
+                              }
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
-
-
         </DashboardLayout>
       </SecureGuard>
     </>

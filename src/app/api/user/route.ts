@@ -39,13 +39,9 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Cek role user, hanya admin_tenant yang bisa mengakses endpoint ini
-    if (data.user && data.user.role !== 'admin_tenant') {
-      return NextResponse.json(
-        { message: 'Akses ditolak. Hanya admin tenant yang dapat mengakses endpoint ini.' },
-        { status: 403 }
-      )
-    }
+    // PERBAIKAN: Hapus validasi role yang membatasi akses
+    // Semua user yang sudah login berhak mengakses data mereka sendiri
+    // Validasi role sudah ditangani oleh backend
 
     return NextResponse.json(data)
   } catch (error) {

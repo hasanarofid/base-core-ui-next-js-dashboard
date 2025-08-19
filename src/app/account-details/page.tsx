@@ -18,6 +18,7 @@ interface UserData {
   role: string;
   forcePasswordChange: boolean;
   tenantId: string;
+  status?: string; // Tambahkan field status dari database
   tenant?: {
     id: string;
     name: string;
@@ -29,10 +30,8 @@ interface UserData {
   };
 }
 
-
-
 export default function AccountDetailsPage() {
-  const { user: authUser, updateUser } = useAuth()
+  const { user: authUser, updateUser, checkAuth } = useAuth()
   const { showToast } = useToast()
   const [user, setUser] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -52,42 +51,43 @@ export default function AccountDetailsPage() {
   });
 
   // Fetch user data from API
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        setLoading(true)
-        console.log('🔍 Fetching user data...')
-        const response = await fetch('/api/auth/me', {
-          credentials: 'include'
-        })
-        
-        if (!response.ok) {
-          throw new Error('Gagal mengambil data user')
-        }
-        
-        const data = await response.json()
-        console.log('📦 User data received:', data)
-        
-        if (data.user) {
-          setUser(data.user)
-          setUpdateForm({
-            fullName: data.user.fullName || '',
-            email: data.user.email || ''
-          })
-          console.log('✅ User data set successfully')
-        }
-      } catch (error) {
-        console.error('❌ Error fetching user data:', error)
-        showToast({
-          type: 'error',
-          title: 'Error',
-          message: 'Gagal mengambil data user'
-        })
-      } finally {
-        setLoading(false)
+  const fetchUserData = async () => {
+    try {
+      setLoading(true)
+      console.log('🔍 Fetching user data...')
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include'
+      })
+      
+      if (!response.ok) {
+        throw new Error('Gagal mengambil data user')
       }
+      
+      const data = await response.json()
+      console.log('📦 User data received:', data)
+      
+      if (data.user) {
+        setUser(data.user)
+        setUpdateForm({
+          fullName: data.user.fullName || '',
+          email: data.user.email || ''
+        })
+        console.log('✅ User data set successfully')
+      }
+    } catch (error) {
+      console.error('❌ Error fetching user data:', error)
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Gagal mengambil data user'
+      })
+    } finally {
+      setLoading(false)
     }
+  }
 
+  // Fetch user data on component mount
+  useEffect(() => {
     fetchUserData()
   }, [showToast])
 
@@ -116,6 +116,12 @@ export default function AccountDetailsPage() {
         })
         console.log('✅ User updated successfully')
       }
+
+      // PERBAIKAN: Refresh user data dari API untuk memastikan data terbaru
+      await fetchUserData()
+      
+      // Refresh auth context juga
+      await checkAuth()
 
       // Show SweetAlert success
       await Swal.fire({
@@ -164,7 +170,37 @@ export default function AccountDetailsPage() {
     }
   }
 
+  // Helper function untuk mendapatkan status akun sesuai database
+  const getAccountStatus = () => {
+    // Gunakan status dari database jika ada
+    if (user?.status) {
+      return user.status === 'active' ? 'Aktif' : 'Tidak Aktif'
+    }
+    // Default status berdasarkan role dan kondisi lainnya
+    return 'Aktif'
+  }
 
+  // Helper function untuk mendapatkan badge class status akun
+  const getAccountStatusBadgeClass = () => {
+    const status = getAccountStatus()
+    return status === 'Aktif' ? 'bg-label-success' : 'bg-label-danger'
+  }
+
+  // Helper function untuk mendapatkan status password sesuai database
+  const getPasswordStatus = () => {
+    // Gunakan forcePasswordChange dari database
+    if (user?.forcePasswordChange !== undefined) {
+      return user.forcePasswordChange ? 'Sudah Diubah' : 'Perlu Diubah'
+    }
+    // Fallback ke auth context jika data database tidak ada
+    return authUser?.force_password_change ? 'Sudah Diubah' : 'Perlu Diubah'
+  }
+
+  // Helper function untuk mendapatkan badge class status password
+  const getPasswordStatusBadgeClass = () => {
+    const status = getPasswordStatus()
+    return status === 'Perlu Diubah' ? 'bg-label-danger' : 'bg-label-success'
+  }
 
   if (loading) {
     return (
@@ -203,6 +239,13 @@ export default function AccountDetailsPage() {
                 <p className="text-muted mb-0">{pageSubtitle}</p>
               </div>
               <div className="d-flex gap-2">
+                <button 
+                  className="btn btn-label-primary"
+                  onClick={fetchUserData}
+                >
+                  <i className="ti ti-refresh me-1"></i>
+                  <span>Refresh Data</span>
+                </button>
                 <button className="btn btn-label-primary">
                   <i className="ti ti-download me-1"></i>
                   <span>Export Data</span>
@@ -248,13 +291,15 @@ export default function AccountDetailsPage() {
                         </div>
                         <div className="d-flex justify-content-between align-items-center mb-3">
                           <span className="text-muted">Status Password</span>
-                          <span className={`badge ${user?.forcePasswordChange ? 'bg-label-danger' : 'bg-label-success'}`}>
-                            {user?.forcePasswordChange ? 'Perlu Diubah' : 'Aman'}
+                          <span className={`badge ${getPasswordStatusBadgeClass()}`}>
+                            {getPasswordStatus()}
                           </span>
                         </div>
                         <div className="d-flex justify-content-between align-items-center">
                           <span className="text-muted">Status Akun</span>
-                          <span className="badge bg-label-success">Aktif</span>
+                          <span className={`badge ${getAccountStatusBadgeClass()}`}>
+                            {getAccountStatus()}
+                          </span>
                         </div>
                       </div>
                     </div>

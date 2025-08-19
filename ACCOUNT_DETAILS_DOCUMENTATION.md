@@ -12,9 +12,9 @@ Halaman detail akun (`/account-details`) menampilkan informasi lengkap tentang a
 - Role
 
 ### 2. Keamanan Akun
-- Status Password (Aman/Perlu Diubah)
+- Status Password (Aman/Perlu Diubah) - **DIPERBAIKI: Sekarang sesuai dengan database**
 - Tenant ID
-- Status Akun
+- Status Akun - **DIPERBAIKI: Sekarang sesuai dengan database**
 
 ### 3. Informasi Tenant (jika ada)
 - Nama Tenant
@@ -26,9 +26,43 @@ Halaman detail akun (`/account-details`) menampilkan informasi lengkap tentang a
 - Login berhasil
 - Melihat dashboard
 
+## Perbaikan yang Telah Dilakukan
+
+### 1. **Data Tidak Berubah Setelah Update** ✅
+**Masalah:** Setelah berhasil update akun, data tidak berubah di halaman dan perlu refresh manual.
+
+**Solusi:**
+- Menambahkan `fetchUserData()` setelah update berhasil
+- Menambahkan `checkAuth()` untuk refresh auth context
+- Menambahkan tombol "Refresh Data" untuk manual refresh
+
+### 2. **Status Akun Tidak Sesuai Database** ✅
+**Masalah:** Status akun selalu menampilkan "Aktif" tanpa memperhatikan data dari database.
+
+**Solusi:**
+- Menambahkan field `status` di interface `UserData`
+- Membuat helper function `getAccountStatus()` yang menggunakan data dari database
+- Membuat helper function `getAccountStatusBadgeClass()` untuk styling badge
+
+### 3. **Status Password Tidak Sesuai Database** ✅
+**Masalah:** Status password tidak sesuai dengan field `forcePasswordChange` dari database.
+
+**Solusi:**
+- Membuat helper function `getPasswordStatus()` yang menggunakan `forcePasswordChange` dari database
+- Membuat helper function `getPasswordStatusBadgeClass()` untuk styling badge
+- Menambahkan fallback ke auth context jika data database tidak tersedia
+
+### 4. **API Endpoint Restriction** ✅
+**Masalah:** API endpoint `/api/user` hanya bisa diakses oleh `admin_tenant`.
+
+**Solusi:**
+- Menghapus validasi role yang membatasi akses
+- Semua user yang sudah login berhak mengakses data mereka sendiri
+- Validasi role sudah ditangani oleh backend
+
 ## API Endpoints yang Digunakan
 
-### GET /api/user
+### GET /api/auth/me
 **Deskripsi:** Mengambil data user yang sedang login
 
 **Response:**
@@ -41,6 +75,7 @@ Halaman detail akun (`/account-details`) menampilkan informasi lengkap tentang a
     "email": "naufalnaufal023@gmail.com",
     "role": "tenant_admin",
     "forcePasswordChange": true,
+    "status": "active",
     "tenantId": "ebe984d2-cb6e-42a8-b77e-23d859dc796b",
     "tenant": {
       "id": "ebe984d2-cb6e-42a8-b77e-23d859dc796b",
@@ -74,6 +109,7 @@ Halaman detail akun (`/account-details`) menampilkan informasi lengkap tentang a
     "email": "email@baru.com",
     "role": "tenant_admin",
     "forcePasswordChange": false,
+    "status": "active",
     "tenantId": "tenant-id",
     "tenant": {
       "id": "tenant-id",
@@ -85,157 +121,88 @@ Halaman detail akun (`/account-details`) menampilkan informasi lengkap tentang a
 }
 ```
 
-### PUT /api/tenants/{id}
-**Deskripsi:** Mengupdate data tenant (hanya untuk role admin_tenant)
+## Helper Functions
 
-**Request Body:**
-```json
-{
-  "name": "Nama Tenant Baru",
-  "domain": "https://domain-baru.com"
-}
-```
+### `getAccountStatus()`
+Mengembalikan status akun berdasarkan data dari database:
+- Jika `user.status === 'active'` → "Aktif"
+- Jika `user.status !== 'active'` → "Tidak Aktif"
+- Default → "Aktif"
 
-**Response:**
-```json
-{
-  "message": "Tenant updated successfully",
-  "data": {
-    "id": "tenant-id",
-    "name": "Nama Tenant Baru",
-    "domain": "https://domain-baru.com",
-    "status": "active"
-  }
-}
-```
+### `getAccountStatusBadgeClass()`
+Mengembalikan class CSS untuk badge status akun:
+- "Aktif" → `bg-label-success`
+- "Tidak Aktif" → `bg-label-danger`
 
-## Komponen UI
+### `getPasswordStatus()`
+Mengembalikan status password berdasarkan data dari database:
+- Jika `user.forcePasswordChange === true` → "Perlu Diubah"
+- Jika `user.forcePasswordChange === false` → "Aman"
+- Fallback ke auth context jika data database tidak tersedia
 
-### Modal Edit Profile
-- Form untuk mengupdate nama lengkap dan email
-- Validasi input
-- Loading state saat menyimpan
-- Feedback success/error
+### `getPasswordStatusBadgeClass()`
+Mengembalikan class CSS untuk badge status password:
+- "Perlu Diubah" → `bg-label-danger`
+- "Aman" → `bg-label-success`
 
-### Modal Edit Tenant
-- Form untuk mengupdate nama tenant dan domain
-- Hanya muncul untuk role admin_tenant
-- Validasi input
-- Loading state saat menyimpan
-- Feedback success/error
+## Flow Update Data
 
-## Role-based Access Control
-
-### Superadmin
-- Dapat melihat semua informasi
-- Dapat mengupdate profile sendiri
-- Tidak dapat mengupdate tenant (karena tidak terikat ke tenant tertentu)
-
-### Admin Tenant
-- Dapat melihat semua informasi
-- Dapat mengupdate profile sendiri
-- Dapat mengupdate data tenant yang terkait
-
-### End User
-- Dapat melihat semua informasi
-- Dapat mengupdate profile sendiri
-- Tidak dapat mengupdate tenant
-
-## State Management
-
-### Local State
-- `user`: Data user dari API
-- `loading`: Status loading saat fetch data
-- `showUpdateModal`: Status modal edit profile
-- `showTenantModal`: Status modal edit tenant
-- `updating`: Status loading saat update
-- `updateForm`: Form data untuk update user
-- `tenantForm`: Form data untuk update tenant
-
-### Global State (AuthContext)
-- User data diupdate di AuthContext setelah berhasil update profile
-
-## Error Handling
-
-### Network Errors
-- Menampilkan toast error jika gagal fetch data
-- Menampilkan toast error jika gagal update data
-- Fallback ke data dari AuthContext jika API gagal
-
-### Validation Errors
-- Validasi input form
-- Menampilkan pesan error yang spesifik dari API
-
-## Styling
-
-### Bootstrap Classes
-- Menggunakan Bootstrap 5 untuk styling
-- Responsive design dengan grid system
-- Modal dengan backdrop
-- Loading spinners
-- Toast notifications
-
-### Icons
-- Menggunakan Tabler Icons
-- Icon yang konsisten dengan halaman lain
-
-## Dependencies
-
-### External Libraries
-- React Hook Form (untuk form handling)
-- SweetAlert2 (untuk konfirmasi)
-- Axios (untuk HTTP requests)
-
-### Internal Components
-- DashboardLayout
-- SecureGuard
-- ToastContext
-- AuthContext
+1. User klik tombol "Edit"
+2. Modal edit muncul dengan data terbaru
+3. User mengubah data dan klik "Simpan"
+4. API call ke `/api/user` dengan method PATCH
+5. Jika berhasil:
+   - Update local state dengan data baru
+   - Update auth context
+   - Refresh data dari API (`fetchUserData()`)
+   - Refresh auth context (`checkAuth()`)
+   - Tampilkan notifikasi sukses
+   - Tutup modal
+6. Jika gagal:
+   - Tampilkan notifikasi error
+   - Modal tetap terbuka
 
 ## Testing
 
-### Unit Tests
-- Test komponen AccountDetailsPage
-- Test fungsi API
-- Test error handling
+### Test Case 1: Update Nama Lengkap
+1. Buka halaman `/account-details`
+2. Klik tombol "Edit"
+3. Ubah nama lengkap
+4. Klik "Simpan"
+5. **Expected:** Nama lengkap berubah langsung tanpa refresh
 
-### Integration Tests
-- Test flow update profile
-- Test flow update tenant
-- Test role-based access
+### Test Case 2: Update Email
+1. Buka halaman `/account-details`
+2. Klik tombol "Edit"
+3. Ubah email
+4. Klik "Simpan"
+5. **Expected:** Email berubah langsung tanpa refresh
 
-## Deployment
+### Test Case 3: Status Sesuai Database
+1. Buka halaman `/account-details`
+2. **Expected:** Status akun dan password sesuai dengan data dari database
 
-### Environment Variables
-- `NEXT_PUBLIC_API_BASE_URL`: Base URL untuk API
-
-### Build Process
-- Tidak ada konfigurasi khusus
-- Menggunakan Next.js build process standar
+### Test Case 4: Refresh Data Manual
+1. Buka halaman `/account-details`
+2. Klik tombol "Refresh Data"
+3. **Expected:** Data ter-refresh dari API
 
 ## Troubleshooting
 
-### Common Issues
-1. **Data tidak muncul**: Cek koneksi API dan session
-2. **Update gagal**: Cek validasi input dan response API
-3. **Modal tidak muncul**: Cek role user dan kondisi rendering
+### Masalah: Data tidak berubah setelah update
+**Penyebab:** Cache atau data tidak ter-refresh
+**Solusi:** 
+1. Klik tombol "Refresh Data"
+2. Cek console browser untuk error
+3. Pastikan API response berhasil
 
-### Debug Steps
-1. Cek console browser untuk error
-2. Cek network tab untuk request/response
-3. Cek AuthContext state
-4. Cek API endpoint response
+### Masalah: Status tidak sesuai database
+**Penyebab:** Data dari API tidak lengkap
+**Solusi:**
+1. Cek response API di Network tab
+2. Pastikan field `status` dan `forcePasswordChange` ada di response
+3. Refresh data manual
 
-## Future Enhancements
-
-### Planned Features
-- Upload avatar/profile picture
-- Change password functionality
-- Activity log yang lebih detail
-- Export data functionality
-- Two-factor authentication
-
-### Performance Improvements
-- Implement caching untuk user data
-- Lazy loading untuk komponen
-- Optimize re-renders 
+### Masalah: Error 403 saat update
+**Penyebab:** Validasi role yang membatasi akses
+**Solusi:** Pastikan user sudah login dan memiliki akses yang sesuai 

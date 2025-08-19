@@ -199,7 +199,7 @@ export default function AccountDetailsPage() {
   // Helper function untuk mendapatkan badge class status password
   const getPasswordStatusBadgeClass = () => {
     const status = getPasswordStatus()
-    return status === 'Perlu Diubah' ? 'bg-label-danger' : 'bg-label-success'
+    return status === 'Sudah Diubah' ? 'bg-label-success' : 'bg-label-danger'
   }
 
   if (loading) {

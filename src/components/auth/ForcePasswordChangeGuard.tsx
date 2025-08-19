@@ -67,10 +67,12 @@ export default function ForcePasswordChangeGuard({ children }: ForcePasswordChan
       console.log('🔍 User role:', user.role);
       console.log('🔍 Force password change:', user.force_password_change);
       console.log('🔍 Current pathname:', pathname);
+      console.log('🔍 Session storage flag:', sessionStorage.getItem(`passwordChanged_${user.id}`));
       
-      // Force password change berlaku untuk role tenant_admin dan admin_tenant
-      // Superadmin tidak terpengaruh oleh aturan ini
-      if ((user.role === 'admin_tenant' || user.role === 'tenant_admin') && user.force_password_change == false) {
+      // PERBAIKAN LOGIKA: 
+      // forcePasswordChange = true berarti sudah berhasil ganti password (TIDAK perlu tampil modal)
+      // forcePasswordChange = false berarti belum ganti password (PERLU tampil modal)
+      if ((user.role === 'admin_tenant' || user.role === 'tenant_admin') && user.force_password_change === false) {
         console.log('🚨 Admin tenant needs to change password!');
         // Delay sedikit untuk memastikan modal muncul setelah halaman selesai loading
         setTimeout(() => {
@@ -87,12 +89,11 @@ export default function ForcePasswordChangeGuard({ children }: ForcePasswordChan
   }, [user, isLoading, hasCheckedForcePassword, pathname, passwordChangeCompleted]);
 
   const handlePasswordChangeSuccess = async () => {
-    console.log('🔄 Password changed successfully, refreshing user data...');
-    // Refresh user data untuk mendapatkan data terbaru
-    await checkAuth();
-    setShowChangePasswordModal(false);
-    // Set flag bahwa password change sudah selesai
+    console.log('🔄 Password changed successfully, updating session...');
+    
+    // Set flag bahwa password change sudah selesai SEBELUM refresh data
     setPasswordChangeCompleted(true);
+    setShowChangePasswordModal(false);
     
     // Simpan flag di sessionStorage untuk mencegah modal muncul lagi
     if (user?.id) {
@@ -100,11 +101,21 @@ export default function ForcePasswordChangeGuard({ children }: ForcePasswordChan
       console.log('💾 Password change flag saved to session storage');
     }
     
-    console.log('✅ Password change completed, modal closed');
+    // PERBAIKAN: Refresh data user untuk mendapatkan data terbaru dari backend
+    // Ini penting untuk memastikan forcePasswordChange sudah berubah menjadi true
+    try {
+      console.log('🔄 Refreshing user data to get updated forcePasswordChange status...');
+      await checkAuth();
+      console.log('✅ User data refreshed successfully');
+      
+      // PERBAIKAN: Cek apakah forcePasswordChange sudah berubah menjadi true
+      console.log('ℹ️ Checking if backend has updated forcePasswordChange status...');
+    } catch (error) {
+      console.error('❌ Error refreshing user data:', error);
+    }
     
-    // Tambahan: Jika backend belum mengupdate forcePasswordChange, 
-    // kita anggap password sudah berhasil diubah dan tidak perlu modal lagi
-    console.log('ℹ️ Note: Backend may still show forcePasswordChange: true, but password has been changed successfully');
+    console.log('✅ Password change completed, modal closed');
+    console.log('ℹ️ Note: Backend should now show forcePasswordChange: true');
   };
 
   // Jika masih loading dan bukan di halaman publik, tampilkan loading

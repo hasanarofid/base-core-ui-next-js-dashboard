@@ -74,6 +74,55 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
+    // PERBAIKAN: Setelah password berhasil diubah, pastikan backend mengupdate force_password_change
+    // Jika backend tidak mengupdate otomatis, kita perlu memanggil API update user
+    console.log('✅ Password changed successfully, checking if force_password_change needs to be updated...')
+    
+    try {
+      // Cek data user terbaru untuk melihat apakah force_password_change sudah diupdate
+      const userResponse = await fetch(`${baseUrl}/user`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': `token=${token}`
+        },
+      })
+      
+      if (userResponse.ok) {
+        const userData = await userResponse.json()
+        console.log('🔍 Current user data after password change:', userData)
+        
+        // PERBAIKAN LOGIKA: Jika force_password_change masih false, kita perlu mengupdate menjadi true
+        if (userData.user && userData.user.forcePasswordChange === false) {
+          console.log('⚠️ forcePasswordChange still false, updating to true...')
+          
+          // Update user untuk set force_password_change menjadi true
+          const updateResponse = await fetch(`${baseUrl}/user`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cookie': `token=${token}`
+            },
+            body: JSON.stringify({
+              id: userData.user.id,
+              forcePasswordChange: true
+            }),
+          })
+          
+          if (updateResponse.ok) {
+            console.log('✅ forcePasswordChange updated to true successfully')
+          } else {
+            console.log('⚠️ Failed to update forcePasswordChange, but password change was successful')
+          }
+        } else {
+          console.log('✅ forcePasswordChange already true, no update needed')
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error checking/updating force_password_change:', error)
+      // Jangan throw error karena password change sudah berhasil
+    }
+
     return NextResponse.json(responseData)
   } catch (error) {
     console.error('Error in change password API:', error)

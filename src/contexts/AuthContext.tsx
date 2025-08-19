@@ -1,6 +1,7 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
 import { LoginUser } from '@/types/auth'
 
 interface AuthContextType {
@@ -15,9 +16,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<LoginUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
 
   const checkAuth = async () => {
     try {
@@ -62,10 +64,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const login = async (email: string, password: string) => {
+    console.log('🔐 Starting login process...')
+    setIsLoading(true)
+    
     try {
-      setIsLoading(true)
-      
-      // Simulate API call
+      console.log('📡 Calling login API...')
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -74,10 +77,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email, password }),
       })
 
+      console.log('📡 Login API response status:', response.status)
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
         const errorMessage = errorData.message || `Login failed with status: ${response.status}`
-        throw new Error(errorMessage)
+        
+        console.log('❌ Login API error:', errorMessage)
+        
+        // PERBAIKAN: Throw error dengan response data yang lengkap
+        const error = new Error(errorMessage)
+        ;(error as Error & { response: { data: { message?: string; [key: string]: unknown }; status: number } }).response = {
+          data: errorData,
+          status: response.status
+        }
+        throw error
       }
 
       const data = await response.json()
@@ -99,24 +113,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(userData)
         console.log('🎯 User set successfully:', userData)
         
+        // PERBAIKAN: Gunakan Next.js router untuk navigasi tanpa refresh
         // Jangan langsung redirect, biarkan ForcePasswordChangeGuard mengecek kondisi
         // Jika user adalah admin_tenant dan force_password_change = true, modal akan muncul
         // Jika tidak, user akan diarahkan ke dashboard oleh ForcePasswordChangeGuard
         console.log('🔍 User role:', userData.role)
         console.log('🔍 Force password change:', userData.force_password_change)
         
-        // Redirect ke dashboard setelah delay singkat untuk memastikan state ter-update
+        // PERBAIKAN: Redirect ke dashboard menggunakan Next.js router (tanpa refresh)
         // ForcePasswordChangeGuard akan mengecek kondisi sebelum redirect
         setTimeout(() => {
-          window.location.href = '/dashboard'
+          console.log('🔄 Redirecting to dashboard...')
+          router.push('/dashboard')
         }, 100)
       } else {
+        console.error('❌ Invalid response structure from login API')
         throw new Error('Invalid response structure from login API')
       }
     } catch (error) {
-      console.error('Login error:', error)
+      console.error('❌ Login error in AuthContext:', error)
+      // PERBAIKAN: Pastikan error dilempar kembali ke component
       throw error
     } finally {
+      console.log('🏁 Login process completed, setting loading to false')
       setIsLoading(false)
     }
   }
@@ -141,9 +160,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Clear user data
       setUser(null)
       
-      // Redirect to login page
+      // PERBAIKAN: Gunakan Next.js router untuk navigasi tanpa refresh
       console.log('🔄 Redirecting to /login...')
-      window.location.href = '/login'
+      router.push('/login')
     }
   }
 

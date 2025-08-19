@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Swal from 'sweetalert2';
+import { useAuth } from '@/contexts/AuthContext';
 
 const changePasswordSchema = z.object({
   new_password: z.string().min(6, 'Password minimal 6 karakter'),
@@ -25,6 +26,8 @@ export default function ChangePasswordModal({ isOpen, onSuccess }: ChangePasswor
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const modalShownRef = useRef(false); // Flag untuk mencegah modal muncul dua kali
+  const { user } = useAuth();
 
   const {
     register,
@@ -40,12 +43,23 @@ export default function ChangePasswordModal({ isOpen, onSuccess }: ChangePasswor
   });
 
   useEffect(() => {
-    if (isOpen) {
+    // PERBAIKAN: Tambahkan flag untuk mencegah modal muncul dua kali
+    if (isOpen && !modalShownRef.current) {
+      modalShownRef.current = true;
       showChangePasswordModal();
+    } else if (!isOpen) {
+      // Reset flag ketika modal ditutup
+      modalShownRef.current = false;
     }
   }, [isOpen]);
 
   const showChangePasswordModal = () => {
+    // PERBAIKAN: Cek apakah sudah ada modal yang aktif
+    if (document.querySelector('.swal2-container')) {
+      console.log('⚠️ Modal already exists, skipping...');
+      return;
+    }
+
     Swal.fire({
       title: 'Ganti Password Wajib',
       html: `
@@ -168,6 +182,9 @@ export default function ChangePasswordModal({ isOpen, onSuccess }: ChangePasswor
         }
       },
       willClose: () => {
+        // Reset flag ketika modal ditutup
+        modalShownRef.current = false;
+        
         // Hapus class dari body saat modal ditutup
         document.body.removeAttribute('data-change-password-modal');
         
@@ -238,6 +255,12 @@ export default function ChangePasswordModal({ isOpen, onSuccess }: ChangePasswor
             throw new Error(errorData.message || 'Gagal mengubah password');
           }
           
+          // PERBAIKAN: Simpan flag session storage setelah password berhasil diubah
+          if (user?.id) {
+            sessionStorage.setItem(`passwordChanged_${user.id}`, 'true');
+            console.log('💾 Password change flag saved to session storage after successful change');
+          }
+          
           return true;
         } catch (error) {
           Swal.showValidationMessage(`Gagal mengubah password: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -253,6 +276,7 @@ export default function ChangePasswordModal({ isOpen, onSuccess }: ChangePasswor
           confirmButtonText: 'OK',
           confirmButtonColor: '#696cff',
         }).then(() => {
+          // PERBAIKAN: Panggil onSuccess untuk trigger refresh data
           onSuccess();
         });
       }

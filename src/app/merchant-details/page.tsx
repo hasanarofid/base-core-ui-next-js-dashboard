@@ -103,6 +103,9 @@ export default function MerchantDetailsPage() {
           ipConfig: data.data.config_json?.ipConfig || []
         })
         console.log('✅ Tenant data set successfully')
+        console.log('📊 Tenant status:', data.data.status)
+        console.log('📊 Status text:', getTenantStatusText(data.data.status))
+        console.log('📊 Status badge class:', getTenantStatusBadgeClass(data.data.status))
       }
     } catch (error) {
       console.error('❌ Error fetching tenant data:', error)
@@ -112,6 +115,50 @@ export default function MerchantDetailsPage() {
         message: 'Gagal mengambil data tenant'
       })
     }
+  }
+
+  // Helper function untuk mendapatkan teks status tenant
+  const getTenantStatusText = (status?: string) => {
+    console.log('🔍 Getting tenant status text for:', status)
+    
+    if (!status) {
+      console.log('📊 Status text: Tidak Diketahui (no status)')
+      return 'Tidak Diketahui'
+    }
+    
+    const statusMap: { [key: string]: string } = {
+      'active': 'Aktif',
+      'inactive': 'Tidak Aktif',
+      'pending': 'Pending',
+      'suspended': 'Ditangguhkan',
+      'deleted': 'Dihapus'
+    }
+    
+    const result = statusMap[status.toLowerCase()] || status
+    console.log('📊 Status text result:', result)
+    return result
+  }
+
+  // Helper function untuk mendapatkan badge class status tenant
+  const getTenantStatusBadgeClass = (status?: string) => {
+    console.log('🔍 Getting tenant status badge class for:', status)
+    
+    if (!status) {
+      console.log('📊 Badge class: bg-label-secondary (no status)')
+      return 'bg-label-secondary'
+    }
+    
+    const statusClassMap: { [key: string]: string } = {
+      'active': 'bg-label-success',
+      'inactive': 'bg-label-danger',
+      'pending': 'bg-label-warning',
+      'suspended': 'bg-label-info',
+      'deleted': 'bg-label-dark'
+    }
+    
+    const result = statusClassMap[status.toLowerCase()] || 'bg-label-secondary'
+    console.log('📊 Badge class result:', result)
+    return result
   }
 
   // Handle tenant update
@@ -354,7 +401,9 @@ export default function MerchantDetailsPage() {
                           </div>
                           <div className="d-flex justify-content-between align-items-center mb-3">
                             <span className="text-muted">Status Tenant</span>
-                            <span className="badge bg-label-success">{tenantData.status || 'Aktif'}</span>
+                            <span className={`badge ${getTenantStatusBadgeClass(tenantData.status)}`}>
+                              {getTenantStatusText(tenantData.status)}
+                            </span>
                           </div>
                           <div className="d-flex justify-content-between align-items-center mb-3">
                             <span className="text-muted">Tanggal Dibuat</span>

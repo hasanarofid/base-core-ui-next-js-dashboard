@@ -17,8 +17,9 @@ interface UserData {
   email: string;
   role: string;
   forcePasswordChange: boolean;
+  isVerified?: boolean; // Field isVerified dari database (optional)
   tenantId: string;
-  status?: string; // Tambahkan field status dari database
+  status?: string; // Field status dari database (optional)
   tenant?: {
     id: string;
     name: string;
@@ -73,6 +74,8 @@ export default function AccountDetailsPage() {
           email: data.user.email || ''
         })
         console.log('✅ User data set successfully')
+        console.log('📊 User verification status:', data.user.isVerified)
+        console.log('📊 User tenant status:', data.user.tenant?.status)
       }
     } catch (error) {
       console.error('❌ Error fetching user data:', error)
@@ -172,18 +175,35 @@ export default function AccountDetailsPage() {
 
   // Helper function untuk mendapatkan status akun sesuai database
   const getAccountStatus = () => {
-    // Gunakan status dari database jika ada
-    if (user?.status) {
-      return user.status === 'active' ? 'Aktif' : 'Tidak Aktif'
+    console.log('🔍 Checking account status - isVerified:', user?.isVerified, 'tenant status:', user?.tenant?.status)
+    
+    // Gunakan isVerified dari database untuk menentukan status akun
+    if (user?.isVerified !== undefined) {
+      const status = user.isVerified ? 'Terverifikasi' : 'Belum Terverifikasi'
+      console.log('📊 Account status based on isVerified:', status)
+      return status
     }
-    // Default status berdasarkan role dan kondisi lainnya
-    return 'Aktif'
+    // Fallback ke status tenant jika isVerified tidak ada
+    if (user?.tenant?.status) {
+      const status = user.tenant.status === 'active' ? 'Aktif' : 'Tidak Aktif'
+      console.log('📊 Account status based on tenant status:', status)
+      return status
+    }
+    // Default status
+    console.log('📊 Account status default: Belum Terverifikasi')
+    return 'Belum Terverifikasi'
   }
 
   // Helper function untuk mendapatkan badge class status akun
   const getAccountStatusBadgeClass = () => {
     const status = getAccountStatus()
-    return status === 'Aktif' ? 'bg-label-success' : 'bg-label-danger'
+    if (status === 'Terverifikasi' || status === 'Aktif') {
+      return 'bg-label-success'
+    } else if (status === 'Belum Terverifikasi') {
+      return 'bg-label-warning'
+    } else {
+      return 'bg-label-danger'
+    }
   }
 
   // Helper function untuk mendapatkan status password sesuai database

@@ -5,7 +5,7 @@ export const environment = {
   isDevelopment,
   isProduction,
   apiBaseUrl: '/api',
-  externalApiUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3030',
+  externalApiUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3032/api/v1',
   enableDebug: isDevelopment,
   enableErrorBoundary: true,
   enableToastNotifications: true,

@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest) {
   try {
-    const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    
+    // Add all search parameters to the query
+    searchParams.forEach((value, key) => {
+      if (value) {
+        queryParams.append(key, value);
+      }
+    });
 
     // Ambil cookies dari request
     const cookies = request.cookies
@@ -20,10 +27,10 @@ export async function GET(
 
     const externalApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3032/api/v1'
     
-    console.log('Fetching transaction detail from:', `${externalApiUrl}/transactions/${id}`)
+    console.log('Fetching transactions from:', `${externalApiUrl}/transactions?${queryParams.toString()}`)
     console.log('Using session cookie:', sessionCookie.name)
 
-    const response = await fetch(`${externalApiUrl}/transactions/${id}`, {
+    const response = await fetch(`${externalApiUrl}/transactions?${queryParams.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -34,19 +41,19 @@ export async function GET(
 
     const data = await response.json()
     
-    console.log('Transaction detail API response status:', response.status)
-    console.log('Transaction detail API response data:', data)
+    console.log('Transactions API response status:', response.status)
+    console.log('Transactions API response data:', data)
 
     if (!response.ok) {
       return NextResponse.json(
-        { message: data.message || 'Failed to get transaction detail' },
+        { message: data.message || 'Failed to get transactions data' },
         { status: response.status }
       )
     }
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error('Transaction detail API error:', error)
+    console.error('Transactions API error:', error)
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

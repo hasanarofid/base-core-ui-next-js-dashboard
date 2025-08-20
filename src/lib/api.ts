@@ -10,6 +10,7 @@ import {
   TenantPaymentMethodResponse,
   CreateTenantPaymentMethodData 
 } from '@/types/tenantPaymentMethod'
+import { Transaction, TransactionListResponse, TransactionFilters } from '@/types/transaction'
 
 // Membuat instance axios dengan konfigurasi default
 export const api = axios.create({
@@ -436,4 +437,29 @@ export async function deleteTenantPaymentMethodWithCookies(id: string): Promise<
 // Fungsi untuk mengambil data tenant payment method individual dengan cookies
 export async function getTenantPaymentMethodByIdWithCookies(id: string): Promise<TenantPaymentMethodResponse> {
   return apiWithCookies(`/tenant-payment-methods/${id}`);
+}
+
+// ===== TRANSACTION API FUNCTIONS =====
+
+// Fungsi untuk mengambil data transactions dengan cookies
+export async function getTransactionsWithCookies(filters?: TransactionFilters): Promise<TransactionListResponse> {
+  const queryParams = new URLSearchParams();
+  
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        queryParams.append(key, value);
+      }
+    });
+  }
+  
+  const url = queryParams.toString() ? `/transactions?${queryParams.toString()}` : '/transactions';
+  console.log('🔍 Calling transactions API with URL:', url);
+  return apiWithCookies(url);
+}
+
+// Fungsi untuk mengambil data transaction individual dengan cookies
+export async function getTransactionByIdWithCookies(id: string): Promise<{ status: string; data: Transaction }> {
+  console.log('🔍 Calling transaction detail API with ID:', id);
+  return apiWithCookies(`/transactions/${id}`);
 }

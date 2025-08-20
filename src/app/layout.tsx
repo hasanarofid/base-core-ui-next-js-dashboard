@@ -11,6 +11,7 @@ import "@/styles/template/demo.css"
 import "@/styles/template/theme-toggle.css"
 import "@/styles/sweetalert-custom.css"
 import "@/styles/force-password-change.css"
+import "@/styles/timeline.css"
 import VendorScripts from "@/components/VendorScripts";
 import PageScripts from "@/components/PageScripts";
 

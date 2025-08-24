@@ -7,10 +7,11 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import SecureGuard from '@/components/auth/SecureGuard'
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { User } from '@/types/user';
-import { getUsersWithCookies, deleteUserWithCookies } from '@/lib/api';
+import { getUsersWithCookies, deleteUserWithCookies, getUserDetailWithCookies } from '@/lib/api';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSweetAlert } from '@/lib/sweetalert-config';
 import Swal from 'sweetalert2';
+import UserDetailModal from '@/components/ui/UserDetailModal';
 
 /**
  * User Management Page
@@ -42,6 +43,11 @@ export default function UserManagementPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 10;
+  
+  // Modal state
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
 
   // Hook untuk SweetAlert dengan tema dinamis
   const sweetAlert = useSweetAlert();
@@ -191,8 +197,35 @@ export default function UserManagementPage() {
 
   const totalPages = Math.ceil((filteredUsers?.length || 0) / itemsPerPage);
 
-  const handleView = (user: User) => {
-    router.push(`/user-management/${user.id}`);
+  const handleView = async (user: User) => {
+    try {
+      setModalLoading(true);
+      setIsModalOpen(true);
+      
+      // Fetch detail user dari API
+      const response = await getUserDetailWithCookies(user.id);
+      
+      if (response && response.data) {
+        setSelectedUser(response.data);
+      } else {
+        // Fallback ke data yang sudah ada jika API gagal
+        setSelectedUser(user);
+        console.warn('Failed to fetch user detail, using existing data');
+      }
+    } catch (error) {
+      console.error('Error fetching user detail:', error);
+      // Fallback ke data yang sudah ada
+      setSelectedUser(user);
+      sweetAlert.error('Error', 'Gagal memuat detail user, menampilkan data yang tersedia');
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedUser(null);
+    setModalLoading(false);
   };
 
   // Handle delete user
@@ -471,6 +504,14 @@ export default function UserManagementPage() {
           </div>
         </DashboardLayout>
       </SecureGuard>
+
+      {/* User Detail Modal */}
+      <UserDetailModal
+        user={selectedUser}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        loading={modalLoading}
+      />
     </>
   )
 } 

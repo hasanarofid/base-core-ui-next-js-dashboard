@@ -335,6 +335,11 @@ export async function deleteUserWithCookies(id: string): Promise<{ message: stri
   })
 }
 
+// Fungsi untuk mendapatkan detail user dengan cookies
+export async function getUserDetailWithCookies(id: string): Promise<{ message: string; data: User }> {
+  return apiWithCookies(`/admin/users/${id}`);
+}
+
 // ===== PAYMENT METHOD API FUNCTIONS =====
 
 // Fungsi untuk mengambil data payment method (tanpa cookies)

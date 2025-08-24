@@ -1,6 +1,7 @@
 export interface User {
   id: string;
   fullName?: string; // Optional untuk kompatibilitas dengan API yang berbeda
+  full_name?: string; // Field dari response API
   email: string;
   password?: string; // Optional karena tidak akan ditampilkan di response
   role: string;

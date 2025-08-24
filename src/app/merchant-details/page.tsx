@@ -19,7 +19,7 @@ interface TenantData {
   contact_person: string;
   config_json: {
     callbackUrl?: string;
-    ipConfig?: string[];
+    ipWhitelist?: string;
     [key: string]: unknown;
   };
   status: string;
@@ -30,8 +30,8 @@ interface TenantData {
 }
 
 interface TenantResponse {
-  message: string;
-  data: TenantData;
+  message?: string;
+  data?: TenantData;
 }
 
 export default function MerchantDetailsPage() {
@@ -48,7 +48,7 @@ export default function MerchantDetailsPage() {
     email: '',
     contact_person: '',
     callbackUrl: '',
-    ipConfig: [] as string[]
+    ipWhitelist: ''
   })
 
   // Fetch tenant data from API
@@ -88,24 +88,27 @@ export default function MerchantDetailsPage() {
         throw new Error('Gagal mengambil data tenant')
       }
       
-      const data: TenantResponse = await response.json()
-      console.log('📦 Tenant data received:', data)
+      const responseData = await response.json()
+      console.log('📦 Tenant data received:', responseData)
       
-      if (data.data) {
-        setTenantData(data.data)
+      // Handle both response formats: { data: {...} } and direct data
+      const tenantData = responseData.data || responseData
+      
+      if (tenantData) {
+        setTenantData(tenantData)
         setTenantForm({
-          name: data.data.name || '',
-          logo_url: data.data.logo_url || '',
-          domain: data.data.domain || '',
-          email: data.data.email || '',
-          contact_person: data.data.contact_person || '',
-          callbackUrl: data.data.config_json?.callbackUrl || '',
-          ipConfig: data.data.config_json?.ipConfig || []
+          name: tenantData.name || '',
+          logo_url: tenantData.logo_url || '',
+          domain: tenantData.domain || '',
+          email: tenantData.email || '',
+          contact_person: tenantData.contact_person || '',
+          callbackUrl: tenantData.config_json?.callbackUrl || '',
+          ipWhitelist: tenantData.config_json?.ipWhitelist || ''
         })
         console.log('✅ Tenant data set successfully')
-        console.log('📊 Tenant status:', data.data.status)
-        console.log('📊 Status text:', getTenantStatusText(data.data.status))
-        console.log('📊 Status badge class:', getTenantStatusBadgeClass(data.data.status))
+        console.log('📊 Tenant status:', tenantData.status)
+        console.log('📊 Status text:', getTenantStatusText(tenantData.status))
+        console.log('📊 Status badge class:', getTenantStatusBadgeClass(tenantData.status))
       }
     } catch (error) {
       console.error('❌ Error fetching tenant data:', error)
@@ -200,7 +203,7 @@ export default function MerchantDetailsPage() {
           contact_person: tenantForm.contact_person,
           config_json: {
             callbackUrl: tenantForm.callbackUrl,
-            ipConfig: tenantForm.ipConfig
+            ipWhitelist: tenantForm.ipWhitelist
           }
         })
       })
@@ -409,14 +412,10 @@ export default function MerchantDetailsPage() {
                             <span className="text-muted">Tanggal Dibuat</span>
                             <span className="fw-semibold">{new Date(tenantData.createdAt).toLocaleDateString('id-ID')}</span>
                           </div>
-                          <div className="mb-3">
-                            <span className="text-muted d-block mb-2">IP Config</span>
-                            {tenantData.config_json?.ipConfig && tenantData.config_json.ipConfig.length > 0 ? (
-                              <div className="d-flex flex-wrap gap-1">
-                                {tenantData.config_json.ipConfig.map((ip, index) => (
-                                  <span key={index} className="badge bg-label-info me-1 mb-1">{ip}</span>
-                                ))}
-                              </div>
+                          <div className="d-flex justify-content-between align-items-center mb-3">
+                            <span className="text-muted">IP Whitelist</span>
+                            {tenantData.config_json?.ipWhitelist ? (
+                              <span className="badge bg-label-info">{tenantData.config_json.ipWhitelist}</span>
                             ) : (
                               <span className="text-muted">-</span>
                             )}
@@ -514,18 +513,18 @@ export default function MerchantDetailsPage() {
                           />
                         </div>
                         <div className="mb-3">
-                          <label className="form-label">IP Config (satu IP per baris)</label>
+                          <label className="form-label">IP Whitelist</label>
                           <textarea
                             className="form-control"
                             rows={3}
-                            value={tenantForm.ipConfig.join('\n')}
+                            value={tenantForm.ipWhitelist}
                             onChange={(e) => setTenantForm({
                               ...tenantForm, 
-                              ipConfig: e.target.value.split('\n').filter(ip => ip.trim() !== '')
+                              ipWhitelist: e.target.value
                             })}
-                            placeholder="192.168.1.1&#10;10.0.0.1&#10;172.16.0.1"
+                            placeholder="192.168.1.1"
                           />
-                          <small className="text-muted">Masukkan satu IP address per baris</small>
+                          <small className="text-muted">Masukkan IP address yang diizinkan</small>
                         </div>
                       </>
                     ) : (

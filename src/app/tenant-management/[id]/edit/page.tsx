@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useToast } from '@/contexts/ToastContext';
+import Swal from 'sweetalert2';
 
 const editTenantSchema = z.object({
   name: z.string().min(1, 'Nama tenant harus diisi'),
@@ -15,7 +16,7 @@ const editTenantSchema = z.object({
   email: z.string().email('Email harus valid'),
   contact_person: z.string().min(1, 'Kontak person harus diisi'),
   callbackUrl: z.string().url('URL callback harus valid').optional().or(z.literal('')),
-  ipConfig: z.string().optional().or(z.literal('')),
+  ipWhitelist: z.string().optional().or(z.literal('')),
 });
 
 type EditTenantForm = z.infer<typeof editTenantSchema>;
@@ -81,7 +82,7 @@ export default function EditTenantPage() {
         // Set config_json values
         const config = tenantData.config_json || {};
         setValue('callbackUrl', (config.callbackUrl as string) || '');
-        setValue('ipConfig', Array.isArray(config.ipConfig) ? config.ipConfig.join('\n') : '');
+        setValue('ipWhitelist', (config.ipWhitelist as string) || '');
       } catch (error) {
         console.error('Error fetching tenant:', error);
         showToast({ 
@@ -105,10 +106,14 @@ export default function EditTenantPage() {
     try {
       // Prepare the data with config_json
       const submitData = {
-        ...data,
+        name: data.name,
+        logo_url: data.logo_url,
+        domain: data.domain,
+        email: data.email,
+        contact_person: data.contact_person,
         config_json: {
           callbackUrl: data.callbackUrl || null,
-          ipConfig: data.ipConfig ? data.ipConfig.split('\n').filter(ip => ip.trim() !== '') : [],
+          ipWhitelist: data.ipWhitelist || null,
         }
       };
 
@@ -123,26 +128,47 @@ export default function EditTenantPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        showToast({ 
-          type: 'error', 
-          title: 'Error', 
-          message: result.message || 'Gagal memperbarui tenant' 
+        await Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: result.message || 'Gagal memperbarui tenant',
+          confirmButtonText: 'OK',
+          confirmButtonColor: '#dc3545',
+          customClass: {
+            popup: 'swal-custom-popup'
+          }
         });
         return;
       }
 
-      showToast({ 
-        type: 'success', 
-        title: 'Berhasil', 
-        message: 'Tenant berhasil diperbarui' 
+      // Show success alert
+      await Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: 'Tenant berhasil diperbarui',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#696cff',
+        timer: 3000,
+        timerProgressBar: true,
+        customClass: {
+          popup: 'swal-custom-popup'
+        }
       });
-      router.push(`/tenant-management/${tenantId}`);
+
+      // Redirect ke list tenant
+      router.push('/tenant-management');
     } catch (error) {
       console.error('Error updating tenant:', error);
-      showToast({ 
-        type: 'error', 
-        title: 'Error', 
-        message: 'Gagal memperbarui tenant' 
+      
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: error instanceof Error ? error.message : 'Gagal memperbarui tenant',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#dc3545',
+        customClass: {
+          popup: 'swal-custom-popup'
+        }
       });
     } finally {
       setUpdating(false);
@@ -318,15 +344,15 @@ export default function EditTenantPage() {
 
                 <div className="col-md-6">
                   <div className="form-group">
-                    <label className="form-label">IP Config</label>
+                    <label className="form-label">IP Whitelist</label>
                     <textarea
-                      className={`form-control ${errors.ipConfig ? 'is-invalid' : ''}`}
+                      className={`form-control ${errors.ipWhitelist ? 'is-invalid' : ''}`}
                       placeholder="192.168.1.1&#10;10.0.0.1&#10;172.16.0.1"
                       rows={3}
-                      {...register('ipConfig')}
+                      {...register('ipWhitelist')}
                     />
-                    {errors.ipConfig && (
-                      <div className="invalid-feedback">{errors.ipConfig.message}</div>
+                    {errors.ipWhitelist && (
+                      <div className="invalid-feedback">{errors.ipWhitelist.message}</div>
                     )}
                     <div className="form-text">Masukkan satu IP address per baris</div>
                   </div>

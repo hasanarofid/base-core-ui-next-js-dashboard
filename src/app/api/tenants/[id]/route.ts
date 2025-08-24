@@ -73,9 +73,22 @@ export async function PUT(
     const { id: tenantId } = await params
     const body = await request.json()
     
+    // Transform data untuk memastikan format yang benar
+    const transformedBody = {
+      name: body.name,
+      logo_url: body.logo_url,
+      domain: body.domain,
+      email: body.email,
+      contact_person: body.contact_person,
+      config_json: {
+        callbackUrl: body.config_json?.callbackUrl || null,
+        ipWhitelist: body.config_json?.ipWhitelist || null
+      }
+    }
+    
     console.log('Updating tenant data from:', `${externalApiUrl}/tenants/${tenantId}`)
     console.log('Using session cookie:', sessionCookie.name)
-    console.log('Update data:', body)
+    console.log('Update data:', transformedBody)
 
     const response = await fetch(`${externalApiUrl}/tenants/${tenantId}`, {
       method: 'PUT',
@@ -84,7 +97,7 @@ export async function PUT(
         'Accept': 'application/json',
         'Cookie': `${sessionCookie.name}=${sessionCookie.value}`,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(transformedBody),
     })
 
     const data = await response.json()
@@ -99,7 +112,13 @@ export async function PUT(
       )
     }
 
-    return NextResponse.json(data)
+    // Format response sesuai requirement
+    const formattedResponse = {
+      message: "Tenant updated successfully",
+      data: data.data || data
+    };
+
+    return NextResponse.json(formattedResponse)
   } catch (error) {
     console.error('Tenant update API error:', error)
     return NextResponse.json(

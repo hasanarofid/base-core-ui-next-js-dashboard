@@ -1,3 +1,8 @@
+export interface TenantConfig {
+  callbackUrl?: string | null;
+  ipWhitelist?: string | null;
+}
+
 export interface Tenant {
   id: string;
   name: string;
@@ -5,7 +10,7 @@ export interface Tenant {
   domain?: string;
   email: string;
   contact_person?: string;
-  config_json?: Record<string, unknown>;
+  config_json?: TenantConfig;
   status: 'pending' | 'active' | 'suspended';
   client_id?: string;
   client_key?: string;
@@ -25,7 +30,7 @@ export interface CreateTenantData {
   logo_url?: string;
   domain?: string;
   contact_person?: string;
-  config_json?: Record<string, unknown>;
+  config_json?: TenantConfig;
   status?: 'pending' | 'active' | 'suspended';
 }
 

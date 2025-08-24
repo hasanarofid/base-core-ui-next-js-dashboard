@@ -15,8 +15,8 @@ const createTenantSchema = z.object({
   domain: z.string().url('Domain harus valid').optional().or(z.literal('')),
   email: z.string().email('Email harus valid'),
   contact_person: z.string().min(1, 'Kontak person harus diisi'),
-  url_callback: z.string().url('URL callback harus valid').optional().or(z.literal('')),
-  ip_whitelist: z.string().optional().or(z.literal('')),
+  callbackUrl: z.string().url('URL callback harus valid').optional().or(z.literal('')),
+  ipWhitelist: z.string().optional().or(z.literal('')),
 });
 
 type CreateTenantForm = z.infer<typeof createTenantSchema>;
@@ -50,8 +50,8 @@ export default function CreateTenantPage() {
         email: data.email,
         contact_person: data.contact_person,
         config_json: {
-          url_callback: data.url_callback || null,
-          ip_whitelist: data.ip_whitelist || null,
+          callbackUrl: data.callbackUrl || null,
+          ipWhitelist: data.ipWhitelist || null,
         }
       };
 
@@ -223,12 +223,12 @@ export default function CreateTenantPage() {
                     <label className="form-label">URL Callback</label>
                     <input
                       type="url"
-                      className={`form-control ${errors.url_callback ? 'is-invalid' : ''}`}
+                      className={`form-control ${errors.callbackUrl ? 'is-invalid' : ''}`}
                       placeholder="https://example.com/callback"
-                      {...register('url_callback')}
+                      {...register('callbackUrl')}
                     />
-                    {errors.url_callback && (
-                      <div className="invalid-feedback">{errors.url_callback.message}</div>
+                    {errors.callbackUrl && (
+                      <div className="invalid-feedback">{errors.callbackUrl.message}</div>
                     )}
                     <div className="form-text">URL untuk menerima callback dari sistem</div>
                   </div>
@@ -238,15 +238,15 @@ export default function CreateTenantPage() {
                   <div className="form-group">
                     <label className="form-label">IP Whitelist</label>
                     <textarea
-                      className={`form-control ${errors.ip_whitelist ? 'is-invalid' : ''}`}
-                      placeholder="192.168.1.1&#10;10.0.0.1&#10;172.16.0.1"
+                      className={`form-control ${errors.ipWhitelist ? 'is-invalid' : ''}`}
+                      placeholder="192.168.1.1"
                       rows={3}
-                      {...register('ip_whitelist')}
+                      {...register('ipWhitelist')}
                     />
-                    {errors.ip_whitelist && (
-                      <div className="invalid-feedback">{errors.ip_whitelist.message}</div>
+                    {errors.ipWhitelist && (
+                      <div className="invalid-feedback">{errors.ipWhitelist.message}</div>
                     )}
-                    <div className="form-text">Masukkan satu IP address per baris</div>
+                    <div className="form-text">Masukkan IP address yang diizinkan</div>
                   </div>
                 </div>
               </div>

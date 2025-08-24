@@ -7,6 +7,11 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 
 import Image from 'next/image';
 
+interface TenantConfig {
+  callbackUrl?: string | null;
+  ipWhitelist?: string | null;
+}
+
 interface Tenant {
   id: string;
   name: string;
@@ -15,7 +20,7 @@ interface Tenant {
   email: string;
   contact_person: string;
   status: string;
-  config_json?: Record<string, unknown>;
+  config_json?: TenantConfig;
   client_id?: string;
   client_key?: string;
   lastLogin?: string;
@@ -244,7 +249,7 @@ export default function TenantViewPage() {
                     <div className="p-3 bg-light rounded">
                       <p className="text-muted mb-2 small fw-medium">URL Callback</p>
                       <code className="bg-white p-2 rounded d-block text-break fw-semibold small border">
-                        {(tenant.config_json?.url_callback as string) || 'Tidak tersedia'}
+                        {tenant.config_json?.callbackUrl || 'Tidak tersedia'}
                       </code>
                     </div>
                   </div>
@@ -252,11 +257,9 @@ export default function TenantViewPage() {
                     <div className="p-3 bg-light rounded">
                       <p className="text-muted mb-2 small fw-medium">IP Whitelist</p>
                       <div className="bg-white p-2 rounded border">
-                        {(tenant.config_json?.ip_whitelist as string) ? (
+                        {tenant.config_json?.ipWhitelist ? (
                           <div className="small">
-                            {(tenant.config_json?.ip_whitelist as string).split('\n').map((ip, index) => (
-                              <div key={index} className="text-break fw-semibold">{ip.trim()}</div>
-                            ))}
+                            <div className="text-break fw-semibold">{tenant.config_json.ipWhitelist}</div>
                           </div>
                         ) : (
                           <span className="text-muted small">Tidak tersedia</span>

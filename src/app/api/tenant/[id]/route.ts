@@ -86,6 +86,20 @@ export async function PUT(
     const body = await request.json()
     console.log('📦 Request body:', body)
 
+    // Transform data untuk memastikan format yang benar
+    const transformedBody = {
+      name: body.name,
+      logo_url: body.logo_url,
+      domain: body.domain,
+      email: body.email,
+      contact_person: body.contact_person,
+      config_json: {
+        callbackUrl: body.config_json?.callbackUrl || null,
+        ipWhitelist: body.config_json?.ipWhitelist || null
+      }
+    }
+    console.log('📦 Transformed body:', transformedBody)
+
     // Make request to external API
     const externalApiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3032/api/v1'}/tenant/${tenantId}`
     console.log('🌐 Making request to external API:', externalApiUrl)
@@ -97,7 +111,7 @@ export async function PUT(
         'Accept': 'application/json',
         'Cookie': `${sessionCookie.name}=${sessionCookie.value}`,
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(transformedBody)
     })
 
     console.log('📡 External API response status:', response.status)
@@ -114,7 +128,13 @@ export async function PUT(
     const data = await response.json()
     console.log('✅ Tenant data updated successfully:', data)
     
-    return NextResponse.json(data)
+    // Format response sesuai requirement
+    const formattedResponse = {
+      message: "Tenant updated successfully",
+      data: data.data || data
+    };
+    
+    return NextResponse.json(formattedResponse)
     
   } catch (error) {
     console.error('❌ Error in PUT /api/tenant/[id]:', error)

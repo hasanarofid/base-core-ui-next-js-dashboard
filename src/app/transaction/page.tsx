@@ -16,32 +16,11 @@ import * as z from 'zod';
 interface Transaction {
   id: string;
   transaction_code: string;
-  tenant_id: string;
-  user_id: string;
-  tenant_payment_method_id: string;
+  reference_code: string;
+  status: string;
+  total_amount: string;
   amount: string;
   fee_amount: string;
-  total_amount: string;
-  status: string;
-  reference_code: string;
-  meta_json: {
-    qrUrl?: string;
-    gateway?: string;
-    isStatic?: boolean;
-    expiredAt?: string;
-    qrContent?: string | null;
-    contractId?: string;
-    terminalId?: string | null;
-    description?: string;
-    customer_name?: string;
-    winpay_reference?: string;
-    partnerReferenceNo?: string;
-    gateway_response_code?: string;
-    gateway_response_message?: string;
-  };
-  gateway_fee_amount: string;
-  tenant_net_amount: string;
-  platform_revenue: string;
   createdAt: string;
   updatedAt: string;
   tenantPaymentMethod: {
@@ -63,6 +42,32 @@ interface Transaction {
     id: string;
     name: string;
   };
+}
+
+// Interface untuk detail transaction (dengan logs)
+interface TransactionDetail extends Transaction {
+  logs: Array<{
+    id: string;
+    action: string;
+    message: string;
+    status: string;
+    metadata: {
+      isStatic?: boolean;
+      expiredAt?: string;
+      qrContent?: string | null;
+      contractId?: string;
+      terminalId?: string | null;
+      description?: string;
+      customer_name?: string;
+      partnerReferenceNo?: string;
+      gateway_response_code?: string;
+      gateway_response_message?: string;
+      paidAt?: string;
+      paidAmount?: string;
+      referenceCode?: string;
+    };
+    created_at: string;
+  }>;
 }
 
 interface TransactionResponse {
@@ -90,14 +95,26 @@ export default function TransactionPage() {
   const { showToast } = useToast()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingTable, setLoadingTable] = useState(false)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
+  const [selectedTransaction, setSelectedTransaction] = useState<TransactionDetail | null>(null)
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [loadingDetail, setLoadingDetail] = useState(false)
   const [loadingAdd, setLoadingAdd] = useState(false)
   const [paymentMethods, setPaymentMethods] = useState<{id: string, payment_method_id: string, fee_type: string, fee_value: number, status: string, paymentMethod?: {code: string, type: string}}[]>([])
   const [userData, setUserData] = useState<{fullName: string, email: string} | null>(null)
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  
+  // Search and filter state
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [dateFilter, setDateFilter] = useState('all')
 
   // Form hook untuk add transaction
   const {
@@ -154,7 +171,7 @@ export default function TransactionPage() {
           
           // Fetch transactions and payment methods after getting tenant ID
           await Promise.all([
-            fetchTransactions(data.user.tenantId),
+            fetchTransactions(data.user.tenantId, currentPage, itemsPerPage),
             fetchPaymentMethods(data.user.tenantId)
           ])
         } else {
@@ -175,12 +192,37 @@ export default function TransactionPage() {
     fetchUserData()
   }, [showToast])
 
+  // Effect untuk memantau perubahan filter dan search
+  useEffect(() => {
+    if (tenantId && !loading) {
+      fetchTransactions(tenantId, currentPage, itemsPerPage)
+    }
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter, dateFilter])
+
   // Fetch transactions data from API
-  const fetchTransactions = async (tenantId: string) => {
+  const fetchTransactions = async (tenantId: string, page: number = 1, limit: number = 10) => {
     try {
-      console.log('🔍 Fetching transactions for tenant:', tenantId)
+      setLoadingTable(true)
+      console.log('🔍 Fetching transactions for tenant:', tenantId, 'page:', page, 'limit:', limit)
       
-      const response = await fetch(`/api/tenants/${tenantId}/transactions`, {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString()
+      })
+      
+      if (searchTerm) {
+        params.append('search', searchTerm)
+      }
+      
+      if (statusFilter !== 'all') {
+        params.append('status', statusFilter)
+      }
+      
+      if (dateFilter !== 'all') {
+        params.append('date', dateFilter)
+      }
+      
+      const response = await fetch(`/api/tenants/${tenantId}/transactions?${params.toString()}`, {
         credentials: 'include'
       })
       
@@ -191,8 +233,11 @@ export default function TransactionPage() {
       const data: TransactionResponse = await response.json()
       console.log('📦 Transactions data received:', data)
       
-      if (data.data && data.data.transactions) {
+      if (data.data) {
         setTransactions(data.data.transactions)
+        setTotalItems(data.data.total)
+        setTotalPages(Math.ceil(data.data.total / limit))
+        setCurrentPage(data.data.page)
         console.log('✅ Transactions data set successfully')
       }
     } catch (error) {
@@ -202,6 +247,8 @@ export default function TransactionPage() {
         title: 'Error',
         message: 'Gagal mengambil data transaksi'
       })
+    } finally {
+      setLoadingTable(false)
     }
   }
 
@@ -300,7 +347,7 @@ export default function TransactionPage() {
       reset()
       
       // Refresh transactions list
-      await fetchTransactions(tenantId)
+      await fetchTransactions(tenantId, currentPage, itemsPerPage)
 
       // Show toast notification
       showToast({
@@ -362,6 +409,41 @@ export default function TransactionPage() {
     } finally {
       setLoadingDetail(false)
     }
+  }
+
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    if (tenantId) {
+      fetchTransactions(tenantId, page, itemsPerPage)
+    }
+  }
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (limit: number) => {
+    setItemsPerPage(limit)
+    setCurrentPage(1)
+    if (tenantId) {
+      fetchTransactions(tenantId, 1, limit)
+    }
+  }
+
+  // Handle search
+  const handleSearch = () => {
+    setCurrentPage(1)
+  }
+
+  // Handle filter changes
+  const handleFilterChange = () => {
+    setCurrentPage(1)
+  }
+
+  // Clear filters
+  const clearFilters = () => {
+    setSearchTerm('')
+    setStatusFilter('all')
+    setDateFilter('all')
+    setCurrentPage(1)
   }
 
   const getStatusBadge = (status: string) => {
@@ -532,88 +614,269 @@ export default function TransactionPage() {
             {/* Tabel Transaksi */}
             <div className="card">
               <div className="card-header">
-                <h5 className="card-title mb-0">Daftar Transaksi</h5>
+                <div className="d-flex justify-content-between align-items-center">
+                  <h5 className="card-title mb-0">Daftar Transaksi</h5>
+                  <div className="d-flex gap-2">
+                    <button 
+                      className="btn btn-sm btn-outline-secondary"
+                      onClick={clearFilters}
+                      disabled={loadingTable}
+                    >
+                      {loadingTable ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-1" role="status"></span>
+                          Clearing...
+                        </>
+                      ) : (
+                        <>
+                          <i className="ti ti-refresh me-1"></i>
+                          Clear Filters
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
+              
+              {/* Search and Filter Section */}
+              <div className={`card-body border-bottom ${loadingTable ? 'opacity-50 pointer-events-none' : ''}`}>
+                <div className="row g-3">
+                  <div className="col-md-4">
+                    <div className="input-group">
+                      <span className="input-group-text">
+                        <i className="ti ti-search"></i>
+                      </span>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Search transaction code, reference code, or email..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                        disabled={loadingTable}
+                      />
+                      <button 
+                        className="btn btn-primary"
+                        onClick={handleSearch}
+                        disabled={loadingTable}
+                      >
+                        {loadingTable ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-1" role="status"></span>
+                            Searching...
+                          </>
+                        ) : (
+                          'Search'
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="col-md-3">
+                    <select
+                      className="form-select"
+                      value={statusFilter}
+                      onChange={(e) => {
+                        setStatusFilter(e.target.value)
+                        handleFilterChange()
+                      }}
+                      disabled={loadingTable}
+                    >
+                      <option value="all">All Status</option>
+                      <option value="paid">Paid</option>
+                      <option value="pending">Pending</option>
+                      <option value="failed">Failed</option>
+                      <option value="expired">Expired</option>
+                    </select>
+                  </div>
+                  <div className="col-md-3">
+                    <select
+                      className="form-select"
+                      value={dateFilter}
+                      onChange={(e) => {
+                        setDateFilter(e.target.value)
+                        handleFilterChange()
+                      }}
+                      disabled={loadingTable}
+                    >
+                      <option value="all">All Dates</option>
+                      <option value="today">Today</option>
+                      <option value="yesterday">Yesterday</option>
+                      <option value="week">This Week</option>
+                      <option value="month">This Month</option>
+                    </select>
+                  </div>
+                  <div className="col-md-2">
+                    <select
+                      className="form-select"
+                      value={itemsPerPage}
+                      onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                      disabled={loadingTable}
+                    >
+                      <option value={5}>5 per page</option>
+                      <option value={10}>10 per page</option>
+                      <option value={20}>20 per page</option>
+                      <option value={50}>50 per page</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
               <div className="card-body">
-                {transactions.length === 0 ? (
+                {loadingTable ? (
+                  <div className="text-center py-4">
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <p className="text-muted mt-3">Memuat data transaksi...</p>
+                  </div>
+                ) : transactions.length === 0 ? (
                   <div className="text-center py-4">
                     <i className="ti ti-receipt text-muted" style={{ fontSize: '3rem' }}></i>
                     <p className="text-muted mt-3">Belum ada transaksi</p>
                   </div>
                 ) : (
-                  <div className="table-responsive">
-                    <table className="table table-striped">
-                      <thead>
-                        <tr>
-                          <th>Transaction Code</th>
-                          <th>Customer</th>
-                          <th>Amount</th>
-                          <th>Payment Method</th>
-                          <th>Status</th>
-                          <th>Created At</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {transactions.map((transaction) => (
-                          <tr key={transaction.id}>
-                            <td>
-                              <span className="fw-semibold">{transaction.transaction_code}</span>
-                              <br />
-                              <small className="text-muted">{transaction.reference_code}</small>
-                            </td>
-                            <td>
-                              <div>
-                                <h6 className="mb-1">{transaction.meta_json?.customer_name || 'N/A'}</h6>
-                                <small className="text-muted">{transaction.user.email}</small>
-                              </div>
-                            </td>
-                            <td>
-                              <div>
-                                <h6 className="mb-1">{formatCurrency(transaction.amount)}</h6>
-                                <small className="text-muted">Fee: {formatCurrency(transaction.fee_amount)}</small>
-                              </div>
-                            </td>
-                            <td>
-                              <div className="d-flex align-items-center">
-                                {transaction.tenantPaymentMethod?.paymentMethod?.logo_url && (
-                                  <img 
-                                    src={transaction.tenantPaymentMethod.paymentMethod.logo_url} 
-                                    alt={transaction.tenantPaymentMethod.paymentMethod.code}
-                                    style={{ width: '24px', height: '24px', marginRight: '8px' }}
-                                  />
-                                )}
-                                <span>{transaction.tenantPaymentMethod?.paymentMethod?.code || 'N/A'}</span>
-                              </div>
-                            </td>
-                            <td>{getStatusBadge(transaction.status)}</td>
-                            <td>
-                              <span className="text-muted">{formatDate(transaction.createdAt)}</span>
-                            </td>
-                                                         <td>
-                               <button 
+                  <>
+                    <div className="table-responsive">
+                      <table className={`table table-striped table-hover ${loadingTable ? 'opacity-50 pointer-events-none' : ''}`}>
+                        <thead>
+                          <tr>
+                            <th>Transaction Code</th>
+                            <th>Customer</th>
+                            <th>Amount</th>
+                            <th>Payment Method</th>
+                            <th>Status</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {transactions.map((transaction) => (
+                            <tr key={transaction.id} className={loadingTable ? 'opacity-50 pointer-events-none' : ''}>
+                              <td>
+                                <span className="fw-semibold">{transaction.transaction_code}</span>
+                                <br />
+                                <small className="text-muted">{transaction.reference_code}</small>
+                              </td>
+                              <td>
+                                <div>
+                                  <h6 className="mb-1">{transaction.user.email}</h6>
+                                  <small className="text-muted">User ID: {transaction.user.id.substring(0, 8)}...</small>
+                                </div>
+                              </td>
+                              <td>
+                                <div>
+                                  <h6 className="mb-1">{formatCurrency(transaction.amount)}</h6>
+                                  <small className="text-muted">Fee: {formatCurrency(transaction.fee_amount)}</small>
+                                </div>
+                              </td>
+                              <td>
+                                <div className="d-flex align-items-center">
+                                  {transaction.tenantPaymentMethod?.paymentMethod?.logo_url && (
+                                    <img 
+                                      src={transaction.tenantPaymentMethod.paymentMethod.logo_url} 
+                                      alt={transaction.tenantPaymentMethod.paymentMethod.code}
+                                      style={{ width: '24px', height: '24px', marginRight: '8px' }}
+                                    />
+                                  )}
+                                  <div>
+                                    <div className="fw-semibold">{transaction.tenantPaymentMethod?.paymentMethod?.code || 'N/A'}</div>
+                                    <small className="text-muted">{transaction.tenantPaymentMethod?.paymentMethod?.type || 'N/A'}</small>
+                                  </div>
+                                </div>
+                              </td>
+                              <td>{getStatusBadge(transaction.status)}</td>
+                              <td>
+                                <span className="text-muted">{formatDate(transaction.createdAt)}</span>
+                              </td>
+                              <td>
+                                                               <button 
                                  className="btn btn-sm btn-outline-primary"
                                  onClick={() => handleViewDetail(transaction)}
-                                 disabled={loadingDetail}
+                                 disabled={loadingDetail || loadingTable}
                                >
-                                 {loadingDetail ? (
-                                   <>
-                                     <span className="spinner-border spinner-border-sm me-1" role="status"></span>
-                                     Loading...
-                                   </>
-                                 ) : (
-                                   <>
-                                     <i className="ti ti-eye me-1"></i>
-                                     Detail
-                                   </>
-                                 )}
-                               </button>
-                             </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                                  {loadingDetail ? (
+                                    <>
+                                      <span className="spinner-border spinner-border-sm me-1" role="status"></span>
+                                      Loading...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <i className="ti ti-eye me-1"></i>
+                                      Detail
+                                    </>
+                                  )}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className={`d-flex justify-content-between align-items-center mt-4 ${loadingTable ? 'opacity-50 pointer-events-none' : ''}`}>
+                        <div className="text-muted">
+                          {loadingTable ? (
+                            <span className="d-flex align-items-center">
+                              <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                              Loading...
+                            </span>
+                          ) : (
+                            `Showing ${((currentPage - 1) * itemsPerPage) + 1} to ${Math.min(currentPage * itemsPerPage, totalItems)} of ${totalItems} entries`
+                          )}
+                        </div>
+                        <nav aria-label="Transaction pagination" className={loadingTable ? 'opacity-50 pointer-events-none' : ''}>
+                          <ul className="pagination pagination-sm mb-0">
+                            <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                              <button 
+                                className="page-link"
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1 || loadingTable}
+                              >
+                                <i className="ti ti-chevron-left"></i>
+                              </button>
+                            </li>
+                            
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                              let pageNum
+                              if (totalPages <= 5) {
+                                pageNum = i + 1
+                              } else if (currentPage <= 3) {
+                                pageNum = i + 1
+                              } else if (currentPage >= totalPages - 2) {
+                                pageNum = totalPages - 4 + i
+                              } else {
+                                pageNum = currentPage - 2 + i
+                              }
+                              
+                              return (
+                                <li key={pageNum} className={`page-item ${currentPage === pageNum ? 'active' : ''}`}>
+                                  <button 
+                                    className="page-link"
+                                    onClick={() => handlePageChange(pageNum)}
+                                    disabled={loadingTable}
+                                  >
+                                    {pageNum}
+                                  </button>
+                                </li>
+                              )
+                            })}
+                            
+                            <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                              <button 
+                                className="page-link"
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages || loadingTable}
+                              >
+                                <i className="ti ti-chevron-right"></i>
+                              </button>
+                            </li>
+                          </ul>
+                        </nav>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -668,8 +931,8 @@ export default function TransactionPage() {
                       <div className="col-md-6">
                         <h6 className="mb-3">Informasi Customer</h6>
                         <div className="d-flex justify-content-between align-items-center mb-2">
-                          <span className="text-muted">Customer Name</span>
-                          <span className="fw-semibold">{selectedTransaction.meta_json?.customer_name || 'N/A'}</span>
+                          <span className="text-muted">Customer Email</span>
+                          <span className="fw-semibold">{selectedTransaction.user.email || 'N/A'}</span>
                         </div>
                         <div className="d-flex justify-content-between align-items-center mb-2">
                           <span className="text-muted">Email</span>
@@ -680,8 +943,8 @@ export default function TransactionPage() {
                           <span className="fw-semibold">{selectedTransaction.tenantPaymentMethod?.paymentMethod?.code || 'N/A'}</span>
                         </div>
                         <div className="d-flex justify-content-between align-items-center mb-2">
-                          <span className="text-muted">Gateway</span>
-                          <span className="fw-semibold">{selectedTransaction.meta_json?.gateway || 'N/A'}</span>
+                          <span className="text-muted">Payment Method Type</span>
+                          <span className="fw-semibold">{selectedTransaction.tenantPaymentMethod?.paymentMethod?.type || 'N/A'}</span>
                         </div>
                         <div className="d-flex justify-content-between align-items-center mb-2">
                           <span className="text-muted">Created At</span>
@@ -693,10 +956,38 @@ export default function TransactionPage() {
                         </div>
                       </div>
                     </div>
-                    {selectedTransaction.meta_json?.description && (
-                      <div className="mt-3">
-                        <h6 className="mb-2">Description</h6>
-                        <p className="text-muted">{selectedTransaction.meta_json.description}</p>
+                    
+                    {/* Transaction Logs */}
+                    {selectedTransaction.logs && selectedTransaction.logs.length > 0 && (
+                      <div className="mt-4">
+                        <h6 className="mb-3">Riwayat Transaksi</h6>
+                        <div className="position-relative">
+                          {selectedTransaction.logs.map((log, index) => (
+                            <div key={log.id} className="d-flex mb-3">
+                              <div className="flex-shrink-0 me-3">
+                                <div className="bg-primary rounded-circle d-flex align-items-center justify-content-center" style={{width: '32px', height: '32px'}}>
+                                  <i className="ti ti-clock text-white" style={{fontSize: '14px'}}></i>
+                                </div>
+                              </div>
+                              <div className="flex-grow-1">
+                                <div className="d-flex justify-content-between align-items-start mb-1">
+                                  <h6 className="mb-0">{log.message}</h6>
+                                  <small className="text-muted">{formatDate(log.created_at)}</small>
+                                </div>
+                                <p className="text-muted mb-1">Status: {getStatusBadge(log.status)}</p>
+                                {log.metadata?.description && (
+                                  <p className="text-muted mb-1">Deskripsi: {log.metadata.description}</p>
+                                )}
+                                {log.metadata?.customer_name && (
+                                  <p className="text-muted mb-1">Customer: {log.metadata.customer_name}</p>
+                                )}
+                                {log.metadata?.gateway_response_message && (
+                                  <p className="text-muted mb-0">Response: {log.metadata.gateway_response_message}</p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>

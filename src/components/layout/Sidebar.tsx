@@ -123,11 +123,11 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       href: '/client-credentials',
       icon: 'ti ti-key'
     },
-    {
-      title: 'Global Config',
-      href: '/global-config',
-      icon: 'ti ti-settings'
-    },
+    // {
+    //   title: 'Global Config',
+    //   href: '/global-config',
+    //   icon: 'ti ti-settings'
+    // },
     {
       title: 'Transaction Monitoring',
       href: '/transaction-monitoring',
@@ -138,16 +138,16 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       href: '/logs-notifications',
       icon: 'ti ti-bell'
     },
-    {
-      title: 'Reports',
-      href: '/reports',
-      icon: 'ti ti-chart-bar'
-    },
-    {
-      title: 'System Settings',
-      href: '/system-settings',
-      icon: 'ti ti-settings'
-    }
+    // {
+    //   title: 'Reports',
+    //   href: '/reports',
+    //   icon: 'ti ti-chart-bar'
+    // },
+    // {
+    //   title: 'System Settings',
+    //   href: '/system-settings',
+    //   icon: 'ti ti-settings'
+    // }
   ]
 
   // Menu items untuk Admin Tenant (sesuai permintaan)

@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { LoginUser } from '@/types/auth'
+import { useToken } from '@/hooks/useToken'
 
 interface AuthContextType {
   user: LoginUser | null
@@ -20,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<LoginUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
+  const { saveToken, removeToken } = useToken()
 
   const checkAuth = async () => {
     try {
@@ -111,6 +113,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // Set user data (token disimpan dalam cookies oleh API)
         setUser(userData)
+        
+        // Simpan token di localStorage untuk Socket.IO
+        if (data.data.token) {
+          saveToken(data.data.token)
+          console.log('🔑 Token saved to localStorage:', data.data.token.substring(0, 20) + '...')
+        } else {
+          console.warn('⚠️ No token found in response data')
+        }
+        
         console.log('🎯 User set successfully:', userData)
         
         // PERBAIKAN: Gunakan Next.js router untuk navigasi tanpa refresh
@@ -159,6 +170,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('🧹 Clearing user data and redirecting...')
       // Clear user data
       setUser(null)
+      
+      // Hapus token dari localStorage
+      removeToken()
       
       // PERBAIKAN: Gunakan Next.js router untuk navigasi tanpa refresh
       console.log('🔄 Redirecting to /login...')

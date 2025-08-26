@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import ThemeToggle from '@/components/ui/ThemeToggle'
+import { NotificationList } from '@/components/ui/NotificationList'
+import { SocketStatus } from '@/components/ui/SocketStatus'
 
 interface HeaderProps {
   onToggleSidebar?: () => void
@@ -14,43 +16,14 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
   const { logout, user } = useAuth()
   const router = useRouter()
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false)
-  const [isNotificationsDropdownOpen, setIsNotificationsDropdownOpen] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const userDropdownRef = React.useRef<HTMLLIElement>(null)
-  const notificationsDropdownRef = React.useRef<HTMLLIElement>(null)
-
-  const notifications = [
-    {
-      id: 1,
-      title: 'New user registered',
-      message: 'John Doe has registered as a new tenant',
-      time: '2 minutes ago',
-      type: 'user'
-    },
-    {
-      id: 2,
-      title: 'Payment received',
-      message: 'Payment of $299 has been received from Tenant ABC',
-      time: '1 hour ago',
-      type: 'payment'
-    },
-    {
-      id: 3,
-      title: 'System update',
-      message: 'System maintenance completed successfully',
-      time: '3 hours ago',
-      type: 'system'
-    }
-  ]
 
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
         setIsUserDropdownOpen(false)
-      }
-      if (notificationsDropdownRef.current && !notificationsDropdownRef.current.contains(event.target as Node)) {
-        setIsNotificationsDropdownOpen(false)
       }
     }
 
@@ -84,32 +57,10 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
           }
         }
       }
-
-      if (isNotificationsDropdownOpen && notificationsDropdownRef.current) {
-        const dropdown = notificationsDropdownRef.current.querySelector('.dropdown-menu') as HTMLElement
-        if (dropdown) {
-          const rect = notificationsDropdownRef.current.getBoundingClientRect()
-          const viewportHeight = window.innerHeight
-          const dropdownHeight = dropdown.offsetHeight
-          
-          // Check if dropdown would go below viewport
-          if (rect.bottom + dropdownHeight > viewportHeight) {
-            dropdown.style.top = 'auto'
-            dropdown.style.bottom = '100%'
-            dropdown.style.marginTop = '0'
-            dropdown.style.marginBottom = '0.5rem'
-          } else {
-            dropdown.style.top = '100%'
-            dropdown.style.bottom = 'auto'
-            dropdown.style.marginTop = '0.5rem'
-            dropdown.style.marginBottom = '0'
-          }
-        }
-      }
     }
 
     // Position dropdowns when they open
-    if (isUserDropdownOpen || isNotificationsDropdownOpen) {
+    if (isUserDropdownOpen) {
       // Small delay to ensure DOM is updated
       setTimeout(positionDropdowns, 10)
     }
@@ -117,20 +68,12 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
     // Reposition on window resize
     window.addEventListener('resize', positionDropdowns)
     return () => window.removeEventListener('resize', positionDropdowns)
-  }, [isUserDropdownOpen, isNotificationsDropdownOpen])
+  }, [isUserDropdownOpen])
 
   const toggleUserDropdown = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     setIsUserDropdownOpen(!isUserDropdownOpen)
-    setIsNotificationsDropdownOpen(false)
-  }
-
-  const toggleNotificationsDropdown = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsNotificationsDropdownOpen(!isNotificationsDropdownOpen)
-    setIsUserDropdownOpen(false)
   }
 
   const handleLogout = async () => {
@@ -143,9 +86,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
     } catch (error) {
       console.error('Logout error:', error)
       // Fallback: clear local storage dan redirect manual
-      localStorage.removeItem('token')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('user')
+      localStorage.removeItem('auth_token')
       setIsLoggingOut(false)
       router.push('/login')
     }
@@ -203,92 +144,14 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
             <ThemeToggle size="md" />
           </li>
 
-          {/* Notifications */}
-          <li className="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-1" ref={notificationsDropdownRef}>
-            <button
-              type="button"
-              className="nav-link dropdown-toggle hide-arrow"
-              onClick={toggleNotificationsDropdown}
-              style={{ border: 'none', background: 'none' }}
-            >
-              <i className="ti ti-bell ti-md"></i>
-              <span className="badge bg-danger rounded-pill badge-notifications">3</span>
-            </button>
+          {/* Socket Status */}
+          <li className="nav-item me-2 me-xl-0">
+            <SocketStatus />
+          </li>
 
-            {isNotificationsDropdownOpen && (
-              <ul className="dropdown-menu dropdown-menu-end py-0 show" style={{
-                position: 'absolute',
-                top: '100%',
-                right: 0,
-                left: 'auto',
-                zIndex: 9999,
-                minWidth: '320px',
-                maxWidth: '400px',
-                maxHeight: '400px',
-                marginTop: '0.5rem',
-                boxShadow: '0 0.25rem 1rem rgba(161, 172, 184, 0.45)',
-                border: '0 solid #d9dee3',
-                borderRadius: '0.5rem',
-                overflowY: 'auto'
-              }}>
-                <li className="dropdown-menu-header border-bottom">
-                  <div className="dropdown-header d-flex align-items-center py-3">
-                    <h5 className="text-body mb-0 me-auto">Notifications</h5>
-                    <button
-                      type="button"
-                      className="dropdown-notifications-all text-body"
-                      data-bs-toggle="tooltip"
-                      data-bs-placement="top"
-                      title="Mark all as read"
-                      style={{ border: 'none', background: 'none', padding: '4px' }}
-                    >
-                      <i className="ti ti-mail-opened fs-4"></i>
-                    </button>
-                  </div>
-                </li>
-                <li className="dropdown-notifications-list scrollable-container">
-                  <ul className="list-group list-group-flush">
-                    {notifications.map((notification) => (
-                      <li key={notification.id} className="list-group-item list-group-item-action dropdown-notifications-item">
-                        <div className="d-flex">
-                          <div className="flex-shrink-0 me-3">
-                            <div className="avatar">
-                              <span className="avatar-initial rounded-circle bg-label-primary">
-                                {notification.type === 'user' && <i className="ti ti-user"></i>}
-                                {notification.type === 'payment' && <i className="ti ti-credit-card"></i>}
-                                {notification.type === 'system' && <i className="ti ti-settings"></i>}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex-grow-1">
-                            <h6 className="mb-1">{notification.title}</h6>
-                            <p className="mb-0">{notification.message}</p>
-                            <small className="text-muted">{notification.time}</small>
-                          </div>
-                          <div className="flex-shrink-0 dropdown-notifications-actions">
-                            <button type="button" className="dropdown-notifications-read" style={{ border: 'none', background: 'none', padding: '4px' }}>
-                              <span className="badge badge-dot"></span>
-                            </button>
-                            <button type="button" className="dropdown-notifications-archive" style={{ border: 'none', background: 'none', padding: '4px' }}>
-                              <span className="ti ti-x"></span>
-                            </button>
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-                <li className="dropdown-menu-footer border-top">
-                  <button
-                    type="button"
-                    className="dropdown-item d-flex justify-content-center text-primary p-2 h-px-40 mb-1 align-items-center"
-                    style={{ border: 'none', background: 'none', width: '100%' }}
-                  >
-                    View all notifications
-                  </button>
-                </li>
-              </ul>
-            )}
+          {/* Notifications */}
+          <li className="nav-item me-3 me-xl-1">
+            <NotificationList />
           </li>
 
           {/* User Dropdown */}

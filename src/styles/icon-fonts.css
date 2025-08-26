@@ -1,0 +1,73 @@
+/* Import icon fonts */
+@import url('/theme/assets/vendor/fonts/fontawesome.css');
+@import url('/theme/assets/vendor/fonts/tabler-icons.css');
+@import url('/theme/assets/vendor/fonts/flag-icons.css');
+
+/* Ensure icons are visible */
+.ti {
+  display: inline-block !important;
+  font-family: "tabler-icons" !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  font-variant: normal !important;
+  text-transform: none !important;
+  line-height: 1 !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+.tf-icons {
+  display: inline-block !important;
+}
+
+.menu-icon {
+  display: inline-block !important;
+}
+
+/* Ensure menu icons are visible */
+.menu-icon.tf-icons {
+  display: inline-block !important;
+  font-size: 1.25rem !important;
+  line-height: 1 !important;
+}
+
+/* Force icon display */
+[class*="ti-"]::before {
+  display: inline-block !important;
+  font-family: "tabler-icons" !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  font-variant: normal !important;
+  text-transform: none !important;
+  line-height: 1 !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Ensure all icon elements are visible */
+i[class*="ti-"] {
+  display: inline-block !important;
+  font-family: "tabler-icons" !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  font-variant: normal !important;
+  text-transform: none !important;
+  line-height: 1 !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Menu specific styles */
+.menu-icon {
+  display: inline-block !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  margin-right: 0.5rem !important;
+}
+
+.menu-icon.tf-icons {
+  display: inline-block !important;
+  font-size: 1.25rem !important;
+  line-height: 1 !important;
+  vertical-align: middle !important;
+}

@@ -3,7 +3,9 @@ import { Public_Sans } from "next/font/google";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { SocketProvider } from "@/contexts/SocketContext";
 import ForcePasswordChangeGuard from "@/components/auth/ForcePasswordChangeGuard";
+import { NotificationWrapper } from "@/components/layout/NotificationWrapper";
 
 import "@/styles/template/core.css"
 import "@/styles/template/theme-default.css"
@@ -59,14 +61,17 @@ export default function RootLayout({
         <link
           rel="stylesheet"
           href="/theme/assets/vendor/fonts/fontawesome.css"
+          crossOrigin="anonymous"
         />
         <link
           rel="stylesheet"
           href="/theme/assets/vendor/fonts/tabler-icons.css"
+          crossOrigin="anonymous"
         />
         <link
           rel="stylesheet"
           href="/theme/assets/vendor/fonts/flag-icons.css"
+          crossOrigin="anonymous"
         />
       </head>
 
@@ -76,11 +81,15 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <AuthProvider>
-            <ToastProvider>
-              <ForcePasswordChangeGuard>
-                {children}
-              </ForcePasswordChangeGuard>
-            </ToastProvider>
+            <SocketProvider>
+              <ToastProvider>
+                <ForcePasswordChangeGuard>
+                  <NotificationWrapper>
+                    {children}
+                  </NotificationWrapper>
+                </ForcePasswordChangeGuard>
+              </ToastProvider>
+            </SocketProvider>
           </AuthProvider>
         </ThemeProvider>
 

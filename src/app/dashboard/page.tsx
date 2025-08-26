@@ -3,7 +3,11 @@
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import UserInfo from '@/components/dashboard/UserInfo'
 import AuthGuard from '@/components/auth/AuthGuard'
-import TestForcePasswordChange from '@/components/auth/TestForcePasswordChange'
+import SocketStatusCard from '@/components/dashboard/SocketStatusCard'
+import RecentNotifications from '@/components/dashboard/RecentNotifications'
+import { ConnectionStatus } from '@/components/ui/ConnectionStatus'
+import { TokenDebug } from '@/components/ui/TokenDebug'
+import { SocketTest } from '@/components/ui/SocketTest'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function DashboardPage() {
@@ -23,11 +27,21 @@ export default function DashboardPage() {
       `}</style>
       <DashboardLayout>
         <div className="container-xxl flex-grow-1 container-p-y">
-          <h4 className="fw-bold py-3 mb-4">
-            <span className="text-muted fw-light">Dashboard /</span> {user?.role}
-          </h4>
+          <div className="d-flex justify-content-between align-items-center py-3 mb-4">
+            <h4 className="fw-bold mb-0">
+              <span className="text-muted fw-light">Dashboard /</span> {user?.role}
+            </h4>
+            <div className="d-flex align-items-center space-x-2">
+              <TokenDebug />
+              <ConnectionStatus />
+            </div>
+          </div>
 
-         
+          {/* Socket Status and Notifications */}
+          <div className="row mb-4">
+            <SocketStatusCard />
+            <RecentNotifications />
+          </div>
 
           {/* Main Statistics Cards */}
         
@@ -231,6 +245,13 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Socket.IO Test */}
+          <div className="row mb-4">
+            <div className="col-12">
+              <SocketTest />
             </div>
           </div>
 

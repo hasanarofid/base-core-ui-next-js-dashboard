@@ -11,6 +11,12 @@ import {
   CreateTenantPaymentMethodData 
 } from '@/types/tenantPaymentMethod'
 import { Transaction, TransactionListResponse, TransactionFilters } from '@/types/transaction'
+import { 
+  NotificationListResponse, 
+  NotificationReadResponse, 
+  NotificationReadAllResponse,
+  ApiNotification 
+} from '@/types/notification'
 
 // Membuat instance axios dengan konfigurasi default
 export const api = axios.create({
@@ -467,4 +473,28 @@ export async function getTransactionsWithCookies(filters?: TransactionFilters): 
 export async function getTransactionByIdWithCookies(id: string): Promise<{ status: string; data: Transaction }> {
   console.log('🔍 Calling transaction detail API with ID:', id);
   return apiWithCookies(`/transactions/${id}`);
+}
+
+// ===== NOTIFICATION API FUNCTIONS =====
+
+// Fungsi untuk mengambil data notifikasi dengan cookies
+export async function getNotificationsWithCookies(page: number = 1, limit: number = 20): Promise<NotificationListResponse> {
+  console.log('🔔 Calling notifications API with page:', page, 'limit:', limit);
+  return apiWithCookies(`/notifications?page=${page}&limit=${limit}`);
+}
+
+// Fungsi untuk menandai notifikasi sebagai sudah dibaca dengan cookies
+export async function markNotificationAsReadWithCookies(id: string): Promise<NotificationReadResponse> {
+  console.log('✅ Marking notification as read with ID:', id);
+  return apiWithCookies(`/notifications/${id}/read`, {
+    method: 'PATCH',
+  });
+}
+
+// Fungsi untuk menandai semua notifikasi sebagai sudah dibaca dengan cookies
+export async function markAllNotificationsAsReadWithCookies(): Promise<NotificationReadAllResponse> {
+  console.log('✅ Marking all notifications as read');
+  return apiWithCookies('/notifications/read-all', {
+    method: 'PATCH',
+  });
 }

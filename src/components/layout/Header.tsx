@@ -145,9 +145,9 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
           </li>
 
           {/* Socket Status */}
-          <li className="nav-item me-2 me-xl-0">
+          {/* <li className="nav-item me-2 me-xl-0">
             <SocketStatus />
-          </li>
+          </li> */}
 
           {/* Notifications */}
           <li className="nav-item me-3 me-xl-1">

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { useAuth } from './AuthContext'
 import { useToken } from '@/hooks/useToken'
@@ -11,6 +11,7 @@ interface SocketContextType {
   isConnected: boolean
   notifications: Notification[]
   clearNotifications: () => void
+  refreshNotifications: () => void
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined)
@@ -21,6 +22,13 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const { user, isAuthenticated } = useAuth()
   const { token } = useToken()
+
+  // Callback untuk refresh notifikasi dari komponen lain
+  const refreshNotifications = useCallback(() => {
+    // Trigger event untuk refresh notifikasi
+    const event = new CustomEvent('refreshNotifications')
+    window.dispatchEvent(event)
+  }, [])
 
   useEffect(() => {
     console.log('🔍 SocketContext useEffect triggered:', {
@@ -126,6 +134,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             data: data
           }
           setNotifications(prev => [notification, ...prev])
+          // Trigger refresh untuk API notifications
+          refreshNotifications()
         })
 
         newSocket.on('tenant_created', (data) => {
@@ -139,6 +149,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             data: data
           }
           setNotifications(prev => [notification, ...prev])
+          // Trigger refresh untuk API notifications
+          refreshNotifications()
         })
 
         newSocket.on('payment_received', (data) => {
@@ -152,6 +164,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             data: data
           }
           setNotifications(prev => [notification, ...prev])
+          // Trigger refresh untuk API notifications
+          refreshNotifications()
         })
 
         newSocket.on('error', (data) => {
@@ -165,6 +179,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             data: data
           }
           setNotifications(prev => [notification, ...prev])
+          // Trigger refresh untuk API notifications
+          refreshNotifications()
         })
 
         newSocket.on('notification', (data) => {
@@ -178,6 +194,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             data: data
           }
           setNotifications(prev => [notification, ...prev])
+          // Trigger refresh untuk API notifications
+          refreshNotifications()
         })
 
         setSocket(newSocket)
@@ -271,6 +289,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         data: data
       }
       setNotifications(prev => [notification, ...prev])
+      // Trigger refresh untuk API notifications
+      refreshNotifications()
     })
 
     // Listen for tenant notifications
@@ -285,6 +305,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         data: data
       }
       setNotifications(prev => [notification, ...prev])
+      // Trigger refresh untuk API notifications
+      refreshNotifications()
     })
 
     // Listen for payment notifications
@@ -299,6 +321,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         data: data
       }
       setNotifications(prev => [notification, ...prev])
+      // Trigger refresh untuk API notifications
+      refreshNotifications()
     })
 
     // Listen for error notifications
@@ -313,6 +337,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         data: data
       }
       setNotifications(prev => [notification, ...prev])
+      // Trigger refresh untuk API notifications
+      refreshNotifications()
     })
 
     // Listen for general notifications
@@ -327,6 +353,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         data: data
       }
       setNotifications(prev => [notification, ...prev])
+      // Trigger refresh untuk API notifications
+      refreshNotifications()
     })
 
     setSocket(newSocket)
@@ -349,6 +377,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     isConnected,
     notifications,
     clearNotifications,
+    refreshNotifications,
   }
 
   return (

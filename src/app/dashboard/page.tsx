@@ -5,8 +5,8 @@ import UserInfo from '@/components/dashboard/UserInfo'
 import AuthGuard from '@/components/auth/AuthGuard'
 import SocketStatusCard from '@/components/dashboard/SocketStatusCard'
 import RecentNotifications from '@/components/dashboard/RecentNotifications'
-import { ConnectionStatus } from '@/components/ui/ConnectionStatus'
-import { TokenDebug } from '@/components/ui/TokenDebug'
+// import { ConnectionStatus } from '@/components/ui/ConnectionStatus'
+// import { TokenDebug } from '@/components/ui/TokenDebug'
 import { SocketTest } from '@/components/ui/SocketTest'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -32,16 +32,16 @@ export default function DashboardPage() {
               <span className="text-muted fw-light">Dashboard /</span> {user?.role}
             </h4>
             <div className="d-flex align-items-center space-x-2">
-              <TokenDebug />
-              <ConnectionStatus />
+              {/* <TokenDebug /> */}
+              {/* <ConnectionStatus /> */}
             </div>
           </div>
 
           {/* Socket Status and Notifications */}
-          <div className="row mb-4">
+          {/* <div className="row mb-4">
             <SocketStatusCard />
             <RecentNotifications />
-          </div>
+          </div> */}
 
           {/* Main Statistics Cards */}
         
@@ -249,18 +249,18 @@ export default function DashboardPage() {
           </div>
 
           {/* Socket.IO Test */}
-          <div className="row mb-4">
+          {/* <div className="row mb-4">
             <div className="col-12">
               <SocketTest />
             </div>
-          </div>
+          </div> */}
 
           {/* User Information */}
-          <div className="row mb-4">
+          {/* <div className="row mb-4">
             <div className="col-12">
               <UserInfo />
             </div>
-          </div>
+          </div> */}
 
         </div>
       </DashboardLayout>

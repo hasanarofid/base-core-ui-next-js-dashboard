@@ -1,11 +1,83 @@
 'use client'
 
+import React, { useState } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import AuthGuard from '@/components/auth/AuthGuard'
-import { useAuth } from '@/contexts/AuthContext'
+import { useNotifications } from '@/hooks/useNotifications'
+import { ApiNotification } from '@/types/notification'
 
 export default function NotificationsPage() {
-  const { user } = useAuth()
+  const { 
+    notifications, 
+    unreadCount, 
+    totalCount, 
+    loading, 
+    error,
+    fetchNotifications, 
+    markAsRead, 
+    markAllAsRead 
+  } = useNotifications()
+  
+  const [currentPage, setCurrentPage] = useState(1)
+  const [limit] = useState(20)
+  const totalPages = Math.ceil(totalCount / limit)
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    fetchNotifications(page, limit)
+  }
+
+  const handleMarkAsRead = async (notification: ApiNotification) => {
+    if (!notification.read_at) {
+      await markAsRead(notification.id)
+    }
+  }
+
+  const handleMarkAllAsRead = async () => {
+    await markAllAsRead()
+  }
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case 'success':
+        return <i className="ti ti-check-circle text-success" />
+      case 'error':
+        return <i className="ti ti-alert-circle text-danger" />
+      case 'warning':
+        return <i className="ti ti-alert-triangle text-warning" />
+      case 'info':
+      default:
+        return <i className="ti ti-info-circle text-info" />
+    }
+  }
+
+  const getBadgeClass = (severity: string) => {
+    switch (severity) {
+      case 'success':
+        return 'bg-success text-white'
+      case 'error':
+        return 'bg-danger text-white'
+      case 'warning':
+        return 'bg-warning text-dark'
+      case 'info':
+      default:
+        return 'bg-info text-white'
+    }
+  }
+
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp)
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
+    const minutes = Math.floor(diff / 60000)
+    const hours = Math.floor(diff / 3600000)
+    const days = Math.floor(diff / 86400000)
+
+    if (days > 0) return `${days} hari yang lalu`
+    if (hours > 0) return `${hours} jam yang lalu`
+    if (minutes > 0) return `${minutes} menit yang lalu`
+    return 'Baru saja'
+  }
 
   return (
     <AuthGuard requireAuth={true}>
@@ -14,268 +86,181 @@ export default function NotificationsPage() {
           <h4 className="fw-bold py-3 mb-4">
             <span className="text-muted fw-light">Notifikasi /</span> Riwayat Notifikasi
           </h4>
-
+          
           <div className="row">
             <div className="col-12">
               <div className="card">
-                <div className="card-header">
+                <div className="card-header d-flex justify-content-between align-items-center">
                   <h5 className="card-title mb-0">
                     <i className="ti ti-bell me-2 text-primary"></i>
-                    Riwayat Notifikasi
+                    Notifikasi
                   </h5>
-                  <p className="card-subtitle text-muted mb-0">
-                    Riwayat callback, notifikasi yang gagal
-                  </p>
+                  <div className="d-flex gap-2">
+                    {unreadCount > 0 && (
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={handleMarkAllAsRead}
+                      >
+                        <i className="ti ti-check me-1"></i>
+                        Tandai Semua Dibaca
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={() => fetchNotifications(currentPage, limit)}
+                      disabled={loading}
+                    >
+                      <i className={`ti ti-refresh me-1 ${loading ? 'ti-spin' : ''}`}></i>
+                      Refresh
+                    </button>
+                  </div>
                 </div>
+                
                 <div className="card-body">
-                  {/* Filter Section */}
-                  <div className="row mb-4">
-                    <div className="col-md-3">
-                      <label className="form-label">Status Notifikasi</label>
-                      <select className="form-select">
-                        <option value="">Semua Status</option>
-                        <option value="sent">Sent</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="failed">Failed</option>
-                        <option value="pending">Pending</option>
-                      </select>
-                    </div>
-                    <div className="col-md-3">
-                      <label className="form-label">Tipe Notifikasi</label>
-                      <select className="form-select">
-                        <option value="">Semua Tipe</option>
-                        <option value="callback">Callback</option>
-                        <option value="email">Email</option>
-                        <option value="sms">SMS</option>
-                        <option value="webhook">Webhook</option>
-                      </select>
-                    </div>
-                    <div className="col-md-3">
-                      <label className="form-label">Tanggal Mulai</label>
-                      <input type="date" className="form-control" />
-                    </div>
-                    <div className="col-md-3">
-                      <label className="form-label">Tanggal Akhir</label>
-                      <input type="date" className="form-control" />
-                    </div>
-                  </div>
-
-                  <div className="row mb-4">
-                    <div className="col-md-6">
-                      <div className="input-group">
-                        <input 
-                          type="text" 
-                          className="form-control" 
-                          placeholder="Cari berdasarkan Transaction ID atau URL..."
-                        />
-                        <button className="btn btn-primary" type="button">
-                          <i className="ti ti-search"></i>
-                        </button>
+                  {loading && (
+                    <div className="text-center py-4">
+                      <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
                       </div>
+                      <p className="mt-2">Memuat notifikasi...</p>
                     </div>
-                    <div className="col-md-6 text-end">
-                      <button className="btn btn-outline-warning me-2">
-                        <i className="ti ti-refresh me-2"></i>
-                        Retry Failed
-                      </button>
-                      <button className="btn btn-outline-success">
-                        <i className="ti ti-refresh me-2"></i>
-                        Refresh
+                  )}
+
+                  {error && (
+                    <div className="alert alert-danger" role="alert">
+                      <i className="ti ti-alert-circle me-2"></i>
+                      {error}
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-danger ms-3"
+                        onClick={() => fetchNotifications(currentPage, limit)}
+                      >
+                        Coba Lagi
                       </button>
                     </div>
-                  </div>
+                  )}
 
-                  {/* Statistics Cards */}
-                  <div className="row mb-4">
-                    <div className="col-md-3">
-                      <div className="card border-primary">
-                        <div className="card-body text-center">
-                          <h4 className="text-primary mb-1">2,456</h4>
-                          <p className="text-muted mb-0">Total Notifikasi</p>
-                        </div>
-                      </div>
+                  {!loading && !error && notifications.length === 0 && (
+                    <div className="text-center py-4">
+                      <i className="ti ti-bell-off text-muted" style={{ fontSize: '3rem' }}></i>
+                      <h5 className="mt-3 text-muted">Tidak ada notifikasi</h5>
+                      <p className="text-muted">Notifikasi baru akan muncul di sini</p>
                     </div>
-                    <div className="col-md-3">
-                      <div className="card border-success">
-                        <div className="card-body text-center">
-                          <h4 className="text-success mb-1">2,200</h4>
-                          <p className="text-muted mb-0">Delivered</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-md-3">
-                      <div className="card border-warning">
-                        <div className="card-body text-center">
-                          <h4 className="text-warning mb-1">156</h4>
-                          <p className="text-muted mb-0">Pending</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-md-3">
-                      <div className="card border-danger">
-                        <div className="card-body text-center">
-                          <h4 className="text-danger mb-1">100</h4>
-                          <p className="text-muted mb-0">Failed</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  )}
 
-                  {/* Notifications Table */}
-                  <div className="table-responsive">
-                    <table className="table table-bordered table-hover">
-                      <thead className="table-light">
-                        <tr>
-                          <th>Transaction ID</th>
-                          <th>Tipe</th>
-                          <th>URL/Target</th>
-                          <th>Status</th>
-                          <th>Response</th>
-                          <th>Retry Count</th>
-                          <th>Created At</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
+                  {!loading && !error && notifications.length > 0 && (
+                    <div className="table-responsive">
+                      <table className="table table-hover">
+                        <thead>
+                          <tr>
+                            <th>Status</th>
+                            <th>Tipe</th>
+                            <th>Judul</th>
+                            <th>Pesan</th>
+                            <th>Waktu</th>
+                            <th>Aksi</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {notifications.map((notification) => (
+                                                    <tr 
+                          key={notification.id}
+                          className={!notification.read_at ? 'table-primary' : ''}
+                        >
                           <td>
-                            <span className="fw-bold text-primary">TRX-001</span>
+                            {notification.read_at ? (
+                              <span className="badge bg-secondary">Dibaca</span>
+                            ) : (
+                              <span className="badge bg-primary">Baru</span>
+                            )}
                           </td>
                           <td>
-                            <span className="badge bg-info">Callback</span>
+                            <div className="d-flex align-items-center">
+                              {getIcon(notification.notification.severity)}
+                              <span className={`badge ms-2 ${getBadgeClass(notification.notification.severity)}`}>
+                                {notification.notification.severity}
+                              </span>
+                            </div>
                           </td>
                           <td>
-                            <small className="text-muted">https://solusicodekata.com/callback</small>
+                            <strong>{notification.notification.title}</strong>
                           </td>
                           <td>
-                            <span className="badge bg-success">Delivered</span>
+                            <span className="text-muted">{notification.notification.body}</span>
                           </td>
                           <td>
-                            <span className="text-success">200 OK</span>
-                          </td>
-                          <td>1</td>
-                          <td>2024-01-15 10:30:00</td>
-                          <td>
-                            <button className="btn btn-sm btn-outline-primary me-1">
-                              <i className="ti ti-eye"></i>
-                            </button>
-                            <button className="btn btn-sm btn-outline-info">
-                              <i className="ti ti-refresh"></i>
-                            </button>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <span className="fw-bold text-primary">TRX-002</span>
+                            <small className="text-muted">{formatTime(notification.created_at)}</small>
                           </td>
                           <td>
-                            <span className="badge bg-primary">Webhook</span>
-                          </td>
-                          <td>
-                            <small className="text-muted">https://api.merchant.com/webhook</small>
-                          </td>
-                          <td>
-                            <span className="badge bg-warning">Pending</span>
-                          </td>
-                          <td>
-                            <span className="text-warning">-</span>
-                          </td>
-                          <td>0</td>
-                          <td>2024-01-15 11:15:00</td>
-                          <td>
-                            <button className="btn btn-sm btn-outline-primary me-1">
-                              <i className="ti ti-eye"></i>
-                            </button>
-                            <button className="btn btn-sm btn-outline-info">
-                              <i className="ti ti-refresh"></i>
-                            </button>
+                            {!notification.read_at && (
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-primary"
+                                onClick={() => handleMarkAsRead(notification)}
+                                title="Tandai sebagai dibaca"
+                              >
+                                <i className="ti ti-check"></i>
+                              </button>
+                            )}
                           </td>
                         </tr>
-                        <tr>
-                          <td>
-                            <span className="fw-bold text-primary">TRX-003</span>
-                          </td>
-                          <td>
-                            <span className="badge bg-info">Callback</span>
-                          </td>
-                          <td>
-                            <small className="text-muted">https://solusicodekata.com/callback</small>
-                          </td>
-                          <td>
-                            <span className="badge bg-danger">Failed</span>
-                          </td>
-                          <td>
-                            <span className="text-danger">500 Error</span>
-                          </td>
-                          <td>3/3</td>
-                          <td>2024-01-15 12:00:00</td>
-                          <td>
-                            <button className="btn btn-sm btn-outline-primary me-1">
-                              <i className="ti ti-eye"></i>
-                            </button>
-                            <button className="btn btn-sm btn-outline-warning">
-                              <i className="ti ti-refresh"></i>
-                            </button>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <span className="fw-bold text-primary">TRX-004</span>
-                          </td>
-                          <td>
-                            <span className="badge bg-success">Email</span>
-                          </td>
-                          <td>
-                            <small className="text-muted">customer@example.com</small>
-                          </td>
-                          <td>
-                            <span className="badge bg-success">Delivered</span>
-                          </td>
-                          <td>
-                            <span className="text-success">250 OK</span>
-                          </td>
-                          <td>1</td>
-                          <td>2024-01-15 09:45:00</td>
-                          <td>
-                            <button className="btn btn-sm btn-outline-primary me-1">
-                              <i className="ti ti-eye"></i>
-                            </button>
-                            <button className="btn btn-sm btn-outline-info">
-                              <i className="ti ti-refresh"></i>
-                            </button>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
 
                   {/* Pagination */}
-                  <div className="d-flex justify-content-between align-items-center mt-4">
-                    <div>
-                      <p className="text-muted mb-0">
-                        Menampilkan 1-10 dari 2,456 notifikasi
-                      </p>
-                    </div>
-                    <nav>
-                      <ul className="pagination pagination-sm mb-0">
-                        <li className="page-item disabled">
-                          <a className="page-link" href="#" tabIndex={-1}>Previous</a>
+                  {!loading && !error && totalPages > 1 && (
+                    <nav aria-label="Notification pagination" className="mt-4">
+                      <ul className="pagination justify-content-center">
+                        <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                          <button
+                            className="page-link"
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                          >
+                            <i className="ti ti-chevron-left"></i>
+                          </button>
                         </li>
-                        <li className="page-item active">
-                          <a className="page-link" href="#">1</a>
-                        </li>
-                        <li className="page-item">
-                          <a className="page-link" href="#">2</a>
-                        </li>
-                        <li className="page-item">
-                          <a className="page-link" href="#">3</a>
-                        </li>
-                        <li className="page-item">
-                          <a className="page-link" href="#">Next</a>
+                        
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          <li key={page} className={`page-item ${currentPage === page ? 'active' : ''}`}>
+                            <button
+                              className="page-link"
+                              onClick={() => handlePageChange(page)}
+                            >
+                              {page}
+                            </button>
+                          </li>
+                        ))}
+                        
+                        <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                          <button
+                            className="page-link"
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                          >
+                            <i className="ti ti-chevron-right"></i>
+                          </button>
                         </li>
                       </ul>
                     </nav>
-                  </div>
+                  )}
+
+                  {/* Summary */}
+                  {!loading && !error && notifications.length > 0 && (
+                    <div className="d-flex justify-content-between align-items-center mt-3">
+                      <small className="text-muted">
+                        Menampilkan {notifications.length} dari {totalCount} notifikasi
+                      </small>
+                      <small className="text-muted">
+                        Halaman {currentPage} dari {totalPages}
+                      </small>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

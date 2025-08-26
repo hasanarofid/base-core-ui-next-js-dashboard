@@ -2,10 +2,24 @@
 
 import React, { useState } from 'react'
 import { useSocket } from '@/contexts/SocketContext'
+import { useNotifications } from '@/hooks/useNotifications'
+import { ApiNotification } from '@/types/notification'
 
 export function NotificationList() {
-  const { notifications, clearNotifications } = useSocket()
+  const { notifications: socketNotifications, clearNotifications } = useSocket()
+  const { 
+    notifications: apiNotifications, 
+    unreadCount, 
+    loading, 
+    error,
+    markAsRead, 
+    markAllAsRead, 
+    refreshNotifications 
+  } = useNotifications()
   const [isOpen, setIsOpen] = useState(false)
+
+  // Combine socket notifications with API notifications
+  const allNotifications = [...socketNotifications, ...apiNotifications]
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -18,6 +32,20 @@ export function NotificationList() {
       case 'info':
       default:
         return <i className="ti ti-info-circle w-4 h-4 text-blue-500" />
+    }
+  }
+
+  const getBadgeClass = (severity: string) => {
+    switch (severity) {
+      case 'success':
+        return 'bg-success text-white'
+      case 'error':
+        return 'bg-danger text-white'
+      case 'warning':
+        return 'bg-warning text-dark'
+      case 'info':
+      default:
+        return 'bg-info text-white'
     }
   }
 
@@ -35,9 +63,10 @@ export function NotificationList() {
     }
   }
 
-  const formatTime = (timestamp: Date) => {
+  const formatTime = (timestamp: Date | string) => {
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp
     const now = new Date()
-    const diff = now.getTime() - timestamp.getTime()
+    const diff = now.getTime() - date.getTime()
     const minutes = Math.floor(diff / 60000)
     const hours = Math.floor(diff / 3600000)
     const days = Math.floor(diff / 86400000)
@@ -48,7 +77,20 @@ export function NotificationList() {
     return 'Baru saja'
   }
 
-  const unreadCount = notifications.length
+  const handleMarkAsRead = async (notification: ApiNotification) => {
+    if (!notification.read_at) {
+      await markAsRead(notification.id)
+    }
+  }
+
+  const handleMarkAllAsRead = async () => {
+    await markAllAsRead()
+    clearNotifications() // Clear socket notifications too
+  }
+
+  const handleRefresh = async () => {
+    await refreshNotifications()
+  }
 
   return (
     <div className="relative">
@@ -85,25 +127,70 @@ export function NotificationList() {
           <li className="dropdown-menu-header border-bottom">
             <div className="dropdown-header d-flex align-items-center py-3">
               <h5 className="text-body mb-0 me-auto">Notifikasi</h5>
-              {unreadCount > 0 && (
+              <div className="d-flex align-items-center gap-2">
+                {unreadCount > 0 && (
+                  <button
+                    type="button"
+                    className="dropdown-notifications-all text-body"
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="top"
+                    title="Tandai semua sebagai dibaca"
+                    onClick={handleMarkAllAsRead}
+                    style={{ border: 'none', background: 'none', padding: '4px' }}
+                  >
+                    <i className="ti ti-check fs-4"></i>
+                  </button>
+                )}
                 <button
                   type="button"
                   className="dropdown-notifications-all text-body"
                   data-bs-toggle="tooltip"
                   data-bs-placement="top"
-                  title="Hapus semua notifikasi"
-                  onClick={clearNotifications}
+                  title="Refresh notifikasi"
+                  onClick={handleRefresh}
                   style={{ border: 'none', background: 'none', padding: '4px' }}
                 >
-                  <i className="ti ti-trash fs-4"></i>
+                  <i className={`ti ti-refresh fs-4 ${loading ? 'ti-spin' : ''}`}></i>
                 </button>
-              )}
+              </div>
             </div>
           </li>
 
           <li className="dropdown-notifications-list scrollable-container">
             <ul className="list-group list-group-flush">
-              {notifications.length === 0 ? (
+              {loading ? (
+                <li className="list-group-item list-group-item-action dropdown-notifications-item">
+                  <div className="d-flex justify-content-center py-3">
+                    <div className="spinner-border spinner-border-sm text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <span className="ms-2">Memuat notifikasi...</span>
+                  </div>
+                </li>
+              ) : error ? (
+                <li className="list-group-item list-group-item-action dropdown-notifications-item">
+                  <div className="d-flex">
+                    <div className="flex-shrink-0 me-3">
+                      <div className="avatar">
+                        <span className="avatar-initial rounded-circle bg-label-danger">
+                          <i className="ti ti-alert-circle"></i>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex-grow-1">
+                      <h6 className="mb-1 text-danger">Error</h6>
+                      <p className="mb-0">{error}</p>
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary mt-2"
+                        onClick={handleRefresh}
+                      >
+                        Coba Lagi
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ) : allNotifications.length === 0 ? (
                 <li className="list-group-item list-group-item-action dropdown-notifications-item">
                   <div className="d-flex">
                     <div className="flex-shrink-0 me-3">
@@ -121,40 +208,72 @@ export function NotificationList() {
                   </div>
                 </li>
               ) : (
-                notifications.map((notification) => (
-                  <li key={notification.id} className="list-group-item list-group-item-action dropdown-notifications-item">
-                    <div className="d-flex">
-                      <div className="flex-shrink-0 me-3">
-                        <div className="avatar">
-                          <span className="avatar-initial rounded-circle bg-label-primary">
-                            {getIcon(notification.type)}
-                          </span>
+                allNotifications.map((notification) => {
+                  // Check if it's an API notification
+                  const isApiNotification = 'notification' in notification
+                  const isRead = isApiNotification ? !!notification.read_at : false
+                  const timestamp = isApiNotification ? notification.created_at : notification.timestamp
+                  const title = isApiNotification ? notification.notification.title : notification.title
+                  const message = isApiNotification ? notification.notification.body : notification.message
+                  const type = isApiNotification ? notification.notification.severity : notification.type
+                  
+                  return (
+                    <li 
+                      key={notification.id} 
+                      className={`list-group-item list-group-item-action dropdown-notifications-item ${!isRead ? 'unread' : ''}`}
+                      onClick={() => isApiNotification && !isRead ? handleMarkAsRead(notification as ApiNotification) : undefined}
+                      style={{ cursor: isApiNotification && !isRead ? 'pointer' : 'default' }}
+                    >
+                      <div className="d-flex">
+                                                <div className="flex-shrink-0 me-3">
+                          <div className="avatar">
+                            <span className="avatar-initial rounded-circle bg-label-primary">
+                              {getIcon(type)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex-grow-1">
+                          <div className="d-flex align-items-center mb-1">
+                            <h6 className="mb-0 me-2">{title}</h6>
+                            <span className={`badge ${getBadgeClass(type)}`}>
+                              {type}
+                            </span>
+                          </div>
+                          <p className="mb-0">{message}</p>
+                          <small className="text-muted">{formatTime(timestamp)}</small>
+                        </div>
+                        <div className="flex-shrink-0 dropdown-notifications-actions">
+                          {!isRead && (
+                            <button 
+                              type="button" 
+                              className="dropdown-notifications-read" 
+                              style={{ border: 'none', background: 'none', padding: '4px' }}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (isApiNotification) {
+                                  handleMarkAsRead(notification as ApiNotification)
+                                }
+                              }}
+                            >
+                              <span className="badge badge-dot bg-primary"></span>
+                            </button>
+                          )}
                         </div>
                       </div>
-                      <div className="flex-grow-1">
-                        <h6 className="mb-1">{notification.title}</h6>
-                        <p className="mb-0">{notification.message}</p>
-                        <small className="text-muted">{formatTime(notification.timestamp)}</small>
-                      </div>
-                      <div className="flex-shrink-0 dropdown-notifications-actions">
-                        <button type="button" className="dropdown-notifications-read" style={{ border: 'none', background: 'none', padding: '4px' }}>
-                          <span className="badge badge-dot"></span>
-                        </button>
-                      </div>
-                    </div>
-                  </li>
-                ))
+                    </li>
+                  )
+                })
               )}
             </ul>
           </li>
           <li className="dropdown-menu-footer border-top">
-            <button
-              type="button"
+            <a
+              href="/notifications"
               className="dropdown-item d-flex justify-content-center text-primary p-2 h-px-40 mb-1 align-items-center"
-              style={{ border: 'none', background: 'none', width: '100%' }}
+              style={{ textDecoration: 'none', width: '100%' }}
             >
               Lihat semua notifikasi
-            </button>
+            </a>
           </li>
         </ul>
       )}
@@ -166,6 +285,26 @@ export function NotificationList() {
           onClick={() => setIsOpen(false)}
         />
       )}
+
+      {/* Custom CSS for unread notifications */}
+      <style jsx>{`
+        .unread {
+          background-color: rgba(var(--bs-primary-rgb), 0.05) !important;
+          border-left: 3px solid var(--bs-primary) !important;
+        }
+        
+        .unread:hover {
+          background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
+        }
+        
+        .dropdown-notifications-item {
+          transition: background-color 0.2s ease;
+        }
+        
+        .dropdown-notifications-item:hover {
+          background-color: rgba(var(--bs-primary-rgb), 0.05);
+        }
+      `}</style>
     </div>
   )
 }

@@ -1,6 +1,13 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react'
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  ReactNode,
+} from 'react'
 import { io, Socket } from 'socket.io-client'
 import { useAuth } from './AuthContext'
 import { useToken } from '@/hooks/useToken'
@@ -16,6 +23,33 @@ interface SocketContextType {
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined)
 
+// === gunakan domain FE + path yang diproxy Nginx ===
+const SOCKET_URL =
+  process.env.NEXT_PUBLIC_SOCKET_URL || 'https://tenant-app-innovia.duckdns.org'
+const SOCKET_PATH = process.env.NEXT_PUBLIC_SOCKET_PATH || '/realtime'
+
+// helper: ambil pesan error dari unknown
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message
+  if (typeof err === 'string') return err
+  try {
+    return JSON.stringify(err)
+  } catch {
+    return 'Unknown error'
+  }
+}
+
+// helper: konversi unknown → Record<string, unknown>
+function toRecord(u: unknown): Record<string, unknown> {
+  if (u && typeof u === 'object' && !Array.isArray(u)) {
+    return u as Record<string, unknown>
+  }
+  return {}
+}
+
+// tipe payload generik dari server (kalau belum ditipkan spesifik)
+type AnyPayload = Record<string, unknown>
+
 export function SocketProvider({ children }: { children: ReactNode }) {
   const [socket, setSocket] = useState<Socket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
@@ -23,364 +57,274 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth()
   const { token } = useToken()
 
-  // Event listeners will be added directly in the useEffect
-
-  // Callback untuk refresh notifikasi dari komponen lain
+  // Trigger global refresh untuk komponen lain (kalau kamu punya listener)
   const refreshNotifications = useCallback(() => {
-    // Trigger event untuk refresh notifikasi
-    const event = new CustomEvent('refreshNotifications')
-    window.dispatchEvent(event)
+    window.dispatchEvent(new CustomEvent('refreshNotifications'))
   }, [])
 
   useEffect(() => {
-    console.log('🔍 SocketContext useEffect triggered:', {
+    console.log('🔍 SocketContext init:', {
       isAuthenticated,
       user: user?.email,
       hasToken: !!token,
-      tokenPreview: token ? token.substring(0, 20) + '...' : 'none'
+      SOCKET_URL,
+      SOCKET_PATH,
     })
 
-    if (!isAuthenticated || !user) {
-      console.log('🚫 User not authenticated, disconnecting socket')
-      // Disconnect socket if user is not authenticated
-      if (socket) {
-        socket.disconnect()
-        setSocket(null)
-        setIsConnected(false)
-      }
+    // Belum login / belum ada token → jangan konek
+    if (!isAuthenticated || !user || !token) {
+      console.warn('⏸️ Skip socket: not authenticated or no token')
       return
     }
 
-    // Disconnect existing socket before creating new one
-    if (socket) {
-      console.log('🔄 Disconnecting existing socket before creating new one')
-      socket.disconnect()
-      setSocket(null)
-      setIsConnected(false)
-    }
-
-    // Use token from useToken hook
-    if (!token) {
-      console.warn('No authentication token found for Socket.IO connection')
-      
-      // Try to get token from cookies as fallback
-      const cookies = document.cookie.split(';')
-      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('auth_token='))
-      if (tokenCookie) {
-        const cookieToken = tokenCookie.split('=')[1]
-        console.log('🔑 Found token in cookies, using for Socket.IO connection')
-        
-        // Create socket connection with cookie token
-        const newSocket = io(process.env.NEXT_PUBLIC_SOCKET || 'http://31.97.61.121:3032', {
-          path: '/realtime',
-          auth: {
-            token: cookieToken
-          },
-          transports: ['websocket', 'polling'],
-          autoConnect: true,
-          reconnection: true,
-          reconnectionAttempts: 10,
-          reconnectionDelay: 1000,
-          reconnectionDelayMax: 5000,
-          timeout: 20000,
-          forceNew: true,
-        })
-        
-        // Add basic connection event listeners
-        newSocket.on('connect', () => {
-          console.log('🔌 Socket.IO connected successfully with cookie token')
-          setIsConnected(true)
-        })
-
-        newSocket.on('disconnect', (reason) => {
-          console.log('🔌 Socket.IO disconnected:', reason)
-          setIsConnected(false)
-        })
-
-        newSocket.on('reconnect', (attemptNumber) => {
-          console.log('🔌 Socket.IO reconnected after', attemptNumber, 'attempts')
-          setIsConnected(true)
-        })
-
-        newSocket.on('reconnect_attempt', (attemptNumber) => {
-          console.log('🔄 Socket.IO reconnection attempt:', attemptNumber)
-        })
-
-        newSocket.on('reconnect_error', (error) => {
-          console.error('❌ Socket.IO reconnection error:', error)
-        })
-
-        newSocket.on('connect_error', (error) => {
-          console.error('🔌 Socket.IO connection error:', error)
-          setIsConnected(false)
-          
-          // Try to reconnect with different transport if websocket fails
-          if (error.message.includes('websocket')) {
-            console.log('🔄 Trying to reconnect with polling transport...')
-            newSocket.io.opts.transports = ['polling']
-            newSocket.connect()
-          }
-        })
-
-        setSocket(newSocket)
-        return
-      }
-      
-      console.error('❌ No token found in localStorage or cookies')
-      return
-    }
-
-    console.log('🔌 Creating Socket.IO connection with token:', token.substring(0, 20) + '...')
-    
-    // Create socket connection with better error handling
-    const newSocket = io(process.env.NEXT_PUBLIC_SOCKET || 'http://31.97.61.121:3032', {
-      path: '/realtime',
-      auth: {
-        token: token
-      },
-      transports: ['websocket', 'polling'],
+    // === Paksa WebSocket only (tanpa polling) ===
+    const s = io(SOCKET_URL, {
+      path: SOCKET_PATH,
+      auth: { token },             // BE baca dari handshake.auth.token
+      transports: ['websocket'],   // ⬅️ WS only
+      upgrade: false,              // ⬅️ jangan upgrade dari polling
+      withCredentials: true,
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       timeout: 20000,
-      forceNew: true,
     })
 
-    console.log('🔌 Socket.IO instance created, waiting for connection...')
+    // ===== koneksi dasar =====
+    s.on('connecting', () => console.log('🔄 Socket.IO connecting...'))
 
-    // Basic connection event listeners
-    newSocket.on('connecting', () => {
-      console.log('🔄 Socket.IO connecting...')
-    })
-
-    newSocket.on('connect_timeout', () => {
-      console.error('⏰ Socket.IO connection timeout')
-      setIsConnected(false)
-    })
-
-    newSocket.on('connect', () => {
-      console.log('✅ Socket.IO connected successfully!')
-      console.log('🔌 Socket ID:', newSocket.id)
-      console.log('🔌 Transport:', newSocket.io.engine.transport.name)
+    s.on('connect', () => {
+      const transport = s.io.engine.transport.name
+      console.log('✅ Socket.IO connected!', { id: s.id, transport })
+      if (transport !== 'websocket') {
+        console.warn('⚠️ Transport bukan websocket:', transport)
+      }
       setIsConnected(true)
     })
 
-    newSocket.on('disconnect', (reason) => {
+    s.on('disconnect', (reason: string) => {
       console.log('🔌 Socket.IO disconnected:', reason)
       setIsConnected(false)
     })
 
-    newSocket.on('reconnect', (attemptNumber) => {
+    s.on('reconnect', (attemptNumber: number) => {
       console.log('🔌 Socket.IO reconnected after', attemptNumber, 'attempts')
       setIsConnected(true)
     })
 
-    newSocket.on('reconnect_attempt', (attemptNumber) => {
-      console.log('🔄 Socket.IO reconnection attempt:', attemptNumber)
-    })
+    const onErr =
+      (label: string) =>
+      (err: unknown): void => {
+        console.error(`❌ Socket.IO ${label}:`, getErrorMessage(err))
+        setIsConnected(false)
+        // ⛔ tidak fallback ke polling—tetap paksa WS
+      }
 
-    newSocket.on('reconnect_error', (error) => {
-      console.error('❌ Socket.IO reconnection error:', error)
-    })
-
-    newSocket.on('connect_error', (error) => {
-      console.error('❌ Socket.IO connection error:', error)
-      console.error('❌ Error details:', {
-        message: error.message,
-        name: error.name,
-        stack: error.stack
-      })
+    s.on('reconnect_error', onErr('reconnect_error'))
+    s.on('connect_error', onErr('connect_error'))
+    s.on('connect_timeout', () => {
+      console.error('⏰ Socket.IO connection timeout')
       setIsConnected(false)
-      
-      // Try to reconnect with different transport if websocket fails
-      if (error.message.includes('websocket')) {
-        console.log('🔄 Trying to reconnect with polling transport...')
-        newSocket.io.opts.transports = ['polling']
-        newSocket.connect()
+    })
+
+    // ===== EVENTS dari backend =====
+
+    // Notifikasi umum → tampil instan (jangan cuma refresh)
+    s.on('notify:new', (data: AnyPayload) => {
+      console.log('📢 notify:new', data)
+      setNotifications((prev) => [
+        {
+          id: `notify_${Date.now()}_${Math.random()}`,
+          type: (data?.type as Notification['type']) || 'info',
+          title: (data?.title as string) || 'Notifikasi',
+          message: (data?.message as string) || 'Ada notifikasi baru',
+          timestamp: new Date(),
+          data,
+        },
+        ...prev,
+      ])
+      // (opsional) kalau perlu sinkron dari API:
+      // refreshNotifications()
+    })
+
+    // Transaksi dibuat
+    s.on('transaction:created', (data: AnyPayload) => {
+      console.log('💰 transaction:created', data)
+      setNotifications((prev) => [
+        {
+          id: `transaction_created_${Date.now()}_${Math.random()}`,
+          type: 'success',
+          title: 'Transaksi Baru',
+          message: `Transaksi baru dibuat: ${(data?.transaction_id as string) || (data?.id as string) || 'N/A'}`,
+          timestamp: new Date(),
+          data,
+        },
+        ...prev,
+      ])
+      // refreshNotifications()
+    })
+
+    // Status transaksi
+    s.on('transaction:status', (data: AnyPayload) => {
+      console.log('💰 transaction:status', data)
+      setNotifications((prev) => [
+        {
+          id: `transaction_status_${Date.now()}_${Math.random()}`,
+          type: 'info',
+          title: 'Status Transaksi',
+          message: `Transaksi ${(data?.transaction_id as string) || (data?.id as string) || 'N/A'}: ${(data?.status as string) || 'updated'}`,
+          timestamp: new Date(),
+          data,
+        },
+        ...prev,
+      ])
+      // refreshNotifications()
+    })
+
+    // (opsional) kompat debug lama
+    s.on('transaction', (data: AnyPayload) => {
+      console.log('💰 transaction (generic)', data)
+      // refreshNotifications()
+    })
+    s.on('transaction_created', (data: AnyPayload) => {
+      console.log('💰 transaction_created (underscore)', data)
+      // refreshNotifications()
+    })
+    s.on('transaction_updated', (data: AnyPayload) => {
+      console.log('💰 transaction_updated', data)
+      setNotifications((prev) => [
+        {
+          id: `transaction_updated_${Date.now()}_${Math.random()}`,
+          type: 'info',
+          title: 'Transaksi Diperbarui',
+          message: `Transaksi ${(data?.transaction_id as string) || (data?.id as string) || 'N/A'} diperbarui`,
+          timestamp: new Date(),
+          data,
+        },
+        ...prev,
+      ])
+      // refreshNotifications()
+    })
+    s.on('transaction_completed', (data: AnyPayload) => {
+      console.log('💰 transaction_completed', data)
+      setNotifications((prev) => [
+        {
+          id: `transaction_completed_${Date.now()}_${Math.random()}`,
+          type: 'success',
+          title: 'Transaksi Selesai',
+          message: `Transaksi ${(data?.transaction_id as string) || (data?.id as string) || 'N/A'} selesai`,
+          timestamp: new Date(),
+          data,
+        },
+        ...prev,
+      ])
+      // refreshNotifications()
+    })
+    s.on('transaction_failed', (data: AnyPayload) => {
+      console.log('💰 transaction_failed', data)
+      setNotifications((prev) => [
+        {
+          id: `transaction_failed_${Date.now()}_${Math.random()}`,
+          type: 'error',
+          title: 'Transaksi Gagal',
+          message: `Transaksi ${(data?.transaction_id as string) || (data?.id as string) || 'N/A'} gagal: ${(data?.reason as string) || 'Unknown error'}`,
+          timestamp: new Date(),
+          data,
+        },
+        ...prev,
+      ])
+      // refreshNotifications()
+    })
+
+    // Pembayaran
+    s.on('payment_received', (data: AnyPayload) => {
+      console.log('💳 payment_received', data)
+      setNotifications((prev) => [
+        {
+          id: `payment_${Date.now()}`,
+          type: 'success',
+          title: 'Pembayaran Diterima',
+          message: `Pembayaran sebesar ${String(data?.amount ?? '')} diterima`,
+          timestamp: new Date(),
+          data,
+        },
+        ...prev,
+      ])
+      // refreshNotifications()
+    })
+
+    // Tenant
+    s.on('tenant_created', (data: AnyPayload) => {
+      console.log('🏢 tenant_created', data)
+      setNotifications((prev) => [
+        {
+          id: `tenant_${Date.now()}`,
+          type: 'info',
+          title: 'Tenant Baru',
+          message: `Tenant baru: ${String(data?.tenant_name ?? data?.name ?? '')}`,
+          timestamp: new Date(),
+          data,
+        },
+        ...prev,
+      ])
+      // refreshNotifications()
+    })
+
+    // Notifikasi generic
+    s.on('notification', (data: AnyPayload) => {
+      console.log('📢 notification (generic)', data)
+      setNotifications((prev) => [
+        {
+          id: `general_${Date.now()}`,
+          type: (data?.type as Notification['type']) || 'info',
+          title: (data?.title as string) || 'Notifikasi',
+          message: (data?.message as string) || 'Ada notifikasi baru',
+          timestamp: new Date(),
+          data,
+        },
+        ...prev,
+      ])
+      // refreshNotifications()
+    })
+
+    // Error dari server (pasang data yang aman)
+    s.on('error', (data: unknown) => {
+      console.log('❌ error event', data)
+      setNotifications((prev) => [
+        {
+          id: `error_${Date.now()}`,
+          type: 'error',
+          title: 'Error',
+          message: getErrorMessage(data),
+          timestamp: new Date(),
+          data: toRecord(data),
+        },
+        ...prev,
+      ])
+      // refreshNotifications()
+    })
+
+    // Debug ringan
+    s.onAny((eventName: string) => {
+      if (eventName === 'transaction:created' || eventName === 'notify:new') {
+        console.log(`🔍 onAny: ${eventName}`)
       }
     })
 
-    // Listen for transaction events
-    newSocket.on('transaction_created', (data) => {
-      console.log('💰 Transaction created notification:', data)
-      const notification: Notification = {
-        id: `transaction_created_${Date.now()}_${Math.random()}`,
-        type: 'success',
-        title: 'Transaksi Baru',
-        message: `Transaksi baru telah dibuat dengan ID: ${data.transaction_id || data.id || 'N/A'}`,
-        timestamp: new Date(),
-        data: data
-      }
-      setNotifications(prev => [notification, ...prev])
-      refreshNotifications()
-    })
+    setSocket(s)
 
-    // Listen for general transaction event (might be sent from backend)
-    newSocket.on('transaction', (data) => {
-      console.log('💰 General transaction event:', data)
-      refreshNotifications()
-    })
-
-    // Listen for transaction:created event (with colon)
-    newSocket.on('transaction:created', (data) => {
-      console.log('💰 Transaction:created event:', data)
-      refreshNotifications()
-    })
-
-    // Listen for notify:new event (with colon)
-    newSocket.on('notify:new', (data) => {
-      console.log('📢 Notify:new event:', data)
-      refreshNotifications()
-    })
-
-    newSocket.on('transaction_updated', (data) => {
-      console.log('💰 Transaction updated notification:', data)
-      const notification: Notification = {
-        id: `transaction_updated_${Date.now()}_${Math.random()}`,
-        type: 'info',
-        title: 'Transaksi Diperbarui',
-        message: `Transaksi dengan ID ${data.transaction_id || data.id || 'N/A'} telah diperbarui`,
-        timestamp: new Date(),
-        data: data
-      }
-      setNotifications(prev => [notification, ...prev])
-      refreshNotifications()
-    })
-
-    newSocket.on('transaction_completed', (data) => {
-      console.log('💰 Transaction completed notification:', data)
-      const notification: Notification = {
-        id: `transaction_completed_${Date.now()}_${Math.random()}`,
-        type: 'success',
-        title: 'Transaksi Selesai',
-        message: `Transaksi dengan ID ${data.transaction_id || data.id || 'N/A'} telah selesai`,
-        timestamp: new Date(),
-        data: data
-      }
-      setNotifications(prev => [notification, ...prev])
-      refreshNotifications()
-    })
-
-    newSocket.on('transaction_failed', (data) => {
-      console.log('💰 Transaction failed notification:', data)
-      const notification: Notification = {
-        id: `transaction_failed_${Date.now()}_${Math.random()}`,
-        type: 'error',
-        title: 'Transaksi Gagal',
-        message: `Transaksi dengan ID ${data.transaction_id || data.id || 'N/A'} gagal: ${data.reason || 'Unknown error'}`,
-        timestamp: new Date(),
-        data: data
-      }
-      setNotifications(prev => [notification, ...prev])
-      refreshNotifications()
-    })
-
-    // Listen for payment events
-    newSocket.on('payment_received', (data) => {
-      console.log('💳 Payment received notification:', data)
-      const notification: Notification = {
-        id: `payment_${Date.now()}`,
-        type: 'success',
-        title: 'Pembayaran Diterima',
-        message: `Pembayaran sebesar ${data.amount} telah diterima`,
-        timestamp: new Date(),
-        data: data
-      }
-      setNotifications(prev => [notification, ...prev])
-      refreshNotifications()
-    })
-
-    // Listen for tenant events
-    newSocket.on('tenant_created', (data) => {
-      console.log('🏢 Tenant created notification:', data)
-      const notification: Notification = {
-        id: `tenant_${Date.now()}`,
-        type: 'info',
-        title: 'Tenant Baru',
-        message: `Tenant baru telah dibuat: ${data.tenant_name || data.name}`,
-        timestamp: new Date(),
-        data: data
-      }
-      setNotifications(prev => [notification, ...prev])
-      refreshNotifications()
-    })
-
-    // Listen for general notification events
-    newSocket.on('notification', (data) => {
-      console.log('📢 General notification:', data)
-      const notification: Notification = {
-        id: `general_${Date.now()}`,
-        type: data.type || 'info',
-        title: data.title || 'Notifikasi',
-        message: data.message || 'Ada notifikasi baru',
-        timestamp: new Date(),
-        data: data
-      }
-      setNotifications(prev => [notification, ...prev])
-      refreshNotifications()
-    })
-
-    // Listen for error events
-    newSocket.on('error', (data) => {
-      console.log('❌ Error notification:', data)
-      const notification: Notification = {
-        id: `error_${Date.now()}`,
-        type: 'error',
-        title: 'Error',
-        message: data.message || 'Terjadi kesalahan',
-        timestamp: new Date(),
-        data: data
-      }
-      setNotifications(prev => [notification, ...prev])
-      refreshNotifications()
-    })
-
-    // Listen for API notification events
-    newSocket.on('new_notification', (data) => {
-      console.log('📢 New API notification received:', data)
-      refreshNotifications()
-    })
-
-    newSocket.on('notification_updated', (data) => {
-      console.log('📢 Notification updated:', data)
-      refreshNotifications()
-    })
-
-    // Listen for any event (debugging)
-    newSocket.onAny((eventName: string, ...args: unknown[]) => {
-      console.log(`🔍 Socket event received (onAny): ${eventName}`, args)
-      
-      // Handle specific events that might be sent from backend
-      if (eventName === 'transaction' || eventName === 'transaction_created' || eventName === 'transaction:created') {
-        const data = args[0] as unknown
-        console.log('💰 Transaction event detected:', data)
-        console.log('🔄 Calling refreshNotifications() for transaction event')
-        refreshNotifications()
-      }
-      
-      if (eventName === 'notification' || eventName === 'new_notification' || eventName === 'notify:new') {
-        console.log('📢 Notification event detected:', args[0])
-        console.log('🔄 Calling refreshNotifications() for notification event')
-        refreshNotifications()
-      }
-    })
-
-    setSocket(newSocket)
-
-    // Cleanup function
+    // cleanup koneksi saat deps berubah / unmount
     return () => {
       console.log('🧹 Cleaning up Socket.IO connection')
-      newSocket.disconnect()
+      s.disconnect()
       setSocket(null)
       setIsConnected(false)
     }
-  }, [isAuthenticated, user, token])
+  }, [isAuthenticated, user, token]) // tidak referensi state `socket` → bebas warning deps
 
-  const clearNotifications = () => {
-    setNotifications([])
-  }
+  const clearNotifications = () => setNotifications([])
 
   const value = {
     socket,
@@ -390,11 +334,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     refreshNotifications,
   }
 
-  return (
-    <SocketContext.Provider value={value}>
-      {children}
-    </SocketContext.Provider>
-  )
+  return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
 }
 
 export function useSocket() {

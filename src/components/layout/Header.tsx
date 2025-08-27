@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import ThemeToggle from '@/components/ui/ThemeToggle'
 import { NotificationList } from '@/components/ui/NotificationList'
-import { SocketStatus } from '@/components/ui/SocketStatus'
+import { AdminNotificationList } from '@/components/ui/AdminNotificationList'
+// SocketStatus component temporarily removed
 
 interface HeaderProps {
   onToggleSidebar?: () => void
@@ -151,7 +152,11 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
 
           {/* Notifications */}
           <li className="nav-item me-3 me-xl-1">
-            <NotificationList />
+            {user?.role === 'superadmin' ? (
+              <AdminNotificationList />
+            ) : (
+              <NotificationList />
+            )}
           </li>
 
           {/* User Dropdown */}

@@ -4,9 +4,13 @@ import React, { useState, useEffect } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import AuthGuard from '@/components/auth/AuthGuard'
 import { useOptimizedNotifications } from '@/hooks/useOptimizedNotifications'
+// Audio components temporarily hidden
+// import { AudioNotificationSettings } from '@/components/ui/AudioNotificationSettings'
+// import { SocketStatus } from '@/components/ui/SocketStatus'
+// import { AudioTestButton } from '@/components/ui/AudioTestButton'
 import { ApiNotification } from '@/types/notification'
 
-export default function NotificationsPage() {
+export default function AdminNotificationsPage() {
   const { 
     notifications, 
     unreadCount, 
@@ -119,8 +123,26 @@ export default function NotificationsPage() {
       <DashboardLayout>
         <div className="container-xxl flex-grow-1 container-p-y">
           <h4 className="fw-bold py-3 mb-4">
-            <span className="text-muted fw-light">Notifikasi /</span> Riwayat Notifikasi
+            <span className="text-muted fw-light">Notifikasi /</span> Riwayat Notifikasi Admin
           </h4>
+          
+          {/* Audio settings temporarily hidden
+          <div className="row">
+            <div className="col-12 mb-4">
+              <div className="row">
+                <div className="col-md-4">
+                  <AudioNotificationSettings />
+                </div>
+                <div className="col-md-4">
+                  <SocketStatus showDetails={true} />
+                </div>
+                <div className="col-md-4">
+                  <AudioTestButton />
+                </div>
+              </div>
+            </div>
+          </div>
+          */}
           
           <div className="row">
             <div className="col-12">
@@ -128,7 +150,7 @@ export default function NotificationsPage() {
                 <div className="card-header d-flex justify-content-between align-items-center">
                   <h5 className="card-title mb-0">
                     <i className="ti ti-bell me-2 text-primary"></i>
-                    Notifikasi
+                    Notifikasi Admin
                   </h5>
                   <div className="d-flex gap-2">
                     {unreadCount > 0 && (
@@ -167,11 +189,11 @@ export default function NotificationsPage() {
                     <div className="alert alert-danger" role="alert">
                       <i className="ti ti-alert-circle me-2"></i>
                       {error}
-                                          <button
-                      type="button"
-                      className="btn btn-sm btn-outline-danger ms-3"
-                      onClick={() => refreshNotifications(currentPage, limit)}
-                    >
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-danger ms-3"
+                        onClick={() => refreshNotifications(currentPage, limit)}
+                      >
                         Coba Lagi
                       </button>
                     </div>
@@ -181,7 +203,7 @@ export default function NotificationsPage() {
                     <div className="text-center py-4">
                       <i className="ti ti-bell-off text-muted" style={{ fontSize: '3rem' }}></i>
                       <h5 className="mt-3 text-muted">Tidak ada notifikasi</h5>
-                      <p className="text-muted">Notifikasi baru akan muncul di sini</p>
+                      <p className="text-muted">Notifikasi admin baru akan muncul di sini</p>
                     </div>
                   )}
 
@@ -200,47 +222,47 @@ export default function NotificationsPage() {
                         </thead>
                         <tbody>
                           {notifications.map((notification) => (
-                                                    <tr 
-                          key={notification.id}
-                          className={!notification.read_at ? 'table-primary' : ''}
-                        >
-                          <td>
-                            {notification.read_at ? (
-                              <span className="badge bg-secondary">Dibaca</span>
-                            ) : (
-                              <span className="badge bg-primary">Baru</span>
-                            )}
-                          </td>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              {getIcon(notification.notification?.severity || 'info')}
-                              <span className={`badge ms-2 ${getBadgeClass(notification.notification?.severity || 'info')}`}>
-                                {notification.notification?.severity || 'info'}
-                              </span>
-                            </div>
-                          </td>
-                          <td>
-                            <strong>{notification.notification?.title || 'No Title'}</strong>
-                          </td>
-                          <td>
-                            <span className="text-muted">{notification.notification?.body || 'No content'}</span>
-                          </td>
-                          <td>
-                            <small className="text-muted">{formatTime(notification.created_at)}</small>
-                          </td>
-                          <td>
-                            {!notification.read_at && (
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-outline-primary"
-                                onClick={() => handleMarkAsRead(notification)}
-                                title="Tandai sebagai dibaca"
-                              >
-                                <i className="ti ti-check"></i>
-                              </button>
-                            )}
-                          </td>
-                        </tr>
+                            <tr 
+                              key={notification.id}
+                              className={!notification.read_at ? 'table-primary' : ''}
+                            >
+                              <td>
+                                {notification.read_at ? (
+                                  <span className="badge bg-secondary">Dibaca</span>
+                                ) : (
+                                  <span className="badge bg-primary">Baru</span>
+                                )}
+                              </td>
+                              <td>
+                                <div className="d-flex align-items-center">
+                                  {getIcon(notification.notification?.severity || 'info')}
+                                  <span className={`badge ms-2 ${getBadgeClass(notification.notification?.severity || 'info')}`}>
+                                    {notification.notification?.severity || 'info'}
+                                  </span>
+                                </div>
+                              </td>
+                              <td>
+                                <strong>{notification.notification?.title || 'No Title'}</strong>
+                              </td>
+                              <td>
+                                <span className="text-muted">{notification.notification?.body || 'No content'}</span>
+                              </td>
+                              <td>
+                                <small className="text-muted">{formatTime(notification.created_at)}</small>
+                              </td>
+                              <td>
+                                {!notification.read_at && (
+                                  <button
+                                    type="button"
+                                    className="btn btn-sm btn-outline-primary"
+                                    onClick={() => handleMarkAsRead(notification)}
+                                    title="Tandai sebagai dibaca"
+                                  >
+                                    <i className="ti ti-check"></i>
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
                           ))}
                         </tbody>
                       </table>
@@ -304,4 +326,4 @@ export default function NotificationsPage() {
       </DashboardLayout>
     </AuthGuard>
   )
-} 
+}

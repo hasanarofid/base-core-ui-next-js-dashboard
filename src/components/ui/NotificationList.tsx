@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useSocket } from '@/contexts/SocketContext'
-import { useNotifications } from '@/hooks/useNotifications'
+import { useOptimizedNotifications } from '@/hooks/useOptimizedNotifications'
 import { ApiNotification } from '@/types/notification'
 
 export function NotificationList() {
@@ -15,8 +15,31 @@ export function NotificationList() {
     markAsRead, 
     markAllAsRead, 
     refreshNotifications 
-  } = useNotifications()
+  } = useOptimizedNotifications()
   const [isOpen, setIsOpen] = useState(false)
+
+  // Listen for events from notification pages to sync icon bell
+  useEffect(() => {
+    const handleNotificationMarkedAsRead = (event: CustomEvent) => {
+      console.log('📢 Received notificationMarkedAsRead event from notification page:', event.detail)
+      // Refresh notifications to sync with notification page
+      refreshNotifications()
+    }
+
+    const handleAllNotificationsMarkedAsRead = (event: CustomEvent) => {
+      console.log('📢 Received allNotificationsMarkedAsRead event from notification page:', event.detail)
+      // Refresh notifications to sync with notification page
+      refreshNotifications()
+    }
+
+    window.addEventListener('notificationMarkedAsRead', handleNotificationMarkedAsRead as EventListener)
+    window.addEventListener('allNotificationsMarkedAsRead', handleAllNotificationsMarkedAsRead as EventListener)
+
+    return () => {
+      window.removeEventListener('notificationMarkedAsRead', handleNotificationMarkedAsRead as EventListener)
+      window.removeEventListener('allNotificationsMarkedAsRead', handleAllNotificationsMarkedAsRead as EventListener)
+    }
+  }, [refreshNotifications])
 
   // Combine socket notifications with API notifications
   const allNotifications = [...socketNotifications, ...apiNotifications]
@@ -49,19 +72,7 @@ export function NotificationList() {
     }
   }
 
-  const getBackgroundColor = (type: string) => {
-    switch (type) {
-      case 'success':
-        return 'bg-green-50 border-l-green-400'
-      case 'error':
-        return 'bg-red-50 border-l-red-400'
-      case 'warning':
-        return 'bg-yellow-50 border-l-yellow-400'
-      case 'info':
-      default:
-        return 'bg-blue-50 border-l-blue-400'
-    }
-  }
+  // getBackgroundColor function removed - unused
 
   const formatTime = (timestamp: Date | string) => {
     const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp

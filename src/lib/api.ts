@@ -5,7 +5,6 @@ import { TenantListResponse, Tenant, CreateTenantData } from '@/types/tenant'
 import { UserListResponse, User, CreateUserData, VerifyEmailData } from '@/types/user'
 import { PaymentMethod, PaymentMethodListResponse, CreatePaymentMethodData } from '@/types/paymentMethod'
 import { 
-  TenantPaymentMethod, 
   TenantPaymentMethodListResponse, 
   TenantPaymentMethodResponse,
   CreateTenantPaymentMethodData 
@@ -14,8 +13,7 @@ import { Transaction, TransactionListResponse, TransactionFilters } from '@/type
 import { 
   NotificationListResponse, 
   NotificationReadResponse, 
-  NotificationReadAllResponse,
-  ApiNotification 
+  NotificationReadAllResponse
 } from '@/types/notification'
 
 // Membuat instance axios dengan konfigurasi default
@@ -498,3 +496,8 @@ export async function markAllNotificationsAsReadWithCookies(): Promise<Notificat
     method: 'PATCH',
   });
 }
+
+// Admin notifications now use the same endpoint as regular notifications
+// The backend will handle role-based filtering based on the user's session
+
+

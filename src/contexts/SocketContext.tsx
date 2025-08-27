@@ -23,6 +23,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth()
   const { token } = useToken()
 
+  // Event listeners will be added directly in the useEffect
+
   // Callback untuk refresh notifikasi dari komponen lain
   const refreshNotifications = useCallback(() => {
     // Trigger event untuk refresh notifikasi
@@ -57,8 +59,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       setIsConnected(false)
     }
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-
     // Use token from useToken hook
     if (!token) {
       console.warn('No authentication token found for Socket.IO connection')
@@ -86,7 +86,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
           forceNew: true,
         })
         
-        // Add event listeners for cookie token
+        // Add basic connection event listeners
         newSocket.on('connect', () => {
           console.log('🔌 Socket.IO connected successfully with cookie token')
           setIsConnected(true)
@@ -122,82 +122,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
           }
         })
 
-        // Listen for notifications
-        newSocket.on('transaction_created', (data) => {
-          console.log('💰 Transaction created notification:', data)
-          const notification: Notification = {
-            id: `transaction_${Date.now()}`,
-            type: 'success',
-            title: 'Transaksi Baru',
-            message: `Transaksi baru telah dibuat dengan ID: ${data.transaction_id || data.id}`,
-            timestamp: new Date(),
-            data: data
-          }
-          setNotifications(prev => [notification, ...prev])
-          // Trigger refresh untuk API notifications
-          refreshNotifications()
-        })
-
-        newSocket.on('tenant_created', (data) => {
-          console.log('🏢 Tenant created notification:', data)
-          const notification: Notification = {
-            id: `tenant_${Date.now()}`,
-            type: 'info',
-            title: 'Tenant Baru',
-            message: `Tenant baru telah dibuat: ${data.tenant_name || data.name}`,
-            timestamp: new Date(),
-            data: data
-          }
-          setNotifications(prev => [notification, ...prev])
-          // Trigger refresh untuk API notifications
-          refreshNotifications()
-        })
-
-        newSocket.on('payment_received', (data) => {
-          console.log('💳 Payment received notification:', data)
-          const notification: Notification = {
-            id: `payment_${Date.now()}`,
-            type: 'success',
-            title: 'Pembayaran Diterima',
-            message: `Pembayaran sebesar ${data.amount} telah diterima`,
-            timestamp: new Date(),
-            data: data
-          }
-          setNotifications(prev => [notification, ...prev])
-          // Trigger refresh untuk API notifications
-          refreshNotifications()
-        })
-
-        newSocket.on('error', (data) => {
-          console.log('❌ Error notification:', data)
-          const notification: Notification = {
-            id: `error_${Date.now()}`,
-            type: 'error',
-            title: 'Error',
-            message: data.message || 'Terjadi kesalahan',
-            timestamp: new Date(),
-            data: data
-          }
-          setNotifications(prev => [notification, ...prev])
-          // Trigger refresh untuk API notifications
-          refreshNotifications()
-        })
-
-        newSocket.on('notification', (data) => {
-          console.log('📢 General notification:', data)
-          const notification: Notification = {
-            id: `general_${Date.now()}`,
-            type: data.type || 'info',
-            title: data.title || 'Notifikasi',
-            message: data.message || 'Ada notifikasi baru',
-            timestamp: new Date(),
-            data: data
-          }
-          setNotifications(prev => [notification, ...prev])
-          // Trigger refresh untuk API notifications
-          refreshNotifications()
-        })
-
         setSocket(newSocket)
         return
       }
@@ -226,7 +150,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
     console.log('🔌 Socket.IO instance created, waiting for connection...')
 
-    // Socket event listeners
+    // Basic connection event listeners
     newSocket.on('connecting', () => {
       console.log('🔄 Socket.IO connecting...')
     })
@@ -235,6 +159,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       console.error('⏰ Socket.IO connection timeout')
       setIsConnected(false)
     })
+
     newSocket.on('connect', () => {
       console.log('✅ Socket.IO connected successfully!')
       console.log('🔌 Socket ID:', newSocket.id)
@@ -277,39 +202,82 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       }
     })
 
-    // Listen for transaction notifications
+    // Listen for transaction events
     newSocket.on('transaction_created', (data) => {
       console.log('💰 Transaction created notification:', data)
       const notification: Notification = {
-        id: `transaction_${Date.now()}`,
+        id: `transaction_created_${Date.now()}_${Math.random()}`,
         type: 'success',
         title: 'Transaksi Baru',
-        message: `Transaksi baru telah dibuat dengan ID: ${data.transaction_id || data.id}`,
+        message: `Transaksi baru telah dibuat dengan ID: ${data.transaction_id || data.id || 'N/A'}`,
         timestamp: new Date(),
         data: data
       }
       setNotifications(prev => [notification, ...prev])
-      // Trigger refresh untuk API notifications
       refreshNotifications()
     })
 
-    // Listen for tenant notifications
-    newSocket.on('tenant_created', (data) => {
-      console.log('🏢 Tenant created notification:', data)
+    // Listen for general transaction event (might be sent from backend)
+    newSocket.on('transaction', (data) => {
+      console.log('💰 General transaction event:', data)
+      refreshNotifications()
+    })
+
+    // Listen for transaction:created event (with colon)
+    newSocket.on('transaction:created', (data) => {
+      console.log('💰 Transaction:created event:', data)
+      refreshNotifications()
+    })
+
+    // Listen for notify:new event (with colon)
+    newSocket.on('notify:new', (data) => {
+      console.log('📢 Notify:new event:', data)
+      refreshNotifications()
+    })
+
+    newSocket.on('transaction_updated', (data) => {
+      console.log('💰 Transaction updated notification:', data)
       const notification: Notification = {
-        id: `tenant_${Date.now()}`,
+        id: `transaction_updated_${Date.now()}_${Math.random()}`,
         type: 'info',
-        title: 'Tenant Baru',
-        message: `Tenant baru telah dibuat: ${data.tenant_name || data.name}`,
+        title: 'Transaksi Diperbarui',
+        message: `Transaksi dengan ID ${data.transaction_id || data.id || 'N/A'} telah diperbarui`,
         timestamp: new Date(),
         data: data
       }
       setNotifications(prev => [notification, ...prev])
-      // Trigger refresh untuk API notifications
       refreshNotifications()
     })
 
-    // Listen for payment notifications
+    newSocket.on('transaction_completed', (data) => {
+      console.log('💰 Transaction completed notification:', data)
+      const notification: Notification = {
+        id: `transaction_completed_${Date.now()}_${Math.random()}`,
+        type: 'success',
+        title: 'Transaksi Selesai',
+        message: `Transaksi dengan ID ${data.transaction_id || data.id || 'N/A'} telah selesai`,
+        timestamp: new Date(),
+        data: data
+      }
+      setNotifications(prev => [notification, ...prev])
+      refreshNotifications()
+    })
+
+    newSocket.on('transaction_failed', (data) => {
+      console.log('💰 Transaction failed notification:', data)
+      const notification: Notification = {
+        id: `transaction_failed_${Date.now()}_${Math.random()}`,
+        type: 'error',
+        title: 'Transaksi Gagal',
+        message: `Transaksi dengan ID ${data.transaction_id || data.id || 'N/A'} gagal: ${data.reason || 'Unknown error'}`,
+        timestamp: new Date(),
+        data: data
+      }
+      setNotifications(prev => [notification, ...prev])
+      refreshNotifications()
+    })
+
+    // Listen for payment events
     newSocket.on('payment_received', (data) => {
       console.log('💳 Payment received notification:', data)
       const notification: Notification = {
@@ -321,27 +289,25 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         data: data
       }
       setNotifications(prev => [notification, ...prev])
-      // Trigger refresh untuk API notifications
       refreshNotifications()
     })
 
-    // Listen for error notifications
-    newSocket.on('error', (data) => {
-      console.log('❌ Error notification:', data)
+    // Listen for tenant events
+    newSocket.on('tenant_created', (data) => {
+      console.log('🏢 Tenant created notification:', data)
       const notification: Notification = {
-        id: `error_${Date.now()}`,
-        type: 'error',
-        title: 'Error',
-        message: data.message || 'Terjadi kesalahan',
+        id: `tenant_${Date.now()}`,
+        type: 'info',
+        title: 'Tenant Baru',
+        message: `Tenant baru telah dibuat: ${data.tenant_name || data.name}`,
         timestamp: new Date(),
         data: data
       }
       setNotifications(prev => [notification, ...prev])
-      // Trigger refresh untuk API notifications
       refreshNotifications()
     })
 
-    // Listen for general notifications
+    // Listen for general notification events
     newSocket.on('notification', (data) => {
       console.log('📢 General notification:', data)
       const notification: Notification = {
@@ -353,8 +319,52 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         data: data
       }
       setNotifications(prev => [notification, ...prev])
-      // Trigger refresh untuk API notifications
       refreshNotifications()
+    })
+
+    // Listen for error events
+    newSocket.on('error', (data) => {
+      console.log('❌ Error notification:', data)
+      const notification: Notification = {
+        id: `error_${Date.now()}`,
+        type: 'error',
+        title: 'Error',
+        message: data.message || 'Terjadi kesalahan',
+        timestamp: new Date(),
+        data: data
+      }
+      setNotifications(prev => [notification, ...prev])
+      refreshNotifications()
+    })
+
+    // Listen for API notification events
+    newSocket.on('new_notification', (data) => {
+      console.log('📢 New API notification received:', data)
+      refreshNotifications()
+    })
+
+    newSocket.on('notification_updated', (data) => {
+      console.log('📢 Notification updated:', data)
+      refreshNotifications()
+    })
+
+    // Listen for any event (debugging)
+    newSocket.onAny((eventName: string, ...args: unknown[]) => {
+      console.log(`🔍 Socket event received (onAny): ${eventName}`, args)
+      
+      // Handle specific events that might be sent from backend
+      if (eventName === 'transaction' || eventName === 'transaction_created' || eventName === 'transaction:created') {
+        const data = args[0] as unknown
+        console.log('💰 Transaction event detected:', data)
+        console.log('🔄 Calling refreshNotifications() for transaction event')
+        refreshNotifications()
+      }
+      
+      if (eventName === 'notification' || eventName === 'new_notification' || eventName === 'notify:new') {
+        console.log('📢 Notification event detected:', args[0])
+        console.log('🔄 Calling refreshNotifications() for notification event')
+        refreshNotifications()
+      }
     })
 
     setSocket(newSocket)
@@ -366,7 +376,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       setSocket(null)
       setIsConnected(false)
     }
-      }, [isAuthenticated, user, token])
+  }, [isAuthenticated, user, token])
 
   const clearNotifications = () => {
     setNotifications([])

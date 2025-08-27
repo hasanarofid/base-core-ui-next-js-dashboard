@@ -1,13 +1,7 @@
 'use client'
 
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import UserInfo from '@/components/dashboard/UserInfo'
 import AuthGuard from '@/components/auth/AuthGuard'
-import SocketStatusCard from '@/components/dashboard/SocketStatusCard'
-import RecentNotifications from '@/components/dashboard/RecentNotifications'
-// import { ConnectionStatus } from '@/components/ui/ConnectionStatus'
-// import { TokenDebug } from '@/components/ui/TokenDebug'
-import { SocketTest } from '@/components/ui/SocketTest'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function DashboardPage() {

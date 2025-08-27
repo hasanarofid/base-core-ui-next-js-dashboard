@@ -71,7 +71,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         console.log('🔑 Found token in cookies, using for Socket.IO connection')
         
         // Create socket connection with cookie token
-        const newSocket = io('http://31.97.61.121:3032', {
+        const newSocket = io(process.env.NEXT_PUBLIC_SOCKET || 'http://31.97.61.121:3032', {
           path: '/realtime',
           auth: {
             token: cookieToken
@@ -133,7 +133,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     console.log('🔌 Creating Socket.IO connection with token:', token.substring(0, 20) + '...')
     
     // Create socket connection with better error handling
-    const newSocket = io('http://31.97.61.121:3032', {
+    const newSocket = io(process.env.NEXT_PUBLIC_SOCKET || 'http://31.97.61.121:3032', {
       path: '/realtime',
       auth: {
         token: token

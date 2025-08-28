@@ -17,7 +17,7 @@ export function NotificationHandler() {
   // Helper function untuk mencegah duplicate events
   const shouldProcessEvent = (eventType: string, data: Record<string, unknown>): boolean => {
     const now = Date.now()
-    const eventId = `${eventType}_${data.transaction_id || data.id || Date.now()}`
+    const eventId = `${eventType}_${data.reference_code || data.transaction_code || data.transaction_id || data.id || Date.now()}`
     
     // Cek apakah event sudah diproses dalam 10 detik terakhir
     if (processedEvents.current.has(eventId)) {
@@ -49,10 +49,18 @@ export function NotificationHandler() {
     const handleTransactionCreated = (data: Record<string, unknown>) => {
       console.log('🔔 NotificationHandler: Transaction created event received:', data)
       console.log('🔔 Current user role:', user?.role)
+      console.log('🔔 Available fields:', {
+        reference_code: data.reference_code,
+        transaction_code: data.transaction_code,
+        code: data.code,
+        transaction_id: data.transaction_id,
+        id: data.id
+      })
       
       if (!shouldProcessEvent('transaction_created', data)) return
       
-      const referenceCode = data.reference_code || data.code || data.transaction_id || data.id || 'N/A'
+      const referenceCode = data.reference_code || data.transaction_code || data.code || data.transaction_id || data.id || 'N/A'
+      console.log('🔔 Selected reference code:', referenceCode)
       showSuccess('Transaksi Baru', `Transaksi baru telah dibuat dengan kode: ${referenceCode}`)
     }
 
@@ -61,7 +69,7 @@ export function NotificationHandler() {
       
       if (!shouldProcessEvent('transaction_updated', data)) return
       
-      const referenceCode = data.reference_code || data.code || data.transaction_id || data.id || 'N/A'
+      const referenceCode = data.reference_code || data.transaction_code || data.code || data.transaction_id || data.id || 'N/A'
       showInfo('Transaksi Diperbarui', `Transaksi dengan kode ${referenceCode} telah diperbarui`)
     }
 
@@ -70,7 +78,7 @@ export function NotificationHandler() {
       
       if (!shouldProcessEvent('transaction_completed', data)) return
       
-      const referenceCode = data.reference_code || data.code || data.transaction_id || data.id || 'N/A'
+      const referenceCode = data.reference_code || data.transaction_code || data.code || data.transaction_id || data.id || 'N/A'
       showSuccess('Transaksi Selesai', `Transaksi dengan kode ${referenceCode} telah selesai`)
     }
 
@@ -79,7 +87,7 @@ export function NotificationHandler() {
       
       if (!shouldProcessEvent('transaction_failed', data)) return
       
-      const referenceCode = data.reference_code || data.code || data.transaction_id || data.id || 'N/A'
+      const referenceCode = data.reference_code || data.transaction_code || data.code || data.transaction_id || data.id || 'N/A'
       showError('Transaksi Gagal', `Transaksi dengan kode ${referenceCode} gagal: ${data.reason || 'Unknown error'}`)
     }
 
@@ -148,7 +156,7 @@ export function NotificationHandler() {
       
       if (!shouldProcessEvent('transaction:created', data)) return
       
-      const referenceCode = data.reference_code || data.code || data.transaction_id || data.id || 'N/A'
+      const referenceCode = data.reference_code || data.transaction_code || data.code || data.transaction_id || data.id || 'N/A'
       showSuccess('Transaksi Baru', `Transaksi baru telah dibuat dengan kode: ${referenceCode}`)
     })
 
@@ -181,7 +189,7 @@ export function NotificationHandler() {
           
           if (!shouldProcessEvent(`onAny_${eventName}`, data)) return
           
-          const referenceCode = data?.reference_code || data?.code || data?.transaction_id || data?.id || 'N/A'
+          const referenceCode = data?.reference_code || data?.transaction_code || data?.code || data?.transaction_id || data?.id || 'N/A'
           showSuccess('Transaksi Baru', `Transaksi baru telah dibuat dengan kode: ${referenceCode}`)
         }
       }

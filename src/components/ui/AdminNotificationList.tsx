@@ -6,7 +6,7 @@ import { useOptimizedNotifications } from '@/hooks/useOptimizedNotifications'
 import { ApiNotification } from '@/types/notification'
 
 export function AdminNotificationList() {
-  const { notifications: socketNotifications } = useSocket()
+  const { notifications: socketNotifications, clearNotifications } = useSocket()
   const { 
     notifications: apiNotifications, 
     unreadCount, 
@@ -72,24 +72,18 @@ export function AdminNotificationList() {
     }
   }
 
-  // getBackgroundColor function removed - unused
-
   const formatTime = (timestamp: Date | string) => {
     const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp
     const now = new Date()
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
+    const diff = now.getTime() - date.getTime()
+    const minutes = Math.floor(diff / 60000)
+    const hours = Math.floor(diff / 3600000)
+    const days = Math.floor(diff / 86400000)
 
-    if (diffInMinutes < 1) {
-      return 'Baru saja'
-    } else if (diffInMinutes < 60) {
-      return `${diffInMinutes} menit yang lalu`
-    } else if (diffInMinutes < 1440) {
-      const hours = Math.floor(diffInMinutes / 60)
-      return `${hours} jam yang lalu`
-    } else {
-      const days = Math.floor(diffInMinutes / 1440)
-      return `${days} hari yang lalu`
-    }
+    if (days > 0) return `${days} hari yang lalu`
+    if (hours > 0) return `${hours} jam yang lalu`
+    if (minutes > 0) return `${minutes} menit yang lalu`
+    return 'Baru saja'
   }
 
   const handleMarkAsRead = async (notification: ApiNotification) => {
@@ -100,6 +94,7 @@ export function AdminNotificationList() {
 
   const handleMarkAllAsRead = async () => {
     await markAllAsRead()
+    clearNotifications() // Clear socket notifications too
   }
 
   const handleRefresh = async () => {
@@ -107,91 +102,122 @@ export function AdminNotificationList() {
   }
 
   return (
-    <div className="dropdown">
+    <div className="relative">
+      {/* Notification Bell */}
       <button
         type="button"
-        className="nav-link dropdown-toggle hide-arrow position-relative"
+        className="nav-link dropdown-toggle hide-arrow"
         onClick={() => setIsOpen(!isOpen)}
         style={{ border: 'none', background: 'none' }}
       >
-        <i className="ti ti-bell ti-sm"></i>
+        <i className="ti ti-bell ti-md"></i>
         {unreadCount > 0 && (
-          <span className="badge rounded-pill badge-notifications bg-danger">
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
+          <span className="badge bg-danger rounded-pill badge-notifications">{unreadCount > 99 ? '99+' : unreadCount}</span>
         )}
       </button>
 
+      {/* Notification Dropdown */}
       {isOpen && (
-        <div className="dropdown-menu dropdown-menu-end py-0 show" style={{
+        <ul className="dropdown-menu dropdown-menu-end py-0 show" style={{
           position: 'absolute',
           top: '100%',
           right: 0,
           left: 'auto',
           zIndex: 9999,
-          minWidth: '380px',
+          minWidth: '320px',
           maxWidth: '400px',
+          maxHeight: '400px',
           marginTop: '0.5rem',
           boxShadow: '0 0.25rem 1rem rgba(161, 172, 184, 0.45)',
           border: '0 solid #d9dee3',
-          borderRadius: '0.5rem'
+          borderRadius: '0.5rem',
+          overflowY: 'auto'
         }}>
-          <div className="dropdown-menu-header border-bottom">
+          <li className="dropdown-menu-header border-bottom">
             <div className="dropdown-header d-flex align-items-center py-3">
-              <h6 className="mb-0 me-auto">Notifikasi Admin</h6>
-              <div className="dropdown-actions">
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-secondary me-2"
-                  onClick={handleRefresh}
-                  disabled={loading}
-                  style={{ border: 'none', background: 'none', padding: '0.25rem 0.5rem' }}
-                >
-                  <i className={`ti ti-refresh ti-sm ${loading ? 'ti-spin' : ''}`}></i>
-                </button>
+              <h5 className="text-body mb-0 me-auto">Notifikasi</h5>
+              <div className="d-flex align-items-center gap-2">
                 {unreadCount > 0 && (
                   <button
                     type="button"
-                    className="btn btn-sm btn-primary"
+                    className="dropdown-notifications-all text-body"
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="top"
+                    title="Tandai semua sebagai dibaca"
                     onClick={handleMarkAllAsRead}
-                    style={{ border: 'none', background: 'none', padding: '0.25rem 0.5rem' }}
+                    style={{ border: 'none', background: 'none', padding: '4px' }}
                   >
-                    <i className="ti ti-check ti-sm"></i>
+                    <i className="ti ti-check fs-4"></i>
                   </button>
                 )}
-              </div>
-            </div>
-          </div>
-
-          <div className="dropdown-notifications-list scrollable-container" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-            {loading ? (
-              <div className="text-center py-4">
-                <div className="spinner-border spinner-border-sm text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </div>
-                <p className="mt-2 mb-0 text-muted small">Memuat notifikasi...</p>
-              </div>
-            ) : error ? (
-              <div className="text-center py-4">
-                <i className="ti ti-alert-circle text-danger mb-2" style={{ fontSize: '2rem' }}></i>
-                <p className="text-danger mb-0">{error}</p>
                 <button
                   type="button"
-                  className="btn btn-sm btn-outline-primary mt-2"
+                  className="dropdown-notifications-all text-body"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="top"
+                  title="Refresh notifikasi"
                   onClick={handleRefresh}
-                  style={{ border: 'none', background: 'none', padding: '0.25rem 0.5rem' }}
+                  style={{ border: 'none', background: 'none', padding: '4px' }}
                 >
-                  Coba Lagi
+                  <i className={`ti ti-refresh fs-4 ${loading ? 'ti-spin' : ''}`}></i>
                 </button>
               </div>
-            ) : allNotifications.length === 0 ? (
-              <div className="text-center py-4">
-                <i className="ti ti-bell-off text-muted mb-2" style={{ fontSize: '2rem' }}></i>
-                <p className="text-muted mb-0">Tidak ada notifikasi</p>
-              </div>
-            ) : (
-              <ul className="list-group list-group-flush">
-                {allNotifications.map((notification) => {
+            </div>
+          </li>
+
+          <li className="dropdown-notifications-list scrollable-container">
+            <ul className="list-group list-group-flush">
+              {loading ? (
+                <li className="list-group-item list-group-item-action dropdown-notifications-item">
+                  <div className="d-flex justify-content-center py-3">
+                    <div className="spinner-border spinner-border-sm text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <span className="ms-2">Memuat notifikasi...</span>
+                  </div>
+                </li>
+              ) : error ? (
+                <li className="list-group-item list-group-item-action dropdown-notifications-item">
+                  <div className="d-flex">
+                    <div className="flex-shrink-0 me-3">
+                      <div className="avatar">
+                        <span className="avatar-initial rounded-circle bg-label-danger">
+                          <i className="ti ti-alert-circle"></i>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex-grow-1">
+                      <h6 className="mb-1 text-danger">Error</h6>
+                      <p className="mb-0">{error}</p>
+                      <button 
+                        type="button" 
+                        className="btn btn-sm btn-outline-primary mt-2"
+                        onClick={handleRefresh}
+                      >
+                        Coba Lagi
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ) : allNotifications.length === 0 ? (
+                <li className="list-group-item list-group-item-action dropdown-notifications-item">
+                  <div className="d-flex">
+                    <div className="flex-shrink-0 me-3">
+                      <div className="avatar">
+                        <span className="avatar-initial rounded-circle bg-label-secondary">
+                          <i className="ti ti-bell-off"></i>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex-grow-1">
+                      <h6 className="mb-1">Tidak ada notifikasi</h6>
+                      <p className="mb-0">Notifikasi baru akan muncul di sini</p>
+                      <small className="text-muted">Saat ini</small>
+                    </div>
+                  </div>
+                </li>
+              ) : (
+                allNotifications.map((notification) => {
                   // Check if it's an API notification
                   const isApiNotification = 'notification' in notification
                   const isRead = isApiNotification ? !!notification.read_at : false
@@ -209,41 +235,85 @@ export function AdminNotificationList() {
                     >
                       <div className="d-flex">
                         <div className="flex-shrink-0 me-3">
-                          {getIcon(type)}
+                          <div className="avatar">
+                            <span className="avatar-initial rounded-circle bg-label-primary">
+                              {getIcon(type)}
+                            </span>
+                          </div>
                         </div>
                         <div className="flex-grow-1">
-                          <h6 className="mb-1 fw-semibold">{title}</h6>
-                          <p className="mb-1 text-muted small">{message}</p>
-                          <div className="d-flex align-items-center">
-                            <i className="ti ti-clock w-3 h-3 text-muted me-1" />
-                            <small className="text-muted">{formatTime(timestamp)}</small>
-                            {!isRead && (
-                              <span className={`badge rounded-pill ms-auto ${getBadgeClass(type)}`}>
-                                Baru
-                              </span>
-                            )}
+                          <div className="d-flex align-items-center mb-1">
+                            <h6 className="mb-0 me-2">{title}</h6>
+                            <span className={`badge ${getBadgeClass(type)}`}>
+                              {type}
+                            </span>
                           </div>
+                          <p className="mb-0">{message}</p>
+                          <small className="text-muted">{formatTime(timestamp)}</small>
+                        </div>
+                        <div className="flex-shrink-0 dropdown-notifications-actions">
+                          {!isRead && (
+                            <button 
+                              type="button" 
+                              className="dropdown-notifications-read" 
+                              style={{ border: 'none', background: 'none', padding: '4px' }}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (isApiNotification) {
+                                  handleMarkAsRead(notification as ApiNotification)
+                                }
+                              }}
+                            >
+                              <span className="badge badge-dot bg-primary"></span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     </li>
                   )
-                })}
-              </ul>
-            )}
-          </div>
-
-          {allNotifications.length > 0 && (
-            <div className="dropdown-menu-footer border-top">
-              <a
-                href="/admin/notifications"
-                className="dropdown-item d-flex justify-content-center py-3"
-              >
-                Lihat Semua Notifikasi
-              </a>
-            </div>
-          )}
-        </div>
+                })
+              )}
+            </ul>
+          </li>
+          <li className="dropdown-menu-footer border-top">
+            <a
+              href="/notifications"
+              className="dropdown-item d-flex justify-content-center text-primary p-2 h-px-40 mb-1 align-items-center"
+              style={{ textDecoration: 'none', width: '100%' }}
+            >
+              Lihat semua notifikasi
+            </a>
+          </li>
+        </ul>
       )}
+
+      {/* Backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Custom CSS for unread notifications */}
+      <style jsx>{`
+        .unread {
+          background-color: rgba(var(--bs-primary-rgb), 0.05) !important;
+          border-left: 3px solid var(--bs-primary) !important;
+        }
+        
+        .unread:hover {
+          background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
+        }
+        
+        .dropdown-notifications-item {
+          transition: background-color 0.2s ease;
+        }
+        
+        .dropdown-notifications-item:hover {
+          background-color: rgba(var(--bs-primary-rgb), 0.05);
+        }
+      `}</style>
     </div>
   )
 }

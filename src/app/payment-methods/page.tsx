@@ -8,13 +8,13 @@ import { DataTable, Column } from '@/components/ui/DataTable';
 import { PaymentMethod } from '@/types/paymentMethod';
 import Image from 'next/image';
 import { getPaymentMethod, deletePaymentMethodWithCookies, updatePaymentMethodStatusWithCookies } from '@/lib/api';
-import { useToast } from '@/contexts/ToastContext';
+import { useToastContext } from '@/contexts/ToastContext';
 import { confirmDelete } from '@/lib/sweetalert-config';
 import { useSweetAlert } from '@/lib/sweetalert-config';
 
 export default function PaymentMethodPage() {
   const router = useRouter();
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useToastContext();
   const sweetAlert = useSweetAlert();
   const [paymentmethods, setPaymentMethod] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,20 +63,10 @@ export default function PaymentMethodPage() {
       try {
         await deletePaymentMethodWithCookies(paymentmethod.id);
         setPaymentMethod((prev) => prev.filter(p => p.id !== paymentmethod.id));
-        showToast({
-          type: 'success',
-          title: 'Berhasil!',
-          message: 'Metode pembayaran dihapus.',
-          duration: 3000
-        });
+        showSuccess('Berhasil!', 'Metode pembayaran dihapus.');
       } catch (error) {
         console.error('Delete error:', error);
-        showToast({
-          type: 'error',
-          title: 'Error!',
-          message: 'Gagal menghapus metode pembayaran.',
-          duration: 5000
-        });
+        showError('Error!', 'Gagal menghapus metode pembayaran.');
       }
     }
   };

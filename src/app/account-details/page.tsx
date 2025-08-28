@@ -6,7 +6,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import SecureGuard from '@/components/auth/SecureGuard'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useToast } from '@/contexts/ToastContext';
+import { useToastContext } from '@/contexts/ToastContext';
 import { updateUser as updateUserAPI } from '@/lib/api';
 import Swal from 'sweetalert2';
 
@@ -33,7 +33,7 @@ interface UserData {
 
 export default function AccountDetailsPage() {
   const { user: authUser, updateUser, checkAuth } = useAuth()
-  const { showToast } = useToast()
+  const { showSuccess, showError } = useToastContext()
   const [user, setUser] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
   const [showUpdateModal, setShowUpdateModal] = useState(false)
@@ -79,11 +79,7 @@ export default function AccountDetailsPage() {
       }
     } catch (error) {
       console.error('❌ Error fetching user data:', error)
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: 'Gagal mengambil data user'
-      })
+      showError('Error', 'Gagal mengambil data user')
     } finally {
       setLoading(false)
     }
@@ -92,7 +88,7 @@ export default function AccountDetailsPage() {
   // Fetch user data on component mount
   useEffect(() => {
     fetchUserData()
-  }, [showToast])
+  }, [showError])
 
   // Handle user update
   const handleUserUpdate = async () => {
@@ -141,11 +137,7 @@ export default function AccountDetailsPage() {
       })
       
       // Also show toast notification
-      showToast({
-        type: 'success',
-        title: 'Berhasil',
-        message: 'Data user berhasil diperbarui'
-      })
+      showSuccess('Berhasil', 'Data user berhasil diperbarui')
       setShowUpdateModal(false)
     } catch (error) {
       console.error('❌ Error updating user:', error)
@@ -163,11 +155,7 @@ export default function AccountDetailsPage() {
       })
       
       // Also show toast notification
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Gagal memperbarui data user'
-      })
+      showError('Error', error instanceof Error ? error.message : 'Gagal memperbarui data user')
     } finally {
       setUpdating(false)
     }

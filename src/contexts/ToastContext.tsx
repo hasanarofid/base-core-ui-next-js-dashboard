@@ -1,55 +1,45 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback } from 'react'
-import Toast, { ToastType } from '@/components/ui/Toast'
-
-interface ToastData {
-  id: string
-  type: ToastType
-  title: string
-  message?: string
-  duration?: number
-}
+import React, { createContext, useContext, ReactNode } from 'react'
+import { useToast, Toast } from '@/hooks/useToast'
+import { ToastContainer, Toast as ToastComponent } from '@/components/ui/Toast'
 
 interface ToastContextType {
-  showToast: (toast: Omit<ToastData, 'id'>) => void
-  hideToast: (id: string) => void
+  showSuccess: (title: string, message: string, duration?: number) => void
+  showError: (title: string, message: string, duration?: number) => void
+  showWarning: (title: string, message: string, duration?: number) => void
+  showInfo: (title: string, message: string, duration?: number) => void
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined)
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = useState<ToastData[]>([])
-
-  const showToast = useCallback((toast: Omit<ToastData, 'id'>) => {
-    const id = Math.random().toString(36).substr(2, 9)
-    setToasts(prev => [...prev, { ...toast, id }])
-  }, [])
-
-  const hideToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id))
-  }, [])
+export function ToastProvider({ children }: { children: ReactNode }) {
+  const { toasts, removeToast, showSuccess, showError, showWarning, showInfo } = useToast()
 
   return (
-    <ToastContext.Provider value={{ showToast, hideToast }}>
+    <ToastContext.Provider value={{ showSuccess, showError, showWarning, showInfo }}>
       {children}
-      <div className="fixed top-4 right-4 z-50 space-y-2">
-        {toasts.map(toast => (
-          <Toast
+      <ToastContainer>
+        {toasts.map((toast: Toast) => (
+          <ToastComponent
             key={toast.id}
-            {...toast}
-            onClose={hideToast}
+            id={toast.id}
+            type={toast.type}
+            title={toast.title}
+            message={toast.message}
+            duration={toast.duration}
+            onClose={removeToast}
           />
         ))}
-      </div>
+      </ToastContainer>
     </ToastContext.Provider>
   )
 }
 
-export function useToast() {
+export function useToastContext() {
   const context = useContext(ToastContext)
   if (context === undefined) {
-    throw new Error('useToast must be used within a ToastProvider')
+    throw new Error('useToastContext must be used within a ToastProvider')
   }
   return context
 } 

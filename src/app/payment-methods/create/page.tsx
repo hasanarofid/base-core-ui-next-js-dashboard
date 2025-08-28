@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { useToast } from '@/contexts/ToastContext';
+import { useToastContext } from '@/contexts/ToastContext';
 import { createPaymentMethodWithCookies } from '@/lib/api';
 
 const createPaymentMethodSchema = z.object({
@@ -23,7 +23,7 @@ type CreatePaymentMethodForm = z.infer<typeof createPaymentMethodSchema>;
 
 export default function CreatePaymentMethodPage() {
   const router = useRouter();
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useToastContext();
   const [loading, setLoading] = useState(false);
 
   const {
@@ -53,31 +53,16 @@ export default function CreatePaymentMethodPage() {
 
       await createPaymentMethodWithCookies(payload);
 
-      showToast({
-        type: 'success',
-        title: 'Berhasil!',
-        message: 'Metode pembayaran berhasil dibuat',
-        duration: 3000
-      });
+      showSuccess('Berhasil!', 'Metode pembayaran berhasil dibuat');
 
       router.push('/payment-methods');
     } catch (error: unknown) {
       console.error('Error creating payment method:', error);
 
       if (error instanceof Error) {
-        showToast({
-          type: 'error',
-          title: 'Error!',
-          message: error.message,
-          duration: 5000
-        });
+        showError('Error!', error.message);
       } else {
-        showToast({
-          type: 'error',
-          title: 'Error!',
-          message: 'Terjadi kesalahan yang tidak diketahui.',
-          duration: 5000
-        });
+        showError('Error!', 'Terjadi kesalahan yang tidak diketahui.');
       }
     } finally {
       setLoading(false);

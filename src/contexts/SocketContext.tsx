@@ -5,6 +5,7 @@ import { io, Socket } from 'socket.io-client'
 import { useAuth } from './AuthContext'
 import { useToken } from '@/hooks/useToken'
 import { Notification } from '@/types/notification'
+// Remove toast context import to avoid circular dependency
 
 interface SocketContextType {
   socket: Socket | null
@@ -12,6 +13,7 @@ interface SocketContextType {
   notifications: Notification[]
   clearNotifications: () => void
   refreshNotifications: () => void
+  refreshTransactions: () => void
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined)
@@ -22,6 +24,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const { user, isAuthenticated } = useAuth()
   const { token } = useToken()
+  // Toast functions will be passed as props or handled differently to avoid circular dependency
 
   // Event listeners will be added directly in the useEffect
 
@@ -29,6 +32,13 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const refreshNotifications = useCallback(() => {
     // Trigger event untuk refresh notifikasi
     const event = new CustomEvent('refreshNotifications')
+    window.dispatchEvent(event)
+  }, [])
+
+  // Callback untuk refresh transactions dari komponen lain
+  const refreshTransactions = useCallback(() => {
+    // Trigger event untuk refresh transactions
+    const event = new CustomEvent('refreshTransactions')
     window.dispatchEvent(event)
   }, [])
 
@@ -215,6 +225,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       }
       setNotifications(prev => [notification, ...prev])
       refreshNotifications()
+      refreshTransactions()
+      
+      // Toast notification will be handled at component level
     })
 
     // Listen for general transaction event (might be sent from backend)
@@ -247,6 +260,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       }
       setNotifications(prev => [notification, ...prev])
       refreshNotifications()
+      refreshTransactions()
+      
+      // Toast notification will be handled at component level
     })
 
     newSocket.on('transaction_completed', (data) => {
@@ -261,6 +277,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       }
       setNotifications(prev => [notification, ...prev])
       refreshNotifications()
+      refreshTransactions()
+      
+      // Toast notification will be handled at component level
     })
 
     newSocket.on('transaction_failed', (data) => {
@@ -275,6 +294,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       }
       setNotifications(prev => [notification, ...prev])
       refreshNotifications()
+      refreshTransactions()
+      
+      // Toast notification will be handled at component level
     })
 
     // Listen for payment events
@@ -290,6 +312,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       }
       setNotifications(prev => [notification, ...prev])
       refreshNotifications()
+      
+      // Toast notification will be handled at component level
     })
 
     // Listen for tenant events
@@ -305,6 +329,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       }
       setNotifications(prev => [notification, ...prev])
       refreshNotifications()
+      
+      // Toast notification will be handled at component level
     })
 
     // Listen for general notification events
@@ -320,6 +346,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       }
       setNotifications(prev => [notification, ...prev])
       refreshNotifications()
+      
+      // Toast notification will be handled at component level
     })
 
     // Listen for error events
@@ -335,6 +363,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       }
       setNotifications(prev => [notification, ...prev])
       refreshNotifications()
+      
+      // Toast notification will be handled at component level
     })
 
     // Listen for API notification events
@@ -388,6 +418,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     notifications,
     clearNotifications,
     refreshNotifications,
+    refreshTransactions,
   }
 
   return (

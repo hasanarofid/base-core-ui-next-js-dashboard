@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { useToast } from '@/contexts/ToastContext';
+import { useToastContext } from '@/contexts/ToastContext';
 import { updateTenantPaymentMethodWithCookies, getPaymentMethodWithCookies, getTenantPaymentMethodsWithCookies } from '@/lib/api';
 import { PaymentMethod } from '@/types/paymentMethod';
 import { TenantPaymentMethod } from '@/types/tenantPaymentMethod';
@@ -27,7 +27,7 @@ type UpdateTenantPaymentMethodForm = z.infer<typeof updateTenantPaymentMethodSch
 export default function EditTenantPaymentMethodPage() {
   const router = useRouter();
   const params = useParams();
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useToastContext();
   const sweetAlert = useSweetAlert();
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -81,11 +81,7 @@ export default function EditTenantPaymentMethodPage() {
 
       } catch (error) {
         console.error('Error fetching data:', error);
-        showToast({
-          type: 'error',
-          title: 'Error',
-          message: error instanceof Error ? error.message : 'Gagal mengambil data payment method'
-        });
+        showError('Error', error instanceof Error ? error.message : 'Gagal mengambil data payment method');
         // Don't redirect immediately, let user see the error
       } finally {
         setLoading(false);
@@ -97,7 +93,7 @@ export default function EditTenantPaymentMethodPage() {
       console.log('🔍 Fetching data for tenant:', tenantId, 'payment method:', paymentMethodId);
       fetchData();
     }
-  }, [tenantId, paymentMethodId, setValue, showToast]);
+  }, [tenantId, paymentMethodId, setValue, showError]);
 
   const onSubmit = async (data: UpdateTenantPaymentMethodForm) => {
     setUpdating(true);

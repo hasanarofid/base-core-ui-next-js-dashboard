@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { useToast } from '@/contexts/ToastContext';
+import { useToastContext } from '@/contexts/ToastContext';
 import { createUserWithCookies } from '@/lib/api';
 import { Tenant } from '@/types/tenant';
 
@@ -24,7 +24,7 @@ type CreateUserForm = z.infer<typeof createUserSchema>;
 
 export default function CreateUserPage() {
   const router = useRouter();
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useToastContext();
   const [loading, setLoading] = useState(false);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loadingTenants, setLoadingTenants] = useState(true);
@@ -57,19 +57,14 @@ export default function CreateUserPage() {
         setTenants(response.data || []);
       } catch (error) {
         console.error('Error fetching tenants:', error);
-        showToast({
-          type: 'error',
-          title: 'Error!',
-          message: 'Gagal mengambil data tenants',
-          duration: 5000
-        });
+        showError('Error!', 'Gagal mengambil data tenants');
       } finally {
         setLoadingTenants(false);
       }
     };
 
     fetchTenants();
-  }, [showToast]);
+  }, [showError]);
 
   const onSubmit = async (data: CreateUserForm) => {
     setLoading(true);
@@ -89,12 +84,7 @@ export default function CreateUserPage() {
       await createUserWithCookies(payload);
       console.log('User created successfully');
       
-      showToast({
-        type: 'success',
-        title: 'Berhasil!',
-        message: 'User berhasil dibuat',
-        duration: 3000
-      });
+      showSuccess('Berhasil!', 'User berhasil dibuat');
       
       // Redirect ke halaman list
       router.push('/user-management');
@@ -102,19 +92,9 @@ export default function CreateUserPage() {
       console.error('Error creating user:', error);
       
       if (error instanceof Error) {
-        showToast({
-          type: 'error',
-          title: 'Error!',
-          message: error.message,
-          duration: 5000
-        });
+        showError('Error!', error.message);
       } else {
-        showToast({
-          type: 'error',
-          title: 'Error!',
-          message: 'Terjadi kesalahan yang tidak diketahui.',
-          duration: 5000
-        });
+        showError('Error!', 'Terjadi kesalahan yang tidak diketahui.');
       }
     } finally {
       setLoading(false);

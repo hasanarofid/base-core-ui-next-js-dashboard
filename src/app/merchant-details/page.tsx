@@ -6,7 +6,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import SecureGuard from '@/components/auth/SecureGuard'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useToast } from '@/contexts/ToastContext';
+import { useToastContext } from '@/contexts/ToastContext';
 import Swal from 'sweetalert2';
 
 // Interface untuk response API tenant
@@ -36,7 +36,7 @@ interface TenantResponse {
 
 export default function MerchantDetailsPage() {
   const { user } = useAuth()
-  const { showToast } = useToast()
+  const { showSuccess, showError } = useToastContext()
   const [tenantData, setTenantData] = useState<TenantData | null>(null)
   const [loading, setLoading] = useState(true)
   const [showTenantModal, setShowTenantModal] = useState(false)
@@ -63,18 +63,14 @@ export default function MerchantDetailsPage() {
         }
       } catch (error) {
         console.error('❌ Error fetching tenant data:', error)
-        showToast({
-          type: 'error',
-          title: 'Error',
-          message: 'Gagal mengambil data tenant'
-        })
+        showError('Error', 'Gagal mengambil data tenant')
       } finally {
         setLoading(false)
       }
     }
 
     fetchTenantData()
-  }, [user?.tenantId, showToast])
+  }, [user?.tenantId, showError])
 
   // Fetch tenant data by ID
   const fetchTenantDataById = async (tenantId: string) => {
@@ -112,11 +108,7 @@ export default function MerchantDetailsPage() {
       }
     } catch (error) {
       console.error('❌ Error fetching tenant data:', error)
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: 'Gagal mengambil data tenant'
-      })
+      showError('Error', 'Gagal mengambil data tenant')
     }
   }
 
@@ -178,11 +170,7 @@ export default function MerchantDetailsPage() {
         }
       })
       
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: 'Tidak ada data tenant yang dapat diupdate'
-      })
+      showError('Error', 'Tidak ada data tenant yang dapat diupdate')
       return
     }
 
@@ -239,11 +227,7 @@ export default function MerchantDetailsPage() {
       })
 
       // Also show toast notification
-      showToast({
-        type: 'success',
-        title: 'Berhasil',
-        message: 'Data tenant berhasil diperbarui'
-      })
+      showSuccess('Berhasil', 'Data tenant berhasil diperbarui')
 
     } catch (error) {
       console.error('❌ Error updating tenant:', error)
@@ -259,11 +243,7 @@ export default function MerchantDetailsPage() {
         }
       })
       
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Gagal memperbarui data tenant'
-      })
+      showError('Error', error instanceof Error ? error.message : 'Gagal memperbarui data tenant')
     } finally {
       setUpdating(false)
     }

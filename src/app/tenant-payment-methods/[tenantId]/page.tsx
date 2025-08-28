@@ -11,7 +11,7 @@ import Badge from '@/components/ui/Badge';
 import { getTenantPaymentMethodsWithCookies, deleteTenantPaymentMethodWithCookies, getPaymentMethodByIdWithCookies } from '@/lib/api';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSweetAlert } from '@/lib/sweetalert-config';
-import { useToast } from '@/contexts/ToastContext';
+import { useToastContext } from '@/contexts/ToastContext';
 
 // Custom CSS untuk styling
 const customStyles = `
@@ -76,7 +76,7 @@ const customStyles = `
 export default function TenantPaymentMethodsPage() {
   const router = useRouter();
   const params = useParams();
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useToastContext();
   const [paymentMethods, setPaymentMethods] = useState<TenantPaymentMethod[]>([]);
   const [paymentMethodNames, setPaymentMethodNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);

@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import AuthGuard from '@/components/auth/AuthGuard';
-import { useToast } from '@/contexts/ToastContext';
+import { useToastContext } from '@/contexts/ToastContext';
 import { createTenantPaymentMethodWithCookies, getPaymentMethodWithCookies } from '@/lib/api';
 import { PaymentMethod } from '@/types/paymentMethod';
 import { useSweetAlert } from '@/lib/sweetalert-config';
@@ -26,7 +26,7 @@ type CreateTenantPaymentMethodForm = z.infer<typeof createTenantPaymentMethodSch
 export default function CreateTenantPaymentMethodPage() {
   const router = useRouter();
   const params = useParams();
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useToastContext();
   const sweetAlert = useSweetAlert();
   const [loading, setLoading] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -57,18 +57,14 @@ export default function CreateTenantPaymentMethodPage() {
         setPaymentMethods(response.data);
       } catch (error) {
         console.error('❌ Error fetching payment methods:', error);
-        showToast({
-          type: 'error',
-          title: 'Error',
-          message: 'Gagal mengambil data payment methods'
-        });
+        showError('Error', 'Gagal mengambil data payment methods');
       } finally {
         setLoadingPaymentMethods(false);
       }
     };
 
     fetchPaymentMethods();
-  }, [showToast]);
+  }, [showError]);
 
   const onSubmit = async (data: CreateTenantPaymentMethodForm) => {
     setLoading(true);

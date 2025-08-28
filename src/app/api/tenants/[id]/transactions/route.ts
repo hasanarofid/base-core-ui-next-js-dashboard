@@ -19,10 +19,24 @@ export async function GET(
     const externalApiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.61.121:3032/api/v1'
     const { id: tenantId } = await params
     
-    console.log('Fetching transactions from:', `${externalApiUrl}/tenants/${tenantId}/transactions`)
+    // Build query parameters
+    const { searchParams } = new URL(request.url);
+    const queryParams = new URLSearchParams();
+    
+    // Add all search parameters to the query
+    searchParams.forEach((value, key) => {
+      if (value) {
+        queryParams.append(key, value);
+      }
+    });
+    
+    const queryString = queryParams.toString();
+    const apiUrl = queryString ? `${externalApiUrl}/tenants/${tenantId}/transactions?${queryString}` : `${externalApiUrl}/tenants/${tenantId}/transactions`;
+    
+    console.log('Fetching transactions from:', apiUrl)
     console.log('Using session cookie:', sessionCookie.name)
 
-    const response = await fetch(`${externalApiUrl}/tenants/${tenantId}/transactions`, {
+    const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useAuth } from '@/contexts/AuthContext'
-import { useToast } from '@/contexts/ToastContext'
+import { useToastContext } from '@/contexts/ToastContext'
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Email atau username harus diisi'),
@@ -23,7 +23,7 @@ export default function LoginForm() {
   const [error, setError] = useState('')
 
   const { login } = useAuth()
-  const { showToast } = useToast()
+  const { showSuccess, showError } = useToastContext()
 
   const {
     register,
@@ -39,11 +39,7 @@ export default function LoginForm() {
 
     try {
       await login(data.email, data.password)
-      showToast({
-        type: 'success',
-        title: 'Login Berhasil',
-        message: 'Selamat datang kembali!'
-      })
+      showSuccess('Login Berhasil', 'Selamat datang kembali!')
       // Redirect sudah ditangani di AuthContext
     } catch (error: unknown) {
       console.error('Login error:', error)
@@ -71,11 +67,7 @@ export default function LoginForm() {
       }
       
       setError(errorMessage)
-      showToast({
-        type: 'error',
-        title: 'Login Gagal',
-        message: errorMessage
-      })
+      showError('Login Gagal', errorMessage)
     } finally {
       setIsLoading(false)
     }

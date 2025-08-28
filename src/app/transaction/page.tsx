@@ -6,11 +6,12 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import SecureGuard from '@/components/auth/SecureGuard'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useToast } from '@/contexts/ToastContext';
+import { useToastContext } from '@/contexts/ToastContext';
 import Swal from 'sweetalert2';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+
 
 // Interface untuk response API transactions
 interface Transaction {
@@ -92,7 +93,7 @@ type AddTransactionForm = z.infer<typeof addTransactionSchema>;
 
 export default function TransactionPage() {
   const { user } = useAuth()
-  const { showToast } = useToast()
+  const { showSuccess, showError } = useToastContext()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingTable, setLoadingTable] = useState(false)
@@ -158,8 +159,8 @@ export default function TransactionPage() {
         const data = await response.json()
         console.log('📦 User data received:', data)
         
-        // Check if user has tenant_admin role
-        if (data.user && data.user.role !== 'tenant_admin') {
+        // Check if user has tenant_admin or admin_tenant role
+        if (data.user && data.user.role !== 'tenant_admin' && data.user.role !== 'admin_tenant') {
           throw new Error('Akses ditolak. Hanya admin tenant yang dapat mengakses halaman ini.')
         }
         
@@ -179,18 +180,14 @@ export default function TransactionPage() {
         }
       } catch (error) {
         console.error('❌ Error fetching user data:', error)
-        showToast({
-          type: 'error',
-          title: 'Error',
-          message: error instanceof Error ? error.message : 'Gagal mengambil data user'
-        })
+        showError('Error', error instanceof Error ? error.message : 'Gagal mengambil data user')
       } finally {
         setLoading(false)
       }
     }
 
     fetchUserData()
-  }, [showToast])
+  }, [showError])
 
   // Effect untuk memantau perubahan filter dan search
   useEffect(() => {
@@ -242,11 +239,7 @@ export default function TransactionPage() {
       }
     } catch (error) {
       console.error('❌ Error fetching transactions:', error)
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: 'Gagal mengambil data transaksi'
-      })
+      showError('Error', 'Gagal mengambil data transaksi')
     } finally {
       setLoadingTable(false)
     }
@@ -274,11 +267,7 @@ export default function TransactionPage() {
       }
     } catch (error) {
       console.error('❌ Error fetching payment methods:', error)
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: 'Gagal mengambil data payment methods'
-      })
+      showError('Error', 'Gagal mengambil data payment methods')
     }
   }
 
@@ -350,11 +339,7 @@ export default function TransactionPage() {
       await fetchTransactions(tenantId, currentPage, itemsPerPage)
 
       // Show toast notification
-      showToast({
-        type: 'success',
-        title: 'Berhasil',
-        message: 'Transaksi berhasil dibuat'
-      })
+      showSuccess('Berhasil', 'Transaksi berhasil dibuat')
     } catch (error) {
       console.error('❌ Error creating transaction:', error)
       
@@ -366,11 +351,7 @@ export default function TransactionPage() {
         confirmButtonColor: '#dc3545'
       })
       
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Gagal membuat transaksi'
-      })
+      showError('Error', error instanceof Error ? error.message : 'Gagal membuat transaksi')
     } finally {
       setLoadingAdd(false)
     }
@@ -401,11 +382,7 @@ export default function TransactionPage() {
       }
     } catch (error) {
       console.error('❌ Error fetching transaction detail:', error)
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Gagal mengambil detail transaksi'
-      })
+      showError('Error', error instanceof Error ? error.message : 'Gagal mengambil detail transaksi')
     } finally {
       setLoadingDetail(false)
     }
@@ -613,270 +590,91 @@ export default function TransactionPage() {
 
             {/* Tabel Transaksi */}
             <div className="card">
-              <div className="card-header">
-                <div className="d-flex justify-content-between align-items-center">
-                  <h5 className="card-title mb-0">Daftar Transaksi</h5>
-                  <div className="d-flex gap-2">
-                    <button 
-                      className="btn btn-sm btn-outline-secondary"
-                      onClick={clearFilters}
-                      disabled={loadingTable}
-                    >
-                      {loadingTable ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm me-1" role="status"></span>
-                          Clearing...
-                        </>
-                      ) : (
-                        <>
-                          <i className="ti ti-refresh me-1"></i>
-                          Clear Filters
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
+              <div className="card-header d-flex justify-content-between align-items-center">
+                <h5 className="card-title mb-0">
+                  <i className="ti ti-credit-card me-2"></i>
+                  Daftar Transaksi
+                </h5>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-outline-primary"
+                  onClick={() => fetchTransactions(tenantId!, currentPage, itemsPerPage)}
+                  disabled={loadingTable}
+                >
+                  <i className={`ti ti-refresh ${loadingTable ? 'ti-spin' : ''}`}></i>
+                  Refresh
+                </button>
               </div>
-              
-              {/* Search and Filter Section */}
-              <div className={`card-body border-bottom ${loadingTable ? 'opacity-50 pointer-events-none' : ''}`}>
-                <div className="row g-3">
-                  <div className="col-md-4">
-                    <div className="input-group">
-                      <span className="input-group-text">
-                        <i className="ti ti-search"></i>
-                      </span>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Search transaction code, reference code, or email..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                        disabled={loadingTable}
-                      />
-                      <button 
-                        className="btn btn-primary"
-                        onClick={handleSearch}
-                        disabled={loadingTable}
-                      >
-                        {loadingTable ? (
-                          <>
-                            <span className="spinner-border spinner-border-sm me-1" role="status"></span>
-                            Searching...
-                          </>
-                        ) : (
-                          'Search'
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="col-md-3">
-                    <select
-                      className="form-select"
-                      value={statusFilter}
-                      onChange={(e) => {
-                        setStatusFilter(e.target.value)
-                        handleFilterChange()
-                      }}
-                      disabled={loadingTable}
-                    >
-                      <option value="all">All Status</option>
-                      <option value="paid">Paid</option>
-                      <option value="pending">Pending</option>
-                      <option value="failed">Failed</option>
-                      <option value="expired">Expired</option>
-                    </select>
-                  </div>
-                  <div className="col-md-3">
-                    <select
-                      className="form-select"
-                      value={dateFilter}
-                      onChange={(e) => {
-                        setDateFilter(e.target.value)
-                        handleFilterChange()
-                      }}
-                      disabled={loadingTable}
-                    >
-                      <option value="all">All Dates</option>
-                      <option value="today">Today</option>
-                      <option value="yesterday">Yesterday</option>
-                      <option value="week">This Week</option>
-                      <option value="month">This Month</option>
-                    </select>
-                  </div>
-                  <div className="col-md-2">
-                    <select
-                      className="form-select"
-                      value={itemsPerPage}
-                      onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                      disabled={loadingTable}
-                    >
-                      <option value={5}>5 per page</option>
-                      <option value={10}>10 per page</option>
-                      <option value={20}>20 per page</option>
-                      <option value={50}>50 per page</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
               <div className="card-body">
                 {loadingTable ? (
                   <div className="text-center py-4">
                     <div className="spinner-border text-primary" role="status">
                       <span className="visually-hidden">Loading...</span>
                     </div>
-                    <p className="text-muted mt-3">Memuat data transaksi...</p>
+                    <p className="mt-2 mb-0">Memuat data transaksi...</p>
                   </div>
                 ) : transactions.length === 0 ? (
                   <div className="text-center py-4">
-                    <i className="ti ti-receipt text-muted" style={{ fontSize: '3rem' }}></i>
-                    <p className="text-muted mt-3">Belum ada transaksi</p>
+                    <i className="ti ti-credit-card-off text-muted mb-2" style={{ fontSize: '2rem' }}></i>
+                    <h6 className="text-muted">Tidak ada transaksi</h6>
+                    <p className="text-muted">Transaksi baru akan muncul di sini</p>
                   </div>
                 ) : (
-                  <>
-                    <div className="table-responsive">
-                      <table className={`table table-striped table-hover ${loadingTable ? 'opacity-50 pointer-events-none' : ''}`}>
-                        <thead>
-                          <tr>
-                            <th>Transaction Code</th>
-                            <th>Customer</th>
-                            <th>Amount</th>
-                            <th>Payment Method</th>
-                            <th>Status</th>
-                            <th>Created At</th>
-                            <th>Actions</th>
+                  <div className="table-responsive">
+                    <table className="table table-hover">
+                      <thead>
+                        <tr>
+                          <th>Transaction Code</th>
+                          <th>Reference Code</th>
+                          <th>Amount</th>
+                          <th>Status</th>
+                          <th>Payment Method</th>
+                          <th>Created At</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {transactions.map((transaction) => (
+                          <tr key={transaction.id}>
+                            <td>
+                              <code className="text-primary">{transaction.transaction_code}</code>
+                            </td>
+                            <td>
+                              <code className="text-secondary">{transaction.reference_code}</code>
+                            </td>
+                            <td>
+                              <span className="fw-semibold">{formatCurrency(transaction.amount)}</span>
+                              <br />
+                              <small className="text-muted">Fee: {formatCurrency(transaction.fee_amount)}</small>
+                            </td>
+                            <td>
+                              {getStatusBadge(transaction.status)}
+                            </td>
+                            <td>
+                              <span className="text-muted">
+                                {transaction.tenantPaymentMethod?.paymentMethod?.code || 'N/A'}
+                              </span>
+                            </td>
+                            <td>
+                              <small className="text-muted">
+                                {formatDate(transaction.createdAt)}
+                              </small>
+                            </td>
+                            <td>
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-primary"
+                                onClick={() => handleViewDetail(transaction)}
+                              >
+                                <i className="ti ti-eye"></i>
+                                Detail
+                              </button>
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {transactions.map((transaction) => (
-                            <tr key={transaction.id} className={loadingTable ? 'opacity-50 pointer-events-none' : ''}>
-                              <td>
-                                <span className="fw-semibold">{transaction.transaction_code}</span>
-                                <br />
-                                <small className="text-muted">{transaction.reference_code}</small>
-                              </td>
-                              <td>
-                                <div>
-                                  <h6 className="mb-1">{transaction.user.email}</h6>
-                                  <small className="text-muted">User ID: {transaction.user.id.substring(0, 8)}...</small>
-                                </div>
-                              </td>
-                              <td>
-                                <div>
-                                  <h6 className="mb-1">{formatCurrency(transaction.amount)}</h6>
-                                  <small className="text-muted">Fee: {formatCurrency(transaction.fee_amount)}</small>
-                                </div>
-                              </td>
-                              <td>
-                                <div className="d-flex align-items-center">
-                                  {transaction.tenantPaymentMethod?.paymentMethod?.logo_url && (
-                                    <img 
-                                      src={transaction.tenantPaymentMethod.paymentMethod.logo_url} 
-                                      alt={transaction.tenantPaymentMethod.paymentMethod.code}
-                                      style={{ width: '24px', height: '24px', marginRight: '8px' }}
-                                    />
-                                  )}
-                                  <div>
-                                    <div className="fw-semibold">{transaction.tenantPaymentMethod?.paymentMethod?.code || 'N/A'}</div>
-                                    <small className="text-muted">{transaction.tenantPaymentMethod?.paymentMethod?.type || 'N/A'}</small>
-                                  </div>
-                                </div>
-                              </td>
-                              <td>{getStatusBadge(transaction.status)}</td>
-                              <td>
-                                <span className="text-muted">{formatDate(transaction.createdAt)}</span>
-                              </td>
-                              <td>
-                                                               <button 
-                                 className="btn btn-sm btn-outline-primary"
-                                 onClick={() => handleViewDetail(transaction)}
-                                 disabled={loadingDetail || loadingTable}
-                               >
-                                  {loadingDetail ? (
-                                    <>
-                                      <span className="spinner-border spinner-border-sm me-1" role="status"></span>
-                                      Loading...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <i className="ti ti-eye me-1"></i>
-                                      Detail
-                                    </>
-                                  )}
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                      <div className={`d-flex justify-content-between align-items-center mt-4 ${loadingTable ? 'opacity-50 pointer-events-none' : ''}`}>
-                        <div className="text-muted">
-                          {loadingTable ? (
-                            <span className="d-flex align-items-center">
-                              <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                              Loading...
-                            </span>
-                          ) : (
-                            `Showing ${((currentPage - 1) * itemsPerPage) + 1} to ${Math.min(currentPage * itemsPerPage, totalItems)} of ${totalItems} entries`
-                          )}
-                        </div>
-                        <nav aria-label="Transaction pagination" className={loadingTable ? 'opacity-50 pointer-events-none' : ''}>
-                          <ul className="pagination pagination-sm mb-0">
-                            <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                              <button 
-                                className="page-link"
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1 || loadingTable}
-                              >
-                                <i className="ti ti-chevron-left"></i>
-                              </button>
-                            </li>
-                            
-                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                              let pageNum
-                              if (totalPages <= 5) {
-                                pageNum = i + 1
-                              } else if (currentPage <= 3) {
-                                pageNum = i + 1
-                              } else if (currentPage >= totalPages - 2) {
-                                pageNum = totalPages - 4 + i
-                              } else {
-                                pageNum = currentPage - 2 + i
-                              }
-                              
-                              return (
-                                <li key={pageNum} className={`page-item ${currentPage === pageNum ? 'active' : ''}`}>
-                                  <button 
-                                    className="page-link"
-                                    onClick={() => handlePageChange(pageNum)}
-                                    disabled={loadingTable}
-                                  >
-                                    {pageNum}
-                                  </button>
-                                </li>
-                              )
-                            })}
-                            
-                            <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                              <button 
-                                className="page-link"
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage === totalPages || loadingTable}
-                              >
-                                <i className="ti ti-chevron-right"></i>
-                              </button>
-                            </li>
-                          </ul>
-                        </nav>
-                      </div>
-                    )}
-                  </>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
             </div>

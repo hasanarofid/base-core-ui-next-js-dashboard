@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { useToast } from '@/contexts/ToastContext';
+import { useToastContext } from '@/contexts/ToastContext';
 import { getPaymentMethodByIdWithCookies, updatePaymentMethodWithCookies } from '@/lib/api';
 import { PaymentMethod } from '@/types/paymentMethod';
 
@@ -24,7 +24,7 @@ type UpdatePaymentMethodFormData = z.infer<typeof updatePaymentMethodSchema>;
 export default function EditPaymentMethodPage() {
   const router = useRouter();
   const params = useParams();
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useToastContext();
   const paymentMethodId = params.id as string;
 
   const [loading, setLoading] = useState(true);
@@ -64,11 +64,7 @@ export default function EditPaymentMethodPage() {
         });
       } catch (error) {
         console.error('Failed to fetch payment method:', error);
-        showToast({
-          type: 'error',
-          title: 'Error',
-          message: 'Gagal mengambil data metode pembayaran'
-        });
+        showError('Error', 'Gagal mengambil data metode pembayaran');
         router.push('/payment-methods');
       } finally {
         setLoading(false);
@@ -76,7 +72,7 @@ export default function EditPaymentMethodPage() {
     };
 
     if (paymentMethodId) fetchMethod();
-  }, [paymentMethodId, setValue, showToast, router]);
+  }, [paymentMethodId, setValue, showError, router]);
 
   const onSubmit = async (data: UpdatePaymentMethodFormData) => {
     setUpdating(true);
@@ -97,11 +93,7 @@ export default function EditPaymentMethodPage() {
       
       console.log('Update result:', result);
       
-      showToast({
-        type: 'success',
-        title: 'Berhasil',
-        message: 'Metode pembayaran berhasil diperbarui'
-      });
+      showSuccess('Berhasil', 'Metode pembayaran berhasil diperbarui');
       
       // Refresh data setelah update
       const updatedMethod = await getPaymentMethodByIdWithCookies(paymentMethodId);
@@ -116,11 +108,7 @@ export default function EditPaymentMethodPage() {
         errorMessage = error.message;
       }
       
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: errorMessage
-      });
+      showError('Error', errorMessage);
     } finally {
       setUpdating(false);
     }

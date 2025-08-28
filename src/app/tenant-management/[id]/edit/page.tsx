@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { useToast } from '@/contexts/ToastContext';
+import { useToastContext } from '@/contexts/ToastContext';
 import Swal from 'sweetalert2';
 
 const editTenantSchema = z.object({
@@ -37,7 +37,7 @@ interface Tenant {
 export default function EditTenantPage() {
   const router = useRouter();
   const params = useParams();
-  const { showToast } = useToast();
+  const { showSuccess, showError } = useToastContext();
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -60,11 +60,7 @@ export default function EditTenantPage() {
         const data = await response.json();
 
         if (!response.ok) {
-          showToast({ 
-            type: 'error', 
-            title: 'Error', 
-            message: data.message || 'Gagal mengambil data tenant' 
-          });
+          showError('Error', data.message || 'Gagal mengambil data tenant');
           router.push('/tenant-management');
           return;
         }
@@ -85,11 +81,7 @@ export default function EditTenantPage() {
         setValue('ipWhitelist', (config.ipWhitelist as string) || '');
       } catch (error) {
         console.error('Error fetching tenant:', error);
-        showToast({ 
-          type: 'error', 
-          title: 'Error', 
-          message: 'Gagal mengambil data tenant' 
-        });
+        showError('Error', 'Gagal mengambil data tenant');
         router.push('/tenant-management');
       } finally {
         setLoading(false);
@@ -99,7 +91,7 @@ export default function EditTenantPage() {
     if (tenantId) {
       fetchTenant();
     }
-  }, [tenantId, setValue, showToast, router]);
+  }, [tenantId, setValue, showError, router]);
 
   const onSubmit = async (data: EditTenantForm) => {
     setUpdating(true);

@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SocketProvider } from "@/contexts/SocketContext";
 import ForcePasswordChangeGuard from "@/components/auth/ForcePasswordChangeGuard";
 import { NotificationWrapper } from "@/components/layout/NotificationWrapper";
+import { NotificationHandler } from "@/components/ui/NotificationHandler";
 
 import "@/styles/template/core.css"
 import "@/styles/template/theme-default.css"
@@ -85,6 +86,7 @@ export default function RootLayout({
               <ToastProvider>
                 <ForcePasswordChangeGuard>
                   <NotificationWrapper>
+                    <NotificationHandler />
                     {children}
                   </NotificationWrapper>
                 </ForcePasswordChangeGuard>

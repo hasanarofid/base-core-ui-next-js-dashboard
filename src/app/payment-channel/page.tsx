@@ -6,7 +6,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import SecureGuard from '@/components/auth/SecureGuard'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useToast } from '@/contexts/ToastContext';
+import { useToastContext } from '@/contexts/ToastContext';
 
 // CSS untuk styling card payment channel
 const paymentChannelStyles = `
@@ -88,7 +88,7 @@ interface UserResponse {
 
 export default function PaymentChannelPage() {
   const { user } = useAuth()
-  const { showToast } = useToast()
+  const { showSuccess, showError } = useToastContext()
   const [paymentMethods, setPaymentMethods] = useState<TenantPaymentMethod[]>([])
   const [loading, setLoading] = useState(true)
   const [tenantId, setTenantId] = useState<string | null>(null)
@@ -135,18 +135,14 @@ export default function PaymentChannelPage() {
         }
       } catch (error) {
         console.error('❌ Error fetching user data:', error)
-        showToast({
-          type: 'error',
-          title: 'Error',
-          message: error instanceof Error ? error.message : 'Gagal mengambil data user'
-        })
+        showError('Error', error instanceof Error ? error.message : 'Gagal mengambil data user')
       } finally {
         setLoading(false)
       }
     }
 
     fetchUserData()
-  }, [showToast])
+  }, [showError])
 
   // Fetch payment methods data from external API
   const fetchPaymentMethods = async (tenantId: string) => {
@@ -170,11 +166,7 @@ export default function PaymentChannelPage() {
       }
     } catch (error) {
       console.error('❌ Error fetching payment methods:', error)
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: 'Gagal mengambil data payment methods'
-      })
+      showError('Error', 'Gagal mengambil data payment methods')
     }
   }
 
@@ -203,18 +195,10 @@ export default function PaymentChannelPage() {
           : method
       ))
       
-      showToast({
-        type: 'success',
-        title: 'Berhasil',
-        message: `Status payment method berhasil diubah menjadi ${newStatus === 'active' ? 'aktif' : 'nonaktif'}`
-      })
+      showSuccess('Berhasil', `Status payment method berhasil diubah menjadi ${newStatus === 'active' ? 'aktif' : 'nonaktif'}`)
     } catch (error) {
       console.error('❌ Error toggling payment method status:', error)
-      showToast({
-        type: 'error',
-        title: 'Error',
-        message: 'Gagal mengubah status payment method'
-      })
+      showError('Error', 'Gagal mengubah status payment method')
     }
   }
 

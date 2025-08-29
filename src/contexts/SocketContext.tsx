@@ -17,7 +17,6 @@ interface SocketContextType {
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined)
-
 export function SocketProvider({ children }: { children: ReactNode }) {
   const [socket, setSocket] = useState<Socket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
@@ -25,7 +24,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth()
   const { token } = useToken()
   // Toast functions will be passed as props or handled differently to avoid circular dependency
-
+  const SOCKET_URL =
+  process.env.NEXT_PUBLIC_SOCKET_URL || 'https://tenant-app-innovia.duckdns.org'
+const SOCKET_PATH = process.env.NEXT_PUBLIC_SOCKET_PATH || '/realtime'
   // Event listeners will be added directly in the useEffect
 
   // Callback untuk refresh notifikasi dari komponen lain
@@ -81,8 +82,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         console.log('🔑 Found token in cookies, using for Socket.IO connection')
         
         // Create socket connection with cookie token
-        const newSocket = io(process.env.NEXT_PUBLIC_SOCKET || 'http://31.97.61.121:3032', {
-          path: '/realtime',
+        const newSocket = io(SOCKET_URL, {
+          path: SOCKET_PATH,
           auth: {
             token: cookieToken
           },
@@ -143,8 +144,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     console.log('🔌 Creating Socket.IO connection with token:', token.substring(0, 20) + '...')
     
     // Create socket connection with better error handling
-    const newSocket = io(process.env.NEXT_PUBLIC_SOCKET || 'http://31.97.61.121:3032', {
-      path: '/realtime',
+    const newSocket = io(SOCKET_URL, {
+      path: SOCKET_PATH,
       auth: {
         token: token
       },

@@ -138,6 +138,11 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       href: '/logs-notifications',
       icon: 'ti ti-bell'
     },
+    {
+      title: 'Wallet',
+      href: '/admin/wallets',
+      icon: 'ti ti-wallet'
+    },
     // {
     //   title: 'Reports',
     //   href: '/reports',
@@ -184,6 +189,11 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       title: 'Transaction',
       href: '/transaction',
       icon: 'ti ti-receipt'
+    },
+    {
+      title: 'Wallet',
+      href: '/tenant/wallet',
+      icon: 'ti ti-wallet'
     }
   ]
 
